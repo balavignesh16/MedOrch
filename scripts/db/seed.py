@@ -1,4 +1,5 @@
 import psycopg2
+# pyrefly: ignore [missing-import]
 from faker import Faker
 import random
 from datetime import datetime, timedelta
