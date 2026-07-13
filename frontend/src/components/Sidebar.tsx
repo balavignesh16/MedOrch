@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Stethoscope, Settings, ShieldCheck, TrendingUp, Activity, Users } from 'lucide-react';
+import { LayoutDashboard, Stethoscope, Settings, ShieldCheck, TrendingUp, Activity, Users, CreditCard, Map } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const Sidebar = () => {
@@ -16,6 +16,8 @@ const Sidebar = () => {
     { name: 'Resource Optimization', href: '/agents/optimization', icon: Activity },
     { name: 'Cyber GRC', href: '/agents/grc', icon: ShieldCheck },
     { name: 'Predictive Analytics', href: '/agents/predictive', icon: TrendingUp },
+    { name: 'Billing & Claims', href: '/agents/billing', icon: CreditCard },
+    { name: 'Patient Navigation', href: '/agents/navigation', icon: Map },
   ];
 
   return (

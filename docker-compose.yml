@@ -21,3 +21,22 @@ services:
       - "50052:50052"
     environment:
       - ENV=production
+      - DB_USER=medorch
+      - DB_PASSWORD=medorchpass
+      - DB_NAME=medorch_db
+      - DB_HOST=db
+
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=medorch
+      - POSTGRES_PASSWORD=medorchpass
+      - POSTGRES_DB=medorch_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  postgres_data:

@@ -1,5 +1,6 @@
 grpcio>=1.62.0
-grpcio-tools>=1.62.0
+grpcio-tools==1.62.1
+psycopg2-binary==2.9.9
 langchain>=0.1.13
 langgraph>=0.0.30
 pydantic>=2.6.4
