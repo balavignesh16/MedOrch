@@ -4,6 +4,7 @@ import React from 'react';
 import MetricCard from '@/components/MetricCard';
 import { TrendingUp, Users, Activity, DollarSign } from 'lucide-react';
 import { motion } from 'framer-motion';
+import CommandBar from '@/components/CommandBar';
 
 export default function Home() {
   // Mock data representing the gRPC payload from Dev A
@@ -32,10 +33,12 @@ export default function Home() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      <header className="mb-10">
+      <header className="mb-2">
         <h2 className="text-3xl font-bold text-foreground tracking-tight">System Overview</h2>
         <p className="text-slate-400 mt-2">Real-time metrics from the predictive engine.</p>
       </header>
+
+      <CommandBar />
 
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
