@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+
+  gateway:
+    build: ./gateway
+    ports:
+      - "50051:50051"
+    environment:
+      - ENV=production
+
+  engine:
+    build: ./engine
+    ports:
+      - "50052:50052"
+    environment:
+      - ENV=production
