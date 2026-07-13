@@ -1,7 +1,7 @@
 "use client";
 
 import MetricCard from '@/components/MetricCard';
-import { Activity, AlertTriangle, CheckCircle, Clock, Server, Zap } from 'lucide-react';
+import { Activity, AlertTriangle, CheckCircle, Clock, Server, Zap, Users } from 'lucide-react';
 
 export default function Home() {
   return (
@@ -12,10 +12,10 @@ export default function Home() {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <MetricCard title="Active Patients" value="1,243" trend="+5" isPositive={false} />
-        <MetricCard title="ICU Bed Capacity" value="82%" trend="Warning" isPositive={false} />
-        <MetricCard title="Avg Readmission Risk" value="14.5%" trend="-1.2%" isPositive={true} />
-        <MetricCard title="Staffing Efficiency" value="94%" trend="+2%" isPositive={true} />
+        <MetricCard title="Active Patients" value="1,243" trend="+5" isPositive={false} icon={<Users className="w-5 h-5 text-brand-teal" />} />
+        <MetricCard title="ICU Bed Capacity" value="82%" trend="Warning" isPositive={false} icon={<Activity className="w-5 h-5 text-amber-500" />} />
+        <MetricCard title="Avg Readmission Risk" value="14.5%" trend="-1.2%" isPositive={true} icon={<AlertTriangle className="w-5 h-5 text-green-500" />} />
+        <MetricCard title="Staffing Efficiency" value="94%" trend="+2%" isPositive={true} icon={<Activity className="w-5 h-5 text-brand-teal" />} />
       </div>
 
       <div className="grid grid-cols-3 gap-6 flex-1 min-h-0">
