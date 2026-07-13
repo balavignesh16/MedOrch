@@ -2,16 +2,20 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Send, Sparkles } from 'lucide-react';
 
-const CommandBar = () => {
+interface CommandBarProps {
+  onQuerySubmit: (query: string) => void;
+  isLoading?: boolean;
+}
+
+const CommandBar = ({ onQuerySubmit, isLoading = false }: CommandBarProps) => {
   const [query, setQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!query.trim()) return;
+    if (!query.trim() || isLoading) return;
     
-    // Visual mock only. In Phase 4, this will call the Go Gateway gRPC client.
-    console.log("Mock query submitted:", query);
+    onQuerySubmit(query);
     setQuery('');
   };
 
@@ -39,10 +43,14 @@ const CommandBar = () => {
         
         <button
           type="submit"
-          disabled={!query.trim()}
+          disabled={!query.trim() || isLoading}
           className="absolute right-4 p-2 bg-brand-teal text-white rounded-xl hover:bg-teal-500 disabled:opacity-50 disabled:hover:bg-brand-teal transition-colors"
         >
-          <Send className="w-5 h-5" />
+          {isLoading ? (
+            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <Send className="w-5 h-5" />
+          )}
         </button>
       </form>
     </motion.div>

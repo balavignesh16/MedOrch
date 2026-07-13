@@ -23,7 +23,7 @@ def serve():
     port = "50051"
     server.add_insecure_port(f"[::]:{port}")
     server.start()
-    print(f"🚀 AI Engine gRPC Server running on port {port}")
+    print(f"AI Engine gRPC Server running on port {port}")
     
     # Block thread
     try:
