@@ -1,7 +1,20 @@
 "use client";
 
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import MetricCard from '@/components/MetricCard';
+import WardHeatmap from '@/components/WardHeatmap';
 import { Activity, AlertTriangle, CheckCircle, Clock, Server, Zap, Users } from 'lucide-react';
+
+const data = [
+  { time: '00:00', admissions: 12, discharges: 8 },
+  { time: '04:00', admissions: 18, discharges: 10 },
+  { time: '08:00', admissions: 45, discharges: 22 },
+  { time: '12:00', admissions: 30, discharges: 35 },
+  { time: '16:00', admissions: 25, discharges: 40 },
+  { time: '20:00', admissions: 15, discharges: 18 },
+  { time: '24:00', admissions: 10, discharges: 12 },
+];
+
 
 export default function Home() {
   return (
@@ -16,6 +29,39 @@ export default function Home() {
         <MetricCard title="ICU Bed Capacity" value="82%" trend="Warning" isPositive={false} icon={Activity} />
         <MetricCard title="Avg Readmission Risk" value="14.5%" trend="-1.2%" isPositive={true} icon={AlertTriangle} />
         <MetricCard title="Staffing Efficiency" value="94%" trend="+2%" isPositive={true} icon={Activity} />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 h-96">
+        <div className="lg:col-span-2 bg-surface-glass border border-border-glass backdrop-blur-md rounded-xl p-6 shadow-lg h-full flex flex-col">
+          <h3 className="text-slate-400 font-medium mb-6">Hospital Activity (24h)</h3>
+          <div className="flex-1 min-h-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorAdmissions" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#14b8a6" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorDischarges" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="time" stroke="#475569" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="#475569" fontSize={12} tickLine={false} axisLine={false} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '8px' }}
+                  itemStyle={{ color: '#e2e8f0' }}
+                />
+                <Area type="monotone" dataKey="admissions" stroke="#14b8a6" fillOpacity={1} fill="url(#colorAdmissions)" strokeWidth={2} />
+                <Area type="monotone" dataKey="discharges" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorDischarges)" strokeWidth={2} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+        <div className="h-full">
+          <WardHeatmap />
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-6 flex-1 min-h-0">

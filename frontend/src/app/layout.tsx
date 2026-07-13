@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Sidebar from "@/components/Sidebar";
+import AppLayout from "@/components/AppLayout";
 
 const inter = Inter({ subsets: ["latin"] });
 
+import { AuthProvider } from '@/context/AuthContext';
+
 export const metadata: Metadata = {
-  title: "MedOrch | Command Center",
-  description: "Healthcare Analytics Platform",
+  title: "MedOrch",
+  description: "MedOrch Orchestrator AI",
 };
 
 export default function RootLayout({
@@ -17,11 +19,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className} h-screen w-screen overflow-hidden flex bg-slate-900 text-slate-100`}>
-        <Sidebar />
-        <main className="flex-1 h-full overflow-y-auto p-10 ml-64">
-          {children}
-        </main>
+      <body className={`${inter.variable} antialiased bg-background text-foreground`}>
+        <AuthProvider>
+          <AppLayout>{children}</AppLayout>
+        </AuthProvider>
       </body>
     </html>
   );
