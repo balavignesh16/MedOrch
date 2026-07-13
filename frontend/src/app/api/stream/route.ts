@@ -15,7 +15,7 @@ const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
 
 const protoDescriptor = grpc.loadPackageDefinition(packageDefinition);
 // @ts-ignore
-const analyticsProto = protoDescriptor.healthcare_analytics;
+const analyticsProto = protoDescriptor.healthcare;
 
 export async function POST(req: NextRequest) {
   const { prompt, agent_target } = await req.json();
