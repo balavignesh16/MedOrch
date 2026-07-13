@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Stethoscope, Settings, ShieldCheck, TrendingUp, Activity } from 'lucide-react';
+import { LayoutDashboard, Stethoscope, Settings, ShieldCheck, TrendingUp, Activity, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const Sidebar = () => {
@@ -11,6 +11,7 @@ const Sidebar = () => {
 
   const links = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+    { name: 'Patients', href: '/patients', icon: Users },
     { name: 'Clinical Triage', href: '/agents/clinical', icon: Stethoscope },
     { name: 'Resource Optimization', href: '/agents/optimization', icon: Activity },
     { name: 'Cyber GRC', href: '/agents/grc', icon: ShieldCheck },
