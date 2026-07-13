@@ -1,12 +1,13 @@
 package main
 
 import (
+	"context"
+	"io"
 	"log"
 	"net"
-	"strings"
-	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	pb "github.com/medorch/gateway/pb"
 )
 
@@ -15,50 +16,44 @@ type server struct {
 }
 
 func (s *server) ProcessQuery(req *pb.QueryRequest, stream pb.AnalyticsEngine_ProcessQueryServer) error {
-	log.Printf("Received query [%s] for AGENT [%s]: %s", req.QueryId, req.AgentTarget, req.NaturalLanguagePrompt)
+	log.Printf("API Gateway intercepting query [%s] for AGENT [%s]: %s", req.QueryId, req.AgentTarget, req.NaturalLanguagePrompt)
 
-	// The full text we want to stream
-	fullSummary := "Based on current trends, the ICU capacity is nearing a critical threshold. We recommend reallocating staff from the general ward."
-	// If targeting a specific agent, customize the mock response slightly
-	if req.AgentTarget == "clinical_triage" {
-		fullSummary = "Patient shows signs of acute cardiac distress. Immediate triage to Cardiology ICU is recommended."
-	} else if req.AgentTarget == "cyber_grc" {
-		fullSummary = "Query processed under HIPAA guidelines. PII has been scrubbed from this dataset. No unauthorized access detected."
+	// Dial the Python LangGraph Engine on port 50052
+	conn, err := grpc.Dial("localhost:50052", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Printf("Failed to connect to Python Engine: %v", err)
+		return err
+	}
+	defer conn.Close()
+
+	client := pb.NewAnalyticsEngineClient(conn)
+
+	// Forward the request to Python
+	pythonStream, err := client.ProcessQuery(context.Background(), req)
+	if err != nil {
+		log.Printf("Error calling Python Engine: %v", err)
+		return err
 	}
 
-	words := strings.Split(fullSummary, " ")
-
-	// MOCK DATA for Phase 4 UI Integration
-	mockJson := `{
-		"metrics": {
-			"readmission_risk": {"value": "15.2%", "trend": "+1.4%", "isPositive": false},
-			"active_patients": {"value": 1243, "trend": "-5", "isPositive": true},
-			"icu_capacity": {"value": "82%", "trend": "Warning", "isPositive": false},
-			"cost_impact": {"value": "$45,000", "trend": "-$2,100", "isPositive": true}
+	// Receive the stream from Python and pipe it directly to Next.js
+	for {
+		res, err := pythonStream.Recv()
+		if err == io.EOF {
+			break
 		}
-	}`
-
-	currentSummary := ""
-
-	// Stream the text word-by-word
-	for _, word := range words {
-		currentSummary += word + " "
-		
-		res := &pb.InsightResponse{
-			ResponseId:           "resp-" + req.QueryId,
-			SummaryText:          strings.TrimSpace(currentSummary),
-			VisualizationDataJson: mockJson, // In a real app, send JSON only once or at the end
-			PiiScrubbed:          true,
-		}
-		
-		if err := stream.Send(res); err != nil {
+		if err != nil {
+			log.Printf("Error receiving from Python stream: %v", err)
 			return err
 		}
-		
-		// Artificial delay to simulate LLM token generation
-		time.Sleep(50 * time.Millisecond)
+
+		// Send the chunk back to Next.js
+		if err := stream.Send(res); err != nil {
+			log.Printf("Error sending to Next.js stream: %v", err)
+			return err
+		}
 	}
 
+	log.Printf("Successfully proxied stream for query [%s]", req.QueryId)
 	return nil
 }
 
@@ -71,7 +66,7 @@ func main() {
 	s := grpc.NewServer()
 	pb.RegisterAnalyticsEngineServer(s, &server{})
 	
-	log.Printf("API Gateway (gRPC Server Streaming) listening at %v", lis.Addr())
+	log.Printf("API Gateway (gRPC Proxy) listening on port 50051...")
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
