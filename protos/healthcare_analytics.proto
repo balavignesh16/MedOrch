@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package healthcare;
+option go_package = "github.com/medorch/gateway/pb";
+
+// The core service exposed by the Python AI Engine
+service AnalyticsEngine {
+  rpc ProcessQuery(QueryRequest) returns (InsightResponse) {}
+}
+
+message QueryRequest {
+  string query_id = 1;
+  string natural_language_prompt = 2;
+  string user_role = 3; // e.g., "admin", "physician" for GRC checks
+}
+
+message Citation {
+  string title = 1;
+  string url = 2;
+  string snippet = 3;
+}
+
+message InsightResponse {
+  string response_id = 1;
+  string summary_text = 2;
+  
+  // JSON payload containing the numerical data for D3/Recharts
+  // e.g., {"metrics": {"risk_increase": 15.2, "cost_impact": 45000}}
+  string visualization_data_json = 3; 
+  
+  repeated Citation research_citations = 4;
+  bool pii_scrubbed = 5; // Cyber GRC flag
+}
