@@ -1,32 +1,22 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Send, Sparkles, Loader2 } from 'lucide-react';
-import { submitAnalyticsQuery } from '@/app/actions';
 
 type CommandBarProps = {
-  onResult: (result: any) => void;
+  onQuery: (query: string) => void;
+  isLoading: boolean;
 };
 
-const CommandBar = ({ onResult }: CommandBarProps) => {
+const CommandBar = ({ onQuery, isLoading }: CommandBarProps) => {
   const [query, setQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim() || isLoading) return;
     
-    setIsLoading(true);
-    try {
-      const result = await submitAnalyticsQuery(query);
-      onResult(result);
-    } catch (error) {
-      console.error("Error querying gateway:", error);
-      alert("Failed to reach the Go Gateway. Ensure the backend is running!");
-    } finally {
-      setIsLoading(false);
-      setQuery('');
-    }
+    onQuery(query);
+    setQuery('');
   };
 
   return (

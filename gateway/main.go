@@ -1,9 +1,10 @@
 package main
 
 import (
-	"context"
 	"log"
 	"net"
+	"strings"
+	"time"
 
 	"google.golang.org/grpc"
 	pb "github.com/medorch/gateway/pb"
@@ -13,8 +14,12 @@ type server struct {
 	pb.UnimplementedAnalyticsEngineServer
 }
 
-func (s *server) ProcessQuery(ctx context.Context, req *pb.QueryRequest) (*pb.InsightResponse, error) {
+func (s *server) ProcessQuery(req *pb.QueryRequest, stream pb.AnalyticsEngine_ProcessQueryServer) error {
 	log.Printf("Received query [%s]: %s", req.QueryId, req.NaturalLanguagePrompt)
+
+	// The full text we want to stream
+	fullSummary := "Based on current trends, the ICU capacity is nearing a critical threshold. We recommend reallocating staff from the general ward."
+	words := strings.Split(fullSummary, " ")
 
 	// MOCK DATA for Phase 4 UI Integration
 	mockJson := `{
@@ -26,12 +31,28 @@ func (s *server) ProcessQuery(ctx context.Context, req *pb.QueryRequest) (*pb.In
 		}
 	}`
 
-	return &pb.InsightResponse{
-		ResponseId:           "resp-" + req.QueryId,
-		SummaryText:          "Based on current trends, the ICU capacity is nearing a critical threshold.",
-		VisualizationDataJson: mockJson,
-		PiiScrubbed:          true,
-	}, nil
+	currentSummary := ""
+
+	// Stream the text word-by-word
+	for _, word := range words {
+		currentSummary += word + " "
+		
+		res := &pb.InsightResponse{
+			ResponseId:           "resp-" + req.QueryId,
+			SummaryText:          strings.TrimSpace(currentSummary),
+			VisualizationDataJson: mockJson, // In a real app, send JSON only once or at the end
+			PiiScrubbed:          true,
+		}
+		
+		if err := stream.Send(res); err != nil {
+			return err
+		}
+		
+		// Artificial delay to simulate LLM token generation
+		time.Sleep(50 * time.Millisecond)
+	}
+
+	return nil
 }
 
 func main() {
@@ -43,7 +64,7 @@ func main() {
 	s := grpc.NewServer()
 	pb.RegisterAnalyticsEngineServer(s, &server{})
 	
-	log.Printf("API Gateway (gRPC) listening at %v", lis.Addr())
+	log.Printf("API Gateway (gRPC Server Streaming) listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}

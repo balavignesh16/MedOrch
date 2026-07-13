@@ -26,7 +26,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AnalyticsEngineClient interface {
-	ProcessQuery(ctx context.Context, in *QueryRequest, opts ...grpc.CallOption) (*InsightResponse, error)
+	ProcessQuery(ctx context.Context, in *QueryRequest, opts ...grpc.CallOption) (AnalyticsEngine_ProcessQueryClient, error)
 }
 
 type analyticsEngineClient struct {
@@ -37,20 +37,43 @@ func NewAnalyticsEngineClient(cc grpc.ClientConnInterface) AnalyticsEngineClient
 	return &analyticsEngineClient{cc}
 }
 
-func (c *analyticsEngineClient) ProcessQuery(ctx context.Context, in *QueryRequest, opts ...grpc.CallOption) (*InsightResponse, error) {
-	out := new(InsightResponse)
-	err := c.cc.Invoke(ctx, AnalyticsEngine_ProcessQuery_FullMethodName, in, out, opts...)
+func (c *analyticsEngineClient) ProcessQuery(ctx context.Context, in *QueryRequest, opts ...grpc.CallOption) (AnalyticsEngine_ProcessQueryClient, error) {
+	stream, err := c.cc.NewStream(ctx, &AnalyticsEngine_ServiceDesc.Streams[0], AnalyticsEngine_ProcessQuery_FullMethodName, opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &analyticsEngineProcessQueryClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type AnalyticsEngine_ProcessQueryClient interface {
+	Recv() (*InsightResponse, error)
+	grpc.ClientStream
+}
+
+type analyticsEngineProcessQueryClient struct {
+	grpc.ClientStream
+}
+
+func (x *analyticsEngineProcessQueryClient) Recv() (*InsightResponse, error) {
+	m := new(InsightResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 // AnalyticsEngineServer is the server API for AnalyticsEngine service.
 // All implementations must embed UnimplementedAnalyticsEngineServer
 // for forward compatibility
 type AnalyticsEngineServer interface {
-	ProcessQuery(context.Context, *QueryRequest) (*InsightResponse, error)
+	ProcessQuery(*QueryRequest, AnalyticsEngine_ProcessQueryServer) error
 	mustEmbedUnimplementedAnalyticsEngineServer()
 }
 
@@ -58,8 +81,8 @@ type AnalyticsEngineServer interface {
 type UnimplementedAnalyticsEngineServer struct {
 }
 
-func (UnimplementedAnalyticsEngineServer) ProcessQuery(context.Context, *QueryRequest) (*InsightResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ProcessQuery not implemented")
+func (UnimplementedAnalyticsEngineServer) ProcessQuery(*QueryRequest, AnalyticsEngine_ProcessQueryServer) error {
+	return status.Errorf(codes.Unimplemented, "method ProcessQuery not implemented")
 }
 func (UnimplementedAnalyticsEngineServer) mustEmbedUnimplementedAnalyticsEngineServer() {}
 
@@ -74,22 +97,25 @@ func RegisterAnalyticsEngineServer(s grpc.ServiceRegistrar, srv AnalyticsEngineS
 	s.RegisterService(&AnalyticsEngine_ServiceDesc, srv)
 }
 
-func _AnalyticsEngine_ProcessQuery_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryRequest)
-	if err := dec(in); err != nil {
-		return nil, err
+func _AnalyticsEngine_ProcessQuery_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(QueryRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
 	}
-	if interceptor == nil {
-		return srv.(AnalyticsEngineServer).ProcessQuery(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AnalyticsEngine_ProcessQuery_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AnalyticsEngineServer).ProcessQuery(ctx, req.(*QueryRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+	return srv.(AnalyticsEngineServer).ProcessQuery(m, &analyticsEngineProcessQueryServer{stream})
+}
+
+type AnalyticsEngine_ProcessQueryServer interface {
+	Send(*InsightResponse) error
+	grpc.ServerStream
+}
+
+type analyticsEngineProcessQueryServer struct {
+	grpc.ServerStream
+}
+
+func (x *analyticsEngineProcessQueryServer) Send(m *InsightResponse) error {
+	return x.ServerStream.SendMsg(m)
 }
 
 // AnalyticsEngine_ServiceDesc is the grpc.ServiceDesc for AnalyticsEngine service.
@@ -98,12 +124,13 @@ func _AnalyticsEngine_ProcessQuery_Handler(srv interface{}, ctx context.Context,
 var AnalyticsEngine_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "healthcare.AnalyticsEngine",
 	HandlerType: (*AnalyticsEngineServer)(nil),
-	Methods: []grpc.MethodDesc{
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
 		{
-			MethodName: "ProcessQuery",
-			Handler:    _AnalyticsEngine_ProcessQuery_Handler,
+			StreamName:    "ProcessQuery",
+			Handler:       _AnalyticsEngine_ProcessQuery_Handler,
+			ServerStreams: true,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
 	Metadata: "protos/healthcare_analytics.proto",
 }

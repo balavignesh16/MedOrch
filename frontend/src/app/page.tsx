@@ -3,20 +3,64 @@
 import React, { useState } from 'react';
 import MetricCard from '@/components/MetricCard';
 import CommandBar from '@/components/CommandBar';
+import RiskChart from '@/components/RiskChart';
 import { TrendingUp, Users, Activity, DollarSign } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function Home() {
-  // Default empty state before any query is made
   const [metrics, setMetrics] = useState<any>(null);
   const [insightSummary, setInsightSummary] = useState<string>("[ LLM generated summary will appear here after gRPC pipeline is connected ]");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleQueryResult = (result: any) => {
-    if (result.data && result.data.metrics) {
-      setMetrics(result.data.metrics);
-    }
-    if (result.summaryText) {
-      setInsightSummary(result.summaryText);
+  const handleQuery = async (query: string) => {
+    setIsLoading(true);
+    setInsightSummary("");
+    setMetrics(null);
+    
+    try {
+      const response = await fetch('/api/stream', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt: query }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to connect to streaming API");
+      }
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (reader) {
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n\n');
+          
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = JSON.parse(line.slice(6));
+              setInsightSummary(data.summaryText);
+              
+              if (data.visualizationDataJson) {
+                 const parsedJson = JSON.parse(data.visualizationDataJson);
+                 if (parsedJson.metrics) {
+                   setMetrics(parsedJson.metrics);
+                 }
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Streaming Error:", error);
+      setInsightSummary("Error connecting to Go Gateway. Is it running?");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -27,7 +71,7 @@ export default function Home() {
         <p className="text-slate-400 mt-2">Real-time metrics from the predictive engine.</p>
       </header>
 
-      <CommandBar onResult={handleQueryResult} />
+      <CommandBar onQuery={handleQuery} isLoading={isLoading} />
 
       {metrics ? (
         <motion.div 
@@ -76,14 +120,15 @@ export default function Home() {
       )}
 
       <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-surface-glass border border-border-glass backdrop-blur-md rounded-xl p-6 shadow-lg h-96 flex items-center justify-center">
-          <p className="text-slate-500 italic">[ D3.js Chart Area - Awaiting Data ]</p>
+        <div className="lg:col-span-2 bg-surface-glass border border-border-glass backdrop-blur-md rounded-xl p-6 shadow-lg h-96">
+          <RiskChart />
         </div>
         <div className="bg-surface-glass border border-border-glass backdrop-blur-md rounded-xl p-6 shadow-lg h-96 flex flex-col">
           <h3 className="text-lg font-bold mb-4">Recent AI Insights</h3>
-          <div className="flex-1 flex items-center justify-center">
-             <p className="text-slate-300 text-center text-sm px-4">
+          <div className="flex-1 flex items-start justify-start overflow-y-auto">
+             <p className="text-slate-300 text-sm">
                {insightSummary}
+               {isLoading && <span className="animate-pulse ml-1\">|</span>}
              </p>
           </div>
         </div>

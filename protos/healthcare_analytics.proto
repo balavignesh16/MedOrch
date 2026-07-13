@@ -5,7 +5,7 @@ option go_package = "github.com/medorch/gateway/pb";
 
 // The core service exposed by the Python AI Engine
 service AnalyticsEngine {
-  rpc ProcessQuery(QueryRequest) returns (InsightResponse) {}
+  rpc ProcessQuery(QueryRequest) returns (stream InsightResponse) {}
 }
 
 message QueryRequest {
