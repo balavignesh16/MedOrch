@@ -12,6 +12,7 @@ message QueryRequest {
   string query_id = 1;
   string natural_language_prompt = 2;
   string user_role = 3; // e.g., "admin", "physician" for GRC checks
+  string agent_target = 4; // Which agent to route to
 }
 
 message Citation {

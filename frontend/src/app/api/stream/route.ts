@@ -18,7 +18,7 @@ const protoDescriptor = grpc.loadPackageDefinition(packageDefinition);
 const analyticsProto = protoDescriptor.healthcare_analytics;
 
 export async function POST(req: NextRequest) {
-  const { prompt } = await req.json();
+  const { prompt, agent_target } = await req.json();
 
   // @ts-ignore
   const client = new analyticsProto.AnalyticsEngine(
@@ -29,7 +29,8 @@ export async function POST(req: NextRequest) {
   const request = {
     query_id: `q-${Date.now()}`,
     natural_language_prompt: prompt,
-    user_role: "admin"
+    user_role: "admin",
+    agent_target: agent_target || "global"
   };
 
   const stream = new ReadableStream({

@@ -15,10 +15,17 @@ type server struct {
 }
 
 func (s *server) ProcessQuery(req *pb.QueryRequest, stream pb.AnalyticsEngine_ProcessQueryServer) error {
-	log.Printf("Received query [%s]: %s", req.QueryId, req.NaturalLanguagePrompt)
+	log.Printf("Received query [%s] for AGENT [%s]: %s", req.QueryId, req.AgentTarget, req.NaturalLanguagePrompt)
 
 	// The full text we want to stream
 	fullSummary := "Based on current trends, the ICU capacity is nearing a critical threshold. We recommend reallocating staff from the general ward."
+	// If targeting a specific agent, customize the mock response slightly
+	if req.AgentTarget == "clinical_triage" {
+		fullSummary = "Patient shows signs of acute cardiac distress. Immediate triage to Cardiology ICU is recommended."
+	} else if req.AgentTarget == "cyber_grc" {
+		fullSummary = "Query processed under HIPAA guidelines. PII has been scrubbed from this dataset. No unauthorized access detected."
+	}
+
 	words := strings.Split(fullSummary, " ")
 
 	// MOCK DATA for Phase 4 UI Integration
