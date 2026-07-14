@@ -117,30 +117,33 @@ const AgentWorkspace = ({ agentName, agentDescription, targetId }: AgentWorkspac
       <div className="flex-1 grid grid-cols-12 gap-6 mb-4 min-h-0">
         {/* Main Chat Area (8 cols) */}
         <div className="col-span-8 flex flex-col gap-4">
-          <div className="flex-1 bg-surface-glass border border-border-glass backdrop-blur-md rounded-2xl p-6 shadow-lg flex flex-col overflow-hidden">
-            <div className="flex-1 overflow-y-auto pr-4 space-y-6">
+          <div className="flex-1 bg-surface-obsidian border border-border-glass rounded-xl p-6 shadow-2xl flex flex-col overflow-hidden relative">
+            {/* Background Terminal Glow */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-brand-teal/5 rounded-full blur-[100px] pointer-events-none"></div>
+            
+            <div className="flex-1 overflow-y-auto pr-4 space-y-6 relative z-10">
               {insightSummary ? (
                 <motion.div initial={{opacity: 0, y: 10}} animate={{opacity: 1, y: 0}} className="flex gap-4">
-                  <div className="w-10 h-10 rounded-full bg-brand-teal/20 flex items-center justify-center shrink-0">
-                    <Bot className="w-5 h-5 text-brand-teal" />
+                  <div className="w-10 h-10 rounded-lg bg-brand-teal/10 border border-brand-teal/20 flex items-center justify-center shrink-0">
+                    <Bot className="w-5 h-5 text-brand-teal drop-shadow-[0_0_5px_rgba(20,184,166,0.8)]" />
                   </div>
                   <div className="flex-1 space-y-4">
                     {/* XAI Thought Process Block */}
                     {sqlQuery && (
-                      <div className="bg-surface-glass border border-brand-teal/20 rounded-xl overflow-hidden">
+                      <div className="bg-surface-obsidian border border-brand-teal/20 rounded-xl overflow-hidden shadow-lg">
                         <button 
                           onClick={() => setIsSqlExpanded(!isSqlExpanded)}
-                          className="w-full flex items-center justify-between px-4 py-2 bg-brand-teal/10 hover:bg-brand-teal/20 transition-colors"
+                          className="w-full flex items-center justify-between px-4 py-3 bg-brand-teal/10 hover:bg-brand-teal/20 transition-colors"
                         >
-                          <div className="flex items-center gap-2 text-brand-teal text-sm font-semibold">
+                          <div className="flex items-center gap-2 text-brand-teal text-sm font-semibold tracking-wider uppercase">
                             <Code2 className="w-4 h-4" />
                             AI Thought Process: Executed SQL
                           </div>
                           {isSqlExpanded ? <ChevronUp className="w-4 h-4 text-brand-teal" /> : <ChevronDown className="w-4 h-4 text-brand-teal" />}
                         </button>
                         {isSqlExpanded && (
-                          <div className="p-4 bg-slate-950/50 overflow-x-auto">
-                            <pre className="text-xs text-brand-teal/80 font-mono whitespace-pre-wrap">
+                          <div className="p-4 bg-black overflow-x-auto border-t border-brand-teal/10">
+                            <pre className="text-xs text-brand-cyan/80 font-mono whitespace-pre-wrap">
                               {sqlQuery}
                             </pre>
                           </div>
@@ -148,40 +151,41 @@ const AgentWorkspace = ({ agentName, agentDescription, targetId }: AgentWorkspac
                       </div>
                     )}
                     
-                    <div className="bg-white/5 border border-white/10 rounded-2xl rounded-tl-none p-4 text-slate-200 leading-relaxed">
-                      <div className="prose prose-invert prose-teal max-w-none prose-p:leading-relaxed prose-pre:bg-slate-900 prose-pre:border prose-pre:border-border-glass prose-th:bg-white/5 prose-th:border-border-glass prose-td:border-border-glass prose-table:border-collapse">
+                    <div className="bg-white/[0.02] border border-border-glass rounded-2xl rounded-tl-none p-6 text-slate-200 leading-relaxed shadow-lg font-mono text-sm">
+                      <div className="prose prose-invert prose-teal max-w-none prose-p:leading-relaxed prose-pre:bg-black prose-pre:border prose-pre:border-border-glass prose-th:bg-white/5 prose-th:border-border-glass prose-td:border-border-glass prose-table:border-collapse">
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                           {insightSummary}
                         </ReactMarkdown>
                       </div>
-                      {isLoading && <span className="animate-pulse ml-1">|</span>}
+                      {isLoading && <span className="inline-block w-2 h-4 bg-brand-teal animate-pulse ml-2 align-middle"></span>}
                     </div>
                   </div>
                 </motion.div>
               ) : (
                 <div className="h-full flex flex-col items-center justify-center text-center max-w-2xl mx-auto">
-                  <div className="w-20 h-20 bg-brand-teal/10 rounded-3xl flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(20,184,166,0.15)]">
-                    <Bot className="w-10 h-10 text-brand-teal" />
+                  <div className="w-24 h-24 bg-brand-teal/5 border border-brand-teal/20 rounded-2xl flex items-center justify-center mb-6 shadow-[0_0_50px_rgba(20,184,166,0.15)] relative">
+                    <div className="absolute inset-0 bg-brand-teal/10 rounded-2xl animate-ping opacity-20"></div>
+                    <Bot className="w-10 h-10 text-brand-teal drop-shadow-[0_0_8px_rgba(20,184,166,0.8)]" />
                   </div>
-                  <h3 className="text-2xl font-bold text-white mb-2">{agentName} is ready</h3>
-                  <p className="text-slate-400 mb-8 max-w-md">Select a quick action below or type a custom query to begin analysis.</p>
+                  <h3 className="text-2xl font-bold text-white mb-2 tracking-tight uppercase">{agentName} <span className="text-brand-teal">Operational</span></h3>
+                  <p className="text-slate-400 mb-8 max-w-md font-mono text-sm">Awaiting command parameters or select a predefined macro below.</p>
                   
-                  <div className="grid grid-cols-2 gap-3 w-full">
-                    <button onClick={() => handleQuery("Count the number of patients currently admitted to each department.")} className="bg-white/5 border border-border-glass hover:bg-white/10 hover:border-brand-teal/50 text-left p-4 rounded-xl transition-all">
-                      <p className="text-sm font-medium text-slate-200">Analyze Department Loads</p>
-                      <p className="text-xs text-slate-500 mt-1">Check active admissions</p>
+                  <div className="grid grid-cols-2 gap-4 w-full">
+                    <button onClick={() => handleQuery("Count the number of patients currently admitted to each department.")} className="bg-white/[0.02] border border-border-glass hover:bg-brand-teal/10 hover:border-brand-teal/50 text-left p-5 rounded-xl transition-all group">
+                      <p className="text-sm font-semibold text-slate-200 group-hover:text-brand-teal transition-colors tracking-wide">Analyze Department Loads</p>
+                      <p className="text-xs text-slate-500 mt-2 font-mono">EXEC: count_admissions()</p>
                     </button>
-                    <button onClick={() => handleQuery("List the 5 most recent abnormal lab results.")} className="bg-white/5 border border-border-glass hover:bg-white/10 hover:border-brand-teal/50 text-left p-4 rounded-xl transition-all">
-                      <p className="text-sm font-medium text-slate-200">Summarize Abnormal Labs</p>
-                      <p className="text-xs text-slate-500 mt-1">Fetch recent critical values</p>
+                    <button onClick={() => handleQuery("List the 5 most recent abnormal lab results.")} className="bg-white/[0.02] border border-border-glass hover:bg-brand-teal/10 hover:border-brand-teal/50 text-left p-5 rounded-xl transition-all group">
+                      <p className="text-sm font-semibold text-slate-200 group-hover:text-brand-teal transition-colors tracking-wide">Summarize Abnormal Labs</p>
+                      <p className="text-xs text-slate-500 mt-2 font-mono">EXEC: fetch_critical_labs(limit=5)</p>
                     </button>
-                    <button onClick={() => handleQuery("List the top 5 most prescribed active medications.")} className="bg-white/5 border border-border-glass hover:bg-white/10 hover:border-brand-teal/50 text-left p-4 rounded-xl transition-all">
-                      <p className="text-sm font-medium text-slate-200">Top Active Medications</p>
-                      <p className="text-xs text-slate-500 mt-1">Find most common drugs</p>
+                    <button onClick={() => handleQuery("List the top 5 most prescribed active medications.")} className="bg-white/[0.02] border border-border-glass hover:bg-brand-teal/10 hover:border-brand-teal/50 text-left p-5 rounded-xl transition-all group">
+                      <p className="text-sm font-semibold text-slate-200 group-hover:text-brand-teal transition-colors tracking-wide">Top Active Medications</p>
+                      <p className="text-xs text-slate-500 mt-2 font-mono">EXEC: rank_medications()</p>
                     </button>
-                    <button onClick={() => handleQuery("How many patients are currently admitted to the ICU?")} className="bg-white/5 border border-border-glass hover:bg-white/10 hover:border-brand-teal/50 text-left p-4 rounded-xl transition-all">
-                      <p className="text-sm font-medium text-slate-200">ICU Capacity Report</p>
-                      <p className="text-xs text-slate-500 mt-1">Current utilization count</p>
+                    <button onClick={() => handleQuery("How many patients are currently admitted to the ICU?")} className="bg-white/[0.02] border border-border-glass hover:bg-brand-teal/10 hover:border-brand-teal/50 text-left p-5 rounded-xl transition-all group">
+                      <p className="text-sm font-semibold text-slate-200 group-hover:text-brand-teal transition-colors tracking-wide">ICU Capacity Report</p>
+                      <p className="text-xs text-slate-500 mt-2 font-mono">EXEC: get_icu_util()</p>
                     </button>
                   </div>
                 </div>
@@ -199,23 +203,24 @@ const AgentWorkspace = ({ agentName, agentDescription, targetId }: AgentWorkspac
             {renderChart()}
           </div>
 
-          <div className="h-1/2 bg-surface-glass border border-border-glass backdrop-blur-md rounded-2xl p-6 shadow-lg overflow-y-auto">
-            <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-6 flex items-center gap-2">
-              <Activity className="w-4 h-4 text-brand-teal" /> Live Execution Trace
+          <div className="h-1/2 bg-surface-obsidian border border-border-glass rounded-xl p-6 shadow-2xl overflow-y-auto relative">
+            <div className="absolute -bottom-[100px] -right-[100px] w-[200px] h-[200px] bg-brand-cyan/5 rounded-full blur-[80px] pointer-events-none"></div>
+            <h3 className="text-xs font-semibold text-white uppercase tracking-widest mb-6 flex items-center gap-2">
+              <Activity className="w-4 h-4 text-brand-teal" /> Execution Trace
             </h3>
             <div className="relative pl-4 space-y-6">
-              <div className="absolute left-[23px] top-4 bottom-4 w-0.5 bg-slate-800" />
+              <div className="absolute left-[23px] top-4 bottom-4 w-0.5 bg-border-glass" />
               {traceNodes.map((node) => {
                 const isProcessing = activeNode === node.id;
                 const isDone = activeNode > node.id || activeNode === 5;
                 const Icon = node.icon;
                 return (
                   <div key={node.id} className="relative flex items-center gap-4">
-                    <div className={`w-3 h-3 rounded-full z-10 transition-all duration-300 ${isProcessing ? 'bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.8)] scale-125' : isDone ? 'bg-brand-teal' : 'bg-slate-700'}`} />
-                    <div className={`flex items-center gap-3 p-3 rounded-xl border w-full transition-colors ${isProcessing ? 'bg-white/10 border-amber-500/30 text-white' : isDone ? 'bg-brand-teal/5 border-brand-teal/20 text-slate-300' : 'bg-transparent border-transparent text-slate-600'}`}>
-                      <Icon className={`w-5 h-5 ${isProcessing ? 'text-amber-400' : isDone ? 'text-brand-teal' : 'text-slate-600'}`} />
-                      <span className="text-sm font-medium">{node.name}</span>
-                      {isProcessing && <span className="ml-auto text-[10px] text-amber-400 uppercase tracking-widest animate-pulse">Executing</span>}
+                    <div className={`w-3 h-3 rounded-full z-10 transition-all duration-300 ${isProcessing ? 'bg-brand-cyan shadow-[0_0_12px_rgba(6,182,212,0.9)] scale-125' : isDone ? 'bg-brand-teal shadow-[0_0_8px_rgba(20,184,166,0.5)]' : 'bg-surface-glass border border-border-glass'}`} />
+                    <div className={`flex items-center gap-3 p-3 rounded-lg border w-full transition-colors ${isProcessing ? 'bg-white/[0.04] border-brand-cyan/30 text-white' : isDone ? 'bg-brand-teal/5 border-brand-teal/20 text-slate-300' : 'bg-transparent border-transparent text-slate-600'}`}>
+                      <Icon className={`w-4 h-4 ${isProcessing ? 'text-brand-cyan' : isDone ? 'text-brand-teal' : 'text-slate-600'}`} />
+                      <span className="text-sm font-mono tracking-tight">{node.name}</span>
+                      {isProcessing && <span className="ml-auto text-[10px] text-brand-cyan uppercase tracking-widest animate-pulse">Executing_</span>}
                     </div>
                   </div>
                 )

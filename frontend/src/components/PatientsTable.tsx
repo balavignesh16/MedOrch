@@ -98,15 +98,18 @@ export default function PatientsTable({ initialPatients }: { initialPatients: Pa
         </button>
       </div>
 
-      <div className="bg-surface-glass border border-border-glass backdrop-blur-md rounded-2xl overflow-hidden shadow-lg">
-        <table className="w-full text-left border-collapse">
+      <div className="bg-surface-obsidian border border-border-glass rounded-xl overflow-hidden shadow-2xl relative">
+        {/* Subtle background glow */}
+        <div className="absolute -top-[100px] -right-[100px] w-[300px] h-[300px] bg-brand-teal/5 rounded-full blur-[80px] pointer-events-none"></div>
+        
+        <table className="w-full text-left border-collapse relative z-10">
           <thead>
-            <tr className="bg-white/5 border-b border-border-glass text-slate-300">
-              <th className="p-4 font-semibold text-sm">Patient ID</th>
-              <th className="p-4 font-semibold text-sm">Name</th>
-              <th className="p-4 font-semibold text-sm">Department</th>
-              <th className="p-4 font-semibold text-sm">Status</th>
-              <th className="p-4 font-semibold text-sm">Risk Score</th>
+            <tr className="bg-white/[0.02] border-b border-border-glass text-slate-400">
+              <th className="p-4 font-semibold text-xs tracking-wider uppercase">Patient ID</th>
+              <th className="p-4 font-semibold text-xs tracking-wider uppercase">Name</th>
+              <th className="p-4 font-semibold text-xs tracking-wider uppercase">Department</th>
+              <th className="p-4 font-semibold text-xs tracking-wider uppercase">Status</th>
+              <th className="p-4 font-semibold text-xs tracking-wider uppercase">Risk Score</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border-glass">
@@ -119,37 +122,55 @@ export default function PatientsTable({ initialPatients }: { initialPatients: Pa
                 <tr 
                   key={idx} 
                   onClick={() => handleRowClick(patient.patient_id)}
-                  className="hover:bg-white/5 transition-colors cursor-pointer"
+                  className="hover:bg-white/[0.04] transition-colors cursor-pointer group"
                 >
-                  <td className="p-4 text-sm font-mono text-slate-400">PT-{patient.patient_id.toString().padStart(4, '0')}</td>
-                  <td className="p-4 text-sm font-medium text-white">{patient.name}</td>
-                  <td className="p-4 text-sm text-slate-300">{patient.dept}</td>
-                  <td className="p-4 text-sm">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      patient.status === 'Admitted' ? 'bg-amber-500/20 text-amber-400' : 
-                      patient.status === 'Outpatient' ? 'bg-slate-500/20 text-slate-400' :
-                      'bg-brand-teal/20 text-brand-teal'
-                    }`}>
-                      {patient.status}
-                    </span>
+                  <td className="p-4 text-sm font-mono text-slate-400 group-hover:text-brand-teal transition-colors">PT-{patient.patient_id.toString().padStart(4, '0')}</td>
+                  <td className="p-4 text-sm font-medium text-white flex items-center gap-3">
+                    <div className="w-6 h-6 rounded-full bg-brand-teal/10 border border-brand-teal/20 flex items-center justify-center shrink-0">
+                      <User className="w-3 h-3 text-brand-teal" />
+                    </div>
+                    {patient.name}
                   </td>
-                  <td className="p-4 text-sm">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      isCritical ? 'bg-red-500/20 text-red-400' :
-                      isHigh ? 'bg-orange-500/20 text-orange-400' :
-                      isModerate ? 'bg-yellow-500/20 text-yellow-400' :
-                      'bg-green-500/20 text-green-400'
-                    }`}>
-                      {patient.risk_score.toFixed(1)}%
-                    </span>
+                  <td className="p-4 text-sm text-slate-300">{patient.dept}</td>
+                  <td className="p-4">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-1.5 h-1.5 rounded-full ${
+                        patient.status === 'Admitted' ? 'bg-amber-400 shadow-[0_0_5px_#fbbf24] animate-pulse' : 
+                        patient.status === 'Outpatient' ? 'bg-slate-400 shadow-[0_0_5px_#94a3b8]' :
+                        'bg-brand-teal shadow-[0_0_5px_#14b8a6]'
+                      }`} />
+                      <span className={`text-xs font-mono uppercase tracking-wider ${
+                        patient.status === 'Admitted' ? 'text-amber-400' : 
+                        patient.status === 'Outpatient' ? 'text-slate-400' :
+                        'text-brand-teal'
+                      }`}>
+                        {patient.status}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="p-4">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-sm font-mono font-bold ${
+                        isCritical ? 'text-red-400' :
+                        isHigh ? 'text-orange-400' :
+                        isModerate ? 'text-yellow-400' :
+                        'text-green-400'
+                      }`}>
+                        {patient.risk_score.toFixed(1)}%
+                      </span>
+                      {isCritical && <AlertTriangle className="w-4 h-4 text-red-500 animate-pulse" />}
+                    </div>
                   </td>
                 </tr>
               );
             })}
             {filteredPatients.length === 0 && (
               <tr>
-                <td colSpan={5} className="p-8 text-center text-slate-500">
-                  No patients found matching criteria.
+                <td colSpan={5} className="p-12 text-center">
+                  <div className="flex flex-col items-center justify-center text-slate-500">
+                    <Activity className="w-8 h-8 mb-3 opacity-20" />
+                    <p className="text-sm font-mono">No patients found matching criteria.</p>
+                  </div>
                 </td>
               </tr>
             )}
@@ -173,106 +194,116 @@ export default function PatientsTable({ initialPatients }: { initialPatients: Pa
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed top-0 right-0 bottom-0 w-full max-w-2xl bg-surface-glass border-l border-border-glass backdrop-blur-2xl shadow-2xl z-50 overflow-y-auto"
+              className="fixed top-0 right-0 bottom-0 w-full max-w-2xl bg-surface-obsidian border-l border-border-glass shadow-2xl z-50 overflow-y-auto"
             >
               {isLoadingDetails || !patientDetails ? (
-                <div className="h-full flex items-center justify-center">
-                  <div className="w-8 h-8 rounded-full border-2 border-brand-teal border-t-transparent animate-spin" />
+                <div className="h-full flex flex-col items-center justify-center space-y-4">
+                  <div className="w-12 h-12 rounded-full border-2 border-brand-teal border-t-transparent animate-spin" />
+                  <p className="text-xs text-brand-teal font-mono uppercase tracking-widest animate-pulse">Retrieving Records...</p>
                 </div>
               ) : (
-                <div className="p-8">
-                  <div className="flex items-start justify-between mb-8">
+                <div className="p-8 relative">
+                  {/* Modal Background Glow */}
+                  <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-brand-teal/5 rounded-full blur-[100px] pointer-events-none"></div>
+                  
+                  <div className="flex items-start justify-between mb-8 relative z-10">
                     <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 rounded-2xl bg-brand-teal/20 flex items-center justify-center">
+                      <div className="w-16 h-16 rounded-2xl bg-brand-teal/10 border border-brand-teal/20 flex items-center justify-center shadow-[0_0_15px_rgba(20,184,166,0.15)]">
                         <User className="w-8 h-8 text-brand-teal" />
                       </div>
                       <div>
-                        <h2 className="text-2xl font-bold text-white">{patientDetails.patient.first_name} {patientDetails.patient.last_name}</h2>
-                        <p className="text-slate-400 font-mono">PT-{patientDetails.patient.patient_id.toString().padStart(4, '0')} • {patientDetails.patient.gender} • DOB: {patientDetails.patient.date_of_birth}</p>
+                        <h2 className="text-2xl font-bold text-white tracking-tight">{patientDetails.patient.first_name} {patientDetails.patient.last_name}</h2>
+                        <p className="text-slate-400 font-mono text-sm mt-1">PT-{patientDetails.patient.patient_id.toString().padStart(4, '0')} • {patientDetails.patient.gender} • DOB: {patientDetails.patient.date_of_birth}</p>
                       </div>
                     </div>
                     <button 
                       onClick={() => setSelectedPatient(null)}
-                      className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                      className="p-2 hover:bg-white/[0.04] rounded-lg transition-colors border border-transparent hover:border-border-glass"
                     >
-                      <X className="w-6 h-6 text-slate-400" />
+                      <X className="w-5 h-5 text-slate-400" />
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 mb-8">
-                    <div className="p-4 rounded-xl border border-border-glass bg-white/5">
-                      <p className="text-xs text-slate-500 uppercase font-semibold mb-1">Current Department</p>
+                  <div className="grid grid-cols-2 gap-4 mb-8 relative z-10">
+                    <div className="p-4 rounded-xl border border-border-glass bg-white/[0.02]">
+                      <p className="text-xs text-slate-500 uppercase tracking-widest font-semibold mb-1">Current Department</p>
                       <p className="text-white font-medium">{patientDetails.patient.department || 'Not Admitted'}</p>
                     </div>
-                    <div className="p-4 rounded-xl border border-border-glass bg-white/5">
-                      <p className="text-xs text-slate-500 uppercase font-semibold mb-1">Primary Diagnosis</p>
+                    <div className="p-4 rounded-xl border border-border-glass bg-white/[0.02]">
+                      <p className="text-xs text-slate-500 uppercase tracking-widest font-semibold mb-1">Primary Diagnosis</p>
                       <p className="text-white font-medium">{patientDetails.patient.diagnosis || 'N/A'}</p>
                     </div>
-                    <div className="p-4 rounded-xl border border-border-glass bg-white/5">
-                      <p className="text-xs text-slate-500 uppercase font-semibold mb-1">Insurance</p>
+                    <div className="p-4 rounded-xl border border-border-glass bg-white/[0.02]">
+                      <p className="text-xs text-slate-500 uppercase tracking-widest font-semibold mb-1">Insurance</p>
                       <p className="text-white font-medium">{patientDetails.patient.insurance_provider}</p>
                     </div>
-                    <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/10">
-                      <p className="text-xs text-amber-500/70 uppercase font-semibold mb-1">Readmission Risk</p>
-                      <p className="text-amber-400 font-bold text-xl">{patientDetails.patient.readmission_risk_score.toFixed(1)}%</p>
+                    <div className="p-4 rounded-xl border border-brand-orange/30 bg-brand-orange/5 shadow-[0_0_15px_rgba(249,115,22,0.05)]">
+                      <p className="text-xs text-brand-orange/70 uppercase tracking-widest font-semibold mb-1">Readmission Risk</p>
+                      <p className="text-brand-orange font-bold text-2xl font-mono">{patientDetails.patient.readmission_risk_score.toFixed(1)}%</p>
                     </div>
                   </div>
 
-                  <div className="space-y-6">
+                  <div className="space-y-6 relative z-10">
                     {/* Lab Results Section */}
                     <div>
-                      <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                        <Activity className="w-5 h-5 text-brand-blue" /> 
+                      <h3 className="text-xs font-semibold text-white mb-4 flex items-center gap-2 uppercase tracking-widest">
+                        <Activity className="w-4 h-4 text-brand-cyan" /> 
                         Recent Lab Results
                       </h3>
                       {patientDetails.labs.length > 0 ? (
                         <div className="space-y-2">
                           {patientDetails.labs.map((lab: any) => (
-                            <div key={lab.lab_id} className="p-3 rounded-xl border border-border-glass bg-white/5 flex items-center justify-between">
+                            <div key={lab.lab_id} className="p-4 rounded-xl border border-border-glass bg-white/[0.02] flex items-center justify-between hover:bg-white/[0.04] transition-colors">
                               <div>
-                                <p className="text-sm font-medium text-white">{lab.test_name}</p>
-                                <p className="text-xs text-slate-500">{new Date(lab.test_date).toLocaleString()} • Ref: {lab.reference_range}</p>
+                                <p className="text-sm font-medium text-slate-200">{lab.test_name}</p>
+                                <p className="text-xs text-slate-500 font-mono mt-1">{new Date(lab.test_date).toLocaleString()} • Ref: {lab.reference_range}</p>
                               </div>
-                              <div className="text-right">
-                                <span className={`text-sm font-bold ${lab.is_abnormal ? 'text-red-400' : 'text-green-400'}`}>
-                                  {lab.test_value} {lab.test_unit}
+                              <div className="text-right flex items-center gap-3">
+                                <span className={`text-sm font-mono font-bold ${lab.is_abnormal ? 'text-red-400 drop-shadow-[0_0_5px_rgba(248,113,113,0.5)]' : 'text-green-400'}`}>
+                                  {lab.test_value} <span className="text-xs font-normal opacity-70">{lab.test_unit}</span>
                                 </span>
-                                {lab.is_abnormal && <span className="ml-2 text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full">Abnormal</span>}
+                                {lab.is_abnormal && <AlertTriangle className="w-4 h-4 text-red-500 animate-pulse" />}
                               </div>
                             </div>
                           ))}
                         </div>
                       ) : (
-                        <p className="text-sm text-slate-500 italic">No lab results on file.</p>
+                        <div className="p-4 rounded-xl border border-border-glass border-dashed flex items-center justify-center">
+                          <p className="text-sm text-slate-500 font-mono">No lab results on file.</p>
+                        </div>
                       )}
                     </div>
 
                     {/* Medications Section */}
                     <div>
-                      <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                        <Pill className="w-5 h-5 text-brand-teal" /> 
+                      <h3 className="text-xs font-semibold text-white mb-4 flex items-center gap-2 uppercase tracking-widest">
+                        <Pill className="w-4 h-4 text-brand-teal" /> 
                         Active Medications
                       </h3>
                       {patientDetails.medications.length > 0 ? (
                         <div className="space-y-2">
                           {patientDetails.medications.map((med: any) => (
-                            <div key={med.medication_id} className="p-3 rounded-xl border border-border-glass bg-white/5 flex items-center justify-between">
+                            <div key={med.medication_id} className="p-4 rounded-xl border border-border-glass bg-white/[0.02] flex items-center justify-between hover:bg-white/[0.04] transition-colors">
                               <div>
-                                <p className="text-sm font-medium text-white">{med.drug_name} {med.dosage}</p>
-                                <p className="text-xs text-slate-500">{med.frequency}</p>
+                                <p className="text-sm font-medium text-slate-200">{med.drug_name} <span className="text-brand-teal font-mono ml-2">{med.dosage}</span></p>
+                                <p className="text-xs text-slate-500 font-mono mt-1">{med.frequency}</p>
                               </div>
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${med.status === 'Active' ? 'bg-brand-teal/20 text-brand-teal' : 'bg-slate-500/20 text-slate-400'}`}>
-                                {med.status}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <div className={`w-1.5 h-1.5 rounded-full ${med.status === 'Active' ? 'bg-brand-teal shadow-[0_0_5px_#14b8a6]' : 'bg-slate-500'}`} />
+                                <span className={`text-xs font-mono uppercase tracking-wider ${med.status === 'Active' ? 'text-brand-teal' : 'text-slate-500'}`}>
+                                  {med.status}
+                                </span>
+                              </div>
                             </div>
                           ))}
                         </div>
                       ) : (
-                        <p className="text-sm text-slate-500 italic">No active medications.</p>
+                        <div className="p-4 rounded-xl border border-border-glass border-dashed flex items-center justify-center">
+                          <p className="text-sm text-slate-500 font-mono">No active medications on file.</p>
+                        </div>
                       )}
                     </div>
                   </div>
-
                 </div>
               )}
             </motion.div>

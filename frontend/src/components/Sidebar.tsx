@@ -12,63 +12,69 @@ const Sidebar = () => {
   const { user, logout } = useAuth();
 
   const links = [
-    { name: 'Dashboard', href: '/', icon: LayoutDashboard, roles: ['admin', 'doctor', 'billing'] },
-    { name: 'Patients', href: '/patients', icon: Users, roles: ['admin', 'doctor', 'billing'] },
-    { name: 'Clinical Triage', href: '/agents/clinical', icon: Stethoscope, roles: ['admin', 'doctor'] },
-    { name: 'Patient Navigation', href: '/agents/navigation', icon: Map, roles: ['admin', 'doctor'] },
-    { name: 'Resource Optimization', href: '/agents/optimization', icon: Activity, roles: ['admin'] },
-    { name: 'Predictive Analytics', href: '/agents/predictive', icon: TrendingUp, roles: ['admin'] },
-    { name: 'Cyber GRC', href: '/agents/grc', icon: ShieldCheck, roles: ['admin'] },
-    { name: 'Billing & Claims', href: '/agents/billing', icon: CreditCard, roles: ['admin', 'billing'] },
+    {
+      name: 'Dashboard', href: '/', icon: LayoutDashboard, roles: ['admin', 'doctor', 'billing']
+    },
+    {
+      name: 'Patients', href: '/patients', icon: Users, roles: ['admin', 'doctor', 'billing']
+    },
+    {
+      name: 'Clinical Triage', href: '/agents/clinical_triage', icon: Stethoscope, roles: ['admin', 'doctor']
+    },
+    {
+      name: 'Patient Navigation', href: '/agents/patient_navigation', icon: Map, roles: ['admin', 'doctor']
+    },
+    {
+      name: 'Resource Optimization', href: '/agents/resource_optimization', icon: Activity, roles: ['admin']
+    },
+    {
+      name: 'Predictive Analytics', href: '/agents/predictive_analytics', icon: TrendingUp, roles: ['admin']
+    },
+    {
+      name: 'Cyber GRC', href: '/agents/cyber_grc', icon: ShieldCheck, roles: ['admin']
+    },
+    {
+      name: 'Billing & Claims', href: '/agents/billing', icon: CreditCard, roles: ['admin', 'billing']
+    }
   ];
 
   // Filter links based on user role
   const visibleLinks = links.filter(link => !user || link.roles.includes(user.role as string));
 
   return (
-    <div className="w-64 h-screen bg-surface-glass border-r border-border-glass backdrop-blur-xl flex flex-col fixed left-0 top-0">
-      <div className="p-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-brand-teal flex items-center justify-center">
-              <Activity className="w-5 h-5 text-white" />
-            </div>
-            <h1 className="text-xl font-bold text-foreground tracking-tight">MedOrch</h1>
-          </div>
-          <button className="relative p-2 text-slate-400 hover:text-white transition-colors">
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-brand-orange rounded-full animate-pulse"></span>
-          </button>
+    <aside className="w-64 h-screen bg-obsidian border-r border-border-glass flex flex-col shrink-0">
+      <div className="p-6 flex items-center gap-3">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-teal to-brand-cyan flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(20,184,166,0.3)]">
+          <Activity className="w-5 h-5 text-white" />
         </div>
-        {user && (
-          <div className="mt-6 p-3 bg-white/5 rounded-xl border border-border-glass">
-            <p className="text-xs text-slate-400">Logged in as</p>
-            <p className="text-sm font-medium text-white truncate">{user.name}</p>
-            <p className="text-xs text-brand-teal capitalize">{user.role} Access</p>
-          </div>
-        )}
+        <span className="text-xl font-bold text-white tracking-tight">MedOrch</span>
+        <div className="ml-auto relative">
+          <Bell className="w-5 h-5 text-slate-400 hover:text-white transition-colors cursor-pointer" />
+          <span className="absolute -top-1 -right-1 w-2 h-2 bg-brand-orange rounded-full animate-pulse"></span>
+        </div>
       </div>
 
-      <nav className="flex-1 px-4 py-2 space-y-2 overflow-y-auto">
-        <p className="px-2 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">
-          AI Workspaces
-        </p>
+      {user && (
+        <div className="px-6 mb-8">
+          <div className="bg-surface-obsidian border border-border-glass rounded-xl p-4">
+            <p className="text-xs text-slate-500 font-medium mb-1">Logged in as</p>
+            <p className="text-sm font-bold text-white">{user.name}</p>
+            <p className="text-xs text-brand-teal mt-0.5 capitalize">{user.role} Access</p>
+          </div>
+        </div>
+      )}
+
+      <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
+        <p className="px-4 text-xs font-semibold text-slate-600 mb-4 tracking-wider">AI WORKSPACES</p>
+        
         {visibleLinks.map((link) => {
           const isActive = pathname === link.href;
           const Icon = link.icon;
           
           return (
-            <Link key={link.name} href={link.href}>
-              <div className={`relative flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition-colors ${isActive ? 'text-white bg-white/10' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
-                {isActive && (
-                  <motion.div
-                    layoutId="active-tab"
-                    className="absolute left-0 top-0 bottom-0 w-1 bg-brand-teal rounded-r-full"
-                    initial={false}
-                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                  />
-                )}
-                <Icon className={`w-5 h-5 ${isActive ? 'text-brand-teal' : ''}`} />
+            <Link key={link.href} href={link.href}>
+              <div className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive ? 'bg-surface-glass text-brand-teal border border-border-neon shadow-sm' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
+                <Icon className="w-4 h-4" />
                 <span className="font-medium text-sm">{link.name}</span>
               </div>
             </Link>
@@ -78,8 +84,8 @@ const Sidebar = () => {
 
       <div className="p-4 mt-auto border-t border-border-glass space-y-2">
         <Link href="/settings">
-          <div className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-colors ${pathname === '/settings' ? 'text-white bg-white/10' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
-            <Settings className={`w-5 h-5 ${pathname === '/settings' ? 'text-brand-teal' : ''}`} />
+          <div className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${pathname === '/settings' ? 'bg-surface-glass text-brand-teal border border-border-neon shadow-sm' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
+            <Settings className="w-4 h-4" />
             <span className="font-medium text-sm">Settings</span>
           </div>
         </Link>
@@ -90,7 +96,7 @@ const Sidebar = () => {
           </div>
         </button>
       </div>
-    </div>
+    </aside>
   );
 };
 
