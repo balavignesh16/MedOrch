@@ -118,10 +118,31 @@ const AgentWorkspace = ({ agentName, agentDescription, targetId }: AgentWorkspac
                   </div>
                 </motion.div>
               ) : (
-                <div className="h-full flex flex-col items-center justify-center text-center">
-                  <Bot className="w-16 h-16 text-slate-600 mb-4 opacity-30" />
-                  <p className="text-slate-400 font-medium text-lg">Agent is standing by.</p>
-                  <p className="text-slate-600 text-sm mt-2 max-w-sm">Initialize a LangGraph workflow by typing a query below.</p>
+                <div className="h-full flex flex-col items-center justify-center text-center max-w-2xl mx-auto">
+                  <div className="w-20 h-20 bg-brand-teal/10 rounded-3xl flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(20,184,166,0.15)]">
+                    <Bot className="w-10 h-10 text-brand-teal" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-2">{agentName} is ready</h3>
+                  <p className="text-slate-400 mb-8 max-w-md">Select a quick action below or type a custom query to begin analysis.</p>
+                  
+                  <div className="grid grid-cols-2 gap-3 w-full">
+                    <button onClick={() => handleQuery("Analyze latest readmission risks across all active patients.")} className="bg-white/5 border border-border-glass hover:bg-white/10 hover:border-brand-teal/50 text-left p-4 rounded-xl transition-all">
+                      <p className="text-sm font-medium text-slate-200">Analyze Readmission Risks</p>
+                      <p className="text-xs text-slate-500 mt-1">Scan active patients for high risk</p>
+                    </button>
+                    <button onClick={() => handleQuery("Summarize recent abnormal lab results.")} className="bg-white/5 border border-border-glass hover:bg-white/10 hover:border-brand-teal/50 text-left p-4 rounded-xl transition-all">
+                      <p className="text-sm font-medium text-slate-200">Summarize Abnormal Labs</p>
+                      <p className="text-xs text-slate-500 mt-1">Fetch recent critical values</p>
+                    </button>
+                    <button onClick={() => handleQuery("Cross-reference active medications for contraindications.")} className="bg-white/5 border border-border-glass hover:bg-white/10 hover:border-brand-teal/50 text-left p-4 rounded-xl transition-all">
+                      <p className="text-sm font-medium text-slate-200">Check Medications</p>
+                      <p className="text-xs text-slate-500 mt-1">Flag dangerous drug interactions</p>
+                    </button>
+                    <button onClick={() => handleQuery("Generate a summary of ICU bed capacity.")} className="bg-white/5 border border-border-glass hover:bg-white/10 hover:border-brand-teal/50 text-left p-4 rounded-xl transition-all">
+                      <p className="text-sm font-medium text-slate-200">ICU Capacity Report</p>
+                      <p className="text-xs text-slate-500 mt-1">Current utilization & forecasting</p>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

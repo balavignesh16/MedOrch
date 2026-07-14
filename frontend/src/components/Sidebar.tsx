@@ -77,9 +77,9 @@ const Sidebar = () => {
       </nav>
 
       <div className="p-4 mt-auto border-t border-border-glass space-y-2">
-        <Link href="#">
-          <div className="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-colors">
-            <Settings className="w-5 h-5" />
+        <Link href="/settings">
+          <div className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-colors ${pathname === '/settings' ? 'text-white bg-white/10' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
+            <Settings className={`w-5 h-5 ${pathname === '/settings' ? 'text-brand-teal' : ''}`} />
             <span className="font-medium text-sm">Settings</span>
           </div>
         </Link>
