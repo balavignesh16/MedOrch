@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Send, Sparkles } from 'lucide-react';
+import { Send, Sparkles, Mic, MicOff } from 'lucide-react';
 
 interface CommandBarProps {
   onQuerySubmit: (query: string) => void;
@@ -10,6 +10,47 @@ interface CommandBarProps {
 const CommandBar = ({ onQuerySubmit, isLoading = false }: CommandBarProps) => {
   const [query, setQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [recognition, setRecognition] = useState<any>(null);
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        const rec = new SpeechRecognition();
+        rec.continuous = false;
+        rec.interimResults = true;
+        
+        rec.onresult = (event: any) => {
+          const transcript = Array.from(event.results)
+            .map((result: any) => result[0])
+            .map((result: any) => result.transcript)
+            .join('');
+          setQuery(transcript);
+        };
+
+        rec.onerror = (event: any) => {
+          console.error("Speech recognition error", event.error);
+          setIsListening(false);
+        };
+
+        rec.onend = () => {
+          setIsListening(false);
+        };
+
+        setRecognition(rec);
+      }
+    }
+  }, []);
+
+  const toggleListening = () => {
+    if (isListening) {
+      recognition?.stop();
+    } else {
+      recognition?.start();
+      setIsListening(true);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,17 +82,32 @@ const CommandBar = ({ onQuerySubmit, isLoading = false }: CommandBarProps) => {
           className="w-full bg-surface-glass border border-border-glass backdrop-blur-md rounded-2xl py-5 pl-14 pr-16 text-foreground placeholder-slate-500 outline-none transition-colors focus:bg-surface-glass-hover"
         />
         
-        <button
-          type="submit"
-          disabled={!query.trim() || isLoading}
-          className="absolute right-4 p-2 bg-brand-teal text-white rounded-xl hover:bg-teal-500 disabled:opacity-50 disabled:hover:bg-brand-teal transition-colors"
-        >
-          {isLoading ? (
-            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <Send className="w-5 h-5" />
-          )}
-        </button>
+        <div className="absolute right-4 flex items-center space-x-2">
+          <button
+            type="button"
+            onClick={toggleListening}
+            className={`p-2 rounded-xl transition-all duration-300 ${
+              isListening 
+                ? 'bg-brand-rose/20 text-brand-rose animate-pulse' 
+                : 'bg-transparent text-slate-400 hover:text-brand-teal hover:bg-brand-teal/10'
+            }`}
+            title="Dictate message"
+          >
+            {isListening ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
+          </button>
+          
+          <button
+            type="submit"
+            disabled={!query.trim() || isLoading}
+            className="p-2 bg-brand-teal text-white rounded-xl hover:bg-teal-500 disabled:opacity-50 disabled:hover:bg-brand-teal transition-colors"
+          >
+            {isLoading ? (
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Send className="w-5 h-5" />
+            )}
+          </button>
+        </div>
       </form>
     </motion.div>
   );

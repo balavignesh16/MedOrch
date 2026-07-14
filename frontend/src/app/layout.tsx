@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Outfit } from "next/font/google";
 import "./globals.css";
-import Sidebar from "@/components/Sidebar";
+import ClientLayout from "@/components/ClientLayout";
 
-const inter = Inter({ subsets: ["latin"] });
+const outfit = Outfit({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "MedOrch | Command Center",
@@ -17,11 +17,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className} h-screen w-screen overflow-hidden flex bg-slate-900 text-slate-100`}>
-        <Sidebar />
-        <main className="flex-1 h-full overflow-y-auto p-10">
+      <body className={`${outfit.className} h-screen w-screen overflow-hidden flex text-slate-100 selection:bg-brand-teal/30`}>
+        <ClientLayout>
           {children}
-        </main>
+        </ClientLayout>
       </body>
     </html>
   );

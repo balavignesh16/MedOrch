@@ -24,22 +24,20 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1ahealthcare_analytics.proto\x12\x17healthcare.analytics.v1\"p\n\x0cQueryRequest\x12\x12\n\nrequest_id\x18\x01 \x01(\t\x12\x0e\n\x06prompt\x18\x02 \x01(\t\x12<\n\rauth_metadata\x18\x03 \x01(\x0b\x32%.healthcare.analytics.v1.AuthMetadata\"D\n\x0c\x41uthMetadata\x12\x0f\n\x07user_id\x18\x01 \x01(\t\x12\x0c\n\x04role\x18\x02 \x01(\t\x12\x15\n\rdepartment_id\x18\x03 \x01(\t\"\xa3\x01\n\x0fInsightResponse\x12\x12\n\nrequest_id\x18\x01 \x01(\t\x12\x17\n\x0ftextual_summary\x18\x02 \x01(\t\x12\x17\n\x0f\x63hart_data_json\x18\x03 \x01(\t\x12\x34\n\tcitations\x18\x04 \x03(\x0b\x32!.healthcare.analytics.v1.Citation\x12\x14\n\x0cgrc_scrubbed\x18\x05 \x01(\x08\"d\n\x08\x43itation\x12\x11\n\tsource_id\x18\x01 \x01(\t\x12\r\n\x05title\x18\x02 \x01(\t\x12\x10\n\x08\x61\x62stract\x18\x03 \x01(\t\x12\x0b\n\x03url\x18\x04 \x01(\t\x12\x17\n\x0frelevance_score\x18\x05 \x01(\x02\x32r\n\x0f\x41nalyticsEngine\x12_\n\x0cProcessQuery\x12%.healthcare.analytics.v1.QueryRequest\x1a(.healthcare.analytics.v1.InsightResponseBDZBgithub.com/medorch/gateway/gen/healthcare/analytics/v1;analyticsv1b\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1ahealthcare_analytics.proto\x12\nhealthcare\"T\n\x0cQueryRequest\x12\x10\n\x08query_id\x18\x01 \x01(\t\x12\x1f\n\x17natural_language_prompt\x18\x02 \x01(\t\x12\x11\n\tuser_role\x18\x03 \x01(\t\"7\n\x08\x43itation\x12\r\n\x05title\x18\x01 \x01(\t\x12\x0b\n\x03url\x18\x02 \x01(\t\x12\x0f\n\x07snippet\x18\x03 \x01(\t\"\xa5\x01\n\x0fInsightResponse\x12\x13\n\x0bresponse_id\x18\x01 \x01(\t\x12\x14\n\x0csummary_text\x18\x02 \x01(\t\x12\x1f\n\x17visualization_data_json\x18\x03 \x01(\t\x12\x30\n\x12research_citations\x18\x04 \x03(\x0b\x32\x14.healthcare.Citation\x12\x14\n\x0cpii_scrubbed\x18\x05 \x01(\x08\x32Z\n\x0f\x41nalyticsEngine\x12G\n\x0cProcessQuery\x12\x18.healthcare.QueryRequest\x1a\x1b.healthcare.InsightResponse\"\x00\x42\x1fZ\x1dgithub.com/medorch/gateway/pbb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'healthcare_analytics_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
-  _globals['DESCRIPTOR']._serialized_options = b'ZBgithub.com/medorch/gateway/gen/healthcare/analytics/v1;analyticsv1'
-  _globals['_QUERYREQUEST']._serialized_start=55
-  _globals['_QUERYREQUEST']._serialized_end=167
-  _globals['_AUTHMETADATA']._serialized_start=169
-  _globals['_AUTHMETADATA']._serialized_end=237
-  _globals['_INSIGHTRESPONSE']._serialized_start=240
-  _globals['_INSIGHTRESPONSE']._serialized_end=403
-  _globals['_CITATION']._serialized_start=405
-  _globals['_CITATION']._serialized_end=505
-  _globals['_ANALYTICSENGINE']._serialized_start=507
-  _globals['_ANALYTICSENGINE']._serialized_end=621
+  _globals['DESCRIPTOR']._serialized_options = b'Z\035github.com/medorch/gateway/pb'
+  _globals['_QUERYREQUEST']._serialized_start=42
+  _globals['_QUERYREQUEST']._serialized_end=126
+  _globals['_CITATION']._serialized_start=128
+  _globals['_CITATION']._serialized_end=183
+  _globals['_INSIGHTRESPONSE']._serialized_start=186
+  _globals['_INSIGHTRESPONSE']._serialized_end=351
+  _globals['_ANALYTICSENGINE']._serialized_start=353
+  _globals['_ANALYTICSENGINE']._serialized_end=443
 # @@protoc_insertion_point(module_scope)

@@ -26,10 +26,7 @@ if _version_not_supported:
 
 
 class AnalyticsEngineStub:
-    """-----------------------------------------------------------------------------
-    Service Definition
-    -----------------------------------------------------------------------------
-
+    """The core service exposed by the Python AI Engine
     """
 
     def __init__(self, channel):
@@ -39,22 +36,18 @@ class AnalyticsEngineStub:
             channel: A grpc.Channel.
         """
         self.ProcessQuery = channel.unary_unary(
-                '/healthcare.analytics.v1.AnalyticsEngine/ProcessQuery',
+                '/healthcare.AnalyticsEngine/ProcessQuery',
                 request_serializer=healthcare__analytics__pb2.QueryRequest.SerializeToString,
                 response_deserializer=healthcare__analytics__pb2.InsightResponse.FromString,
                 _registered_method=True)
 
 
 class AnalyticsEngineServicer:
-    """-----------------------------------------------------------------------------
-    Service Definition
-    -----------------------------------------------------------------------------
-
+    """The core service exposed by the Python AI Engine
     """
 
     def ProcessQuery(self, request, context):
-        """Processes a natural language query and returns actionable insights.
-        """
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -69,17 +62,14 @@ def add_AnalyticsEngineServicer_to_server(servicer, server):
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'healthcare.analytics.v1.AnalyticsEngine', rpc_method_handlers)
+            'healthcare.AnalyticsEngine', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('healthcare.analytics.v1.AnalyticsEngine', rpc_method_handlers)
+    server.add_registered_method_handlers('healthcare.AnalyticsEngine', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
 class AnalyticsEngine:
-    """-----------------------------------------------------------------------------
-    Service Definition
-    -----------------------------------------------------------------------------
-
+    """The core service exposed by the Python AI Engine
     """
 
     @staticmethod
@@ -96,7 +86,7 @@ class AnalyticsEngine:
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/healthcare.analytics.v1.AnalyticsEngine/ProcessQuery',
+            '/healthcare.AnalyticsEngine/ProcessQuery',
             healthcare__analytics__pb2.QueryRequest.SerializeToString,
             healthcare__analytics__pb2.InsightResponse.FromString,
             options,
