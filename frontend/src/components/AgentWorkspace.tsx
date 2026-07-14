@@ -167,21 +167,21 @@ const AgentWorkspace = ({ agentName, agentDescription, targetId }: AgentWorkspac
                   <p className="text-slate-400 mb-8 max-w-md">Select a quick action below or type a custom query to begin analysis.</p>
                   
                   <div className="grid grid-cols-2 gap-3 w-full">
-                    <button onClick={() => handleQuery("Analyze latest readmission risks across all active patients.")} className="bg-white/5 border border-border-glass hover:bg-white/10 hover:border-brand-teal/50 text-left p-4 rounded-xl transition-all">
-                      <p className="text-sm font-medium text-slate-200">Analyze Readmission Risks</p>
-                      <p className="text-xs text-slate-500 mt-1">Scan active patients for high risk</p>
+                    <button onClick={() => handleQuery("Count the number of patients currently admitted to each department.")} className="bg-white/5 border border-border-glass hover:bg-white/10 hover:border-brand-teal/50 text-left p-4 rounded-xl transition-all">
+                      <p className="text-sm font-medium text-slate-200">Analyze Department Loads</p>
+                      <p className="text-xs text-slate-500 mt-1">Check active admissions</p>
                     </button>
-                    <button onClick={() => handleQuery("Summarize recent abnormal lab results.")} className="bg-white/5 border border-border-glass hover:bg-white/10 hover:border-brand-teal/50 text-left p-4 rounded-xl transition-all">
+                    <button onClick={() => handleQuery("List the 5 most recent abnormal lab results.")} className="bg-white/5 border border-border-glass hover:bg-white/10 hover:border-brand-teal/50 text-left p-4 rounded-xl transition-all">
                       <p className="text-sm font-medium text-slate-200">Summarize Abnormal Labs</p>
                       <p className="text-xs text-slate-500 mt-1">Fetch recent critical values</p>
                     </button>
-                    <button onClick={() => handleQuery("Cross-reference active medications for contraindications.")} className="bg-white/5 border border-border-glass hover:bg-white/10 hover:border-brand-teal/50 text-left p-4 rounded-xl transition-all">
-                      <p className="text-sm font-medium text-slate-200">Check Medications</p>
-                      <p className="text-xs text-slate-500 mt-1">Flag dangerous drug interactions</p>
+                    <button onClick={() => handleQuery("List the top 5 most prescribed active medications.")} className="bg-white/5 border border-border-glass hover:bg-white/10 hover:border-brand-teal/50 text-left p-4 rounded-xl transition-all">
+                      <p className="text-sm font-medium text-slate-200">Top Active Medications</p>
+                      <p className="text-xs text-slate-500 mt-1">Find most common drugs</p>
                     </button>
-                    <button onClick={() => handleQuery("Generate a summary of ICU bed capacity.")} className="bg-white/5 border border-border-glass hover:bg-white/10 hover:border-brand-teal/50 text-left p-4 rounded-xl transition-all">
+                    <button onClick={() => handleQuery("How many patients are currently admitted to the ICU?")} className="bg-white/5 border border-border-glass hover:bg-white/10 hover:border-brand-teal/50 text-left p-4 rounded-xl transition-all">
                       <p className="text-sm font-medium text-slate-200">ICU Capacity Report</p>
-                      <p className="text-xs text-slate-500 mt-1">Current utilization & forecasting</p>
+                      <p className="text-xs text-slate-500 mt-1">Current utilization count</p>
                     </button>
                   </div>
                 </div>
