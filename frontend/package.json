@@ -11,6 +11,7 @@
   "dependencies": {
     "@grpc/grpc-js": "^1.14.4",
     "@grpc/proto-loader": "^0.8.1",
+    "@tailwindcss/typography": "^0.5.20",
     "@types/d3": "^7.4.3",
     "better-sqlite3": "^12.11.1",
     "d3": "^7.9.0",
@@ -19,7 +20,9 @@
     "next": "16.2.10",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "recharts": "^3.9.2"
+    "react-markdown": "^10.1.0",
+    "recharts": "^3.9.2",
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

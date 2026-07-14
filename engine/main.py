@@ -28,15 +28,16 @@ db = SQLDatabase.from_uri(f"sqlite:///{db_path}")
 
 try:
     # Try to use tool calling if supported
-    agent_executor = create_sql_agent(llm, db=db, agent_type="openai-tools", verbose=True)
+    agent_executor = create_sql_agent(llm, db=db, agent_type="openai-tools", verbose=True, return_intermediate_steps=True)
 except ValueError:
     # Fallback to standard ReAct agent if openai-tools is not supported
-    agent_executor = create_sql_agent(llm, db=db, verbose=True)
+    agent_executor = create_sql_agent(llm, db=db, verbose=True, return_intermediate_steps=True)
 
 class AnalyticsEngineServicer(healthcare_analytics_pb2_grpc.AnalyticsEngineServicer):
     def ProcessQuery(self, request, context):
         print(f"Received query for [{request.agent_target}]: {request.natural_language_prompt}")
         
+        sql_query = None
         try:
             context_prefix = ""
             if request.agent_target == "clinical_triage":
@@ -47,18 +48,32 @@ class AnalyticsEngineServicer(healthcare_analytics_pb2_grpc.AnalyticsEngineServi
             prompt = context_prefix + request.natural_language_prompt
             result = agent_executor.invoke({"input": prompt})
             full_text = result["output"]
+            
+            # Extract SQL query from intermediate steps
+            if "intermediate_steps" in result:
+                for step, _ in result["intermediate_steps"]:
+                    if step.tool == "sql_db_query":
+                        sql_query = step.tool_input
+                        # The tool_input might be a dict or a string depending on the agent type
+                        if isinstance(sql_query, dict):
+                            sql_query = sql_query.get("query", "")
+                        break
         except Exception as e:
             print("Error executing SQL agent:", e)
             full_text = f"An error occurred while analyzing the database: {e}"
 
-        mock_json = json.dumps({
+        mock_json_data = {
             "metrics": {
                 "readmission_risk": {"value": "15.2%", "trend": "+1.4%", "isPositive": False},
                 "active_patients": {"value": 1243, "trend": "-5", "isPositive": True},
                 "icu_capacity": {"value": "82%", "trend": "Warning", "isPositive": False},
                 "cost_impact": {"value": "$45,000", "trend": "-$2,100", "isPositive": True}
             }
-        })
+        }
+        if sql_query:
+            mock_json_data["sql_query"] = sql_query
+            
+        mock_json = json.dumps(mock_json_data)
 
         words = full_text.split(" ")
         current_text = ""

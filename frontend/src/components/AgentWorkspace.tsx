@@ -3,11 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import CommandBar from '@/components/CommandBar';
 import { motion } from 'framer-motion';
-import { Bot, Network, Database, Shield, Zap, Activity } from 'lucide-react';
+import { Bot, Network, Database, Shield, Zap, Activity, Code2, ChevronDown, ChevronUp } from 'lucide-react';
 import RiskChart from './RiskChart';
 import BedCapacityChart from './BedCapacityChart';
 import ComplianceRadar from './ComplianceRadar';
 import CostScatterPlot from './CostScatterPlot';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 type AgentWorkspaceProps = {
   agentName: string;
@@ -17,6 +19,8 @@ type AgentWorkspaceProps = {
 
 const AgentWorkspace = ({ agentName, agentDescription, targetId }: AgentWorkspaceProps) => {
   const [insightSummary, setInsightSummary] = useState<string>("");
+  const [sqlQuery, setSqlQuery] = useState<string>("");
+  const [isSqlExpanded, setIsSqlExpanded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [activeNode, setActiveNode] = useState(0);
 
@@ -35,6 +39,8 @@ const AgentWorkspace = ({ agentName, agentDescription, targetId }: AgentWorkspac
   const handleQuery = async (query: string) => {
     setIsLoading(true);
     setInsightSummary("");
+    setSqlQuery("");
+    setIsSqlExpanded(false);
     
     try {
       const response = await fetch('/api/stream', {
@@ -62,6 +68,12 @@ const AgentWorkspace = ({ agentName, agentDescription, targetId }: AgentWorkspac
             if (line.startsWith('data: ')) {
               const data = JSON.parse(line.slice(6));
               setInsightSummary(data.summaryText);
+              if (data.visualizationDataJson) {
+                const parsedVis = JSON.parse(data.visualizationDataJson);
+                if (parsedVis.sql_query) {
+                  setSqlQuery(parsedVis.sql_query);
+                }
+              }
             }
           }
         }
@@ -112,9 +124,38 @@ const AgentWorkspace = ({ agentName, agentDescription, targetId }: AgentWorkspac
                   <div className="w-10 h-10 rounded-full bg-brand-teal/20 flex items-center justify-center shrink-0">
                     <Bot className="w-5 h-5 text-brand-teal" />
                   </div>
-                  <div className="bg-white/5 border border-white/10 rounded-2xl rounded-tl-none p-4 text-slate-200 leading-relaxed">
-                    {insightSummary}
-                    {isLoading && <span className="animate-pulse ml-1">|</span>}
+                  <div className="flex-1 space-y-4">
+                    {/* XAI Thought Process Block */}
+                    {sqlQuery && (
+                      <div className="bg-surface-glass border border-brand-teal/20 rounded-xl overflow-hidden">
+                        <button 
+                          onClick={() => setIsSqlExpanded(!isSqlExpanded)}
+                          className="w-full flex items-center justify-between px-4 py-2 bg-brand-teal/10 hover:bg-brand-teal/20 transition-colors"
+                        >
+                          <div className="flex items-center gap-2 text-brand-teal text-sm font-semibold">
+                            <Code2 className="w-4 h-4" />
+                            AI Thought Process: Executed SQL
+                          </div>
+                          {isSqlExpanded ? <ChevronUp className="w-4 h-4 text-brand-teal" /> : <ChevronDown className="w-4 h-4 text-brand-teal" />}
+                        </button>
+                        {isSqlExpanded && (
+                          <div className="p-4 bg-slate-950/50 overflow-x-auto">
+                            <pre className="text-xs text-brand-teal/80 font-mono whitespace-pre-wrap">
+                              {sqlQuery}
+                            </pre>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    <div className="bg-white/5 border border-white/10 rounded-2xl rounded-tl-none p-4 text-slate-200 leading-relaxed">
+                      <div className="prose prose-invert prose-teal max-w-none prose-p:leading-relaxed prose-pre:bg-slate-900 prose-pre:border prose-pre:border-border-glass prose-th:bg-white/5 prose-th:border-border-glass prose-td:border-border-glass prose-table:border-collapse">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {insightSummary}
+                        </ReactMarkdown>
+                      </div>
+                      {isLoading && <span className="animate-pulse ml-1">|</span>}
+                    </div>
                   </div>
                 </motion.div>
               ) : (
