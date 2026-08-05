@@ -39,7 +39,7 @@ const CommandBar = ({ onQuery, isLoading }: CommandBarProps) => {
           onBlur={() => setIsFocused(false)}
           disabled={isLoading}
           placeholder="Ask MedOrch AI... e.g., 'What is the readmission risk if ICU capacity reaches 90%?'"
-          className="w-full bg-surface-glass border border-border-glass backdrop-blur-md rounded-2xl py-5 pl-14 pr-16 text-foreground placeholder-slate-500 outline-none transition-colors focus:bg-surface-glass-hover disabled:opacity-50"
+          className="w-full bg-white border border-slate-200 rounded-2xl py-5 pl-14 pr-16 text-slate-900 placeholder-slate-400 outline-none transition-all shadow-sm focus:shadow-md disabled:opacity-50"
         />
         
         <button

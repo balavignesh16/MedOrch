@@ -14,8 +14,8 @@ const data = [
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-slate-800 border border-slate-700 p-3 rounded-lg shadow-xl">
-        <p className="text-slate-300 text-sm">{label}</p>
+      <div className="bg-white border border-slate-200 p-3 rounded-lg shadow-md">
+        <p className="text-slate-500 font-medium text-sm">{label}</p>
         <p className="text-brand-teal font-bold">{`Capacity: ${payload[0].value}%`}</p>
       </div>
     );
@@ -26,7 +26,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 const RiskChart = () => {
   return (
     <div className="w-full h-full flex flex-col">
-      <h3 className="text-lg font-bold mb-4">ICU Utilization Trend (30 Days)</h3>
+      <h3 className="text-lg font-bold mb-4 text-slate-900">ICU Utilization Trend (30 Days)</h3>
       <div className="flex-1 w-full min-h-[250px]">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -36,9 +36,9 @@ const RiskChart = () => {
                 <stop offset="95%" stopColor="#0d9488" stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-            <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
-            <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}%`} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+            <XAxis dataKey="name" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+            <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}%`} />
             <Tooltip content={<CustomTooltip />} />
             <Area type="monotone" dataKey="capacity" stroke="#0d9488" strokeWidth={3} fillOpacity={1} fill="url(#colorCapacity)" />
           </AreaChart>

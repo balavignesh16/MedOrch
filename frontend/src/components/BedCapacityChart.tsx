@@ -22,21 +22,21 @@ const data = [
 
 export default function BedCapacityChart() {
   return (
-    <div className="bg-surface-glass border border-border-glass backdrop-blur-md rounded-2xl p-6 h-full shadow-lg">
+    <div className="bg-white border border-slate-200 rounded-2xl p-6 h-full shadow-sm flex flex-col">
       <div className="mb-4">
-        <h3 className="text-lg font-semibold text-white">Bed Utilization per Dept</h3>
-        <p className="text-sm text-slate-400">% capacity vs optimal targets</p>
+        <h3 className="text-lg font-semibold text-slate-900">Bed Utilization per Dept</h3>
+        <p className="text-sm text-slate-500">% capacity vs optimal targets</p>
       </div>
       <div className="h-[250px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
             <XAxis dataKey="name" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
             <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
             <Tooltip
-              cursor={{ fill: '#1e293b', opacity: 0.4 }}
-              contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px' }}
-              itemStyle={{ color: '#2dd4bf' }}
+              cursor={{ fill: '#f1f5f9', opacity: 0.4 }}
+              contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+              itemStyle={{ color: '#0d9488' }}
             />
             <Bar dataKey="capacity" radius={[4, 4, 0, 0]}>
               {data.map((entry, index) => (

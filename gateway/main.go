@@ -19,7 +19,7 @@ func (s *server) ProcessQuery(req *pb.QueryRequest, stream pb.AnalyticsEngine_Pr
 	log.Printf("API Gateway intercepting query [%s] for AGENT [%s]: %s", req.QueryId, req.AgentTarget, req.NaturalLanguagePrompt)
 
 	// Dial the Python LangGraph Engine on port 50052
-	conn, err := grpc.Dial("localhost:50052", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial("127.0.0.1:50052", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Printf("Failed to connect to Python Engine: %v", err)
 		return err
