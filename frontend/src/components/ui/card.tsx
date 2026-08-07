@@ -16,11 +16,11 @@ export function Card({ className, widgetSize, ...props }: CardProps) {
 
   return (
     <div
-      className={`group relative rounded-2xl border border-white/5 bg-surface-glass text-foreground shadow-sm backdrop-blur-xl transition-all duration-500 hover:bg-surface-glass-hover hover:border-white/10 hover:shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:-translate-y-1 overflow-hidden ${spanClass} ${className || ''}`}
+      className={`group relative rounded-2xl border border-white/5 bg-surface-glass text-foreground shadow-sm backdrop-blur-xl transition-all duration-500 hover:bg-surface-glass-hover hover:border-white/10 hover:shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:-translate-y-1 ${spanClass} ${className || ''}`}
       {...props}
     >
       {/* Inner subtle gradient overlay for MNC aesthetic */}
-      <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] to-transparent pointer-events-none"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] to-transparent pointer-events-none rounded-2xl"></div>
       <div className="relative z-10 h-full">
         {props.children}
       </div>
