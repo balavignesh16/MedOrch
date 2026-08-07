@@ -13,18 +13,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar />
-      <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
-        <div className="min-h-full rounded-2xl border border-border-glass bg-surface-glass backdrop-blur-3xl shadow-[0_8px_32px_rgba(0,0,0,0.2)] relative">
-           {/* Glow Effects */}
-           <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-brand-teal/5 rounded-full blur-[120px] pointer-events-none mix-blend-screen"></div>
-           <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-brand-cyan/5 rounded-full blur-[100px] pointer-events-none mix-blend-screen"></div>
-           
-           <div className="relative z-10 p-4 md:p-8">
-             {children}
-           </div>
-        </div>
+      <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 relative">
+         {/* Deeper Ambient Background Glows */}
+         <div className="fixed top-0 left-1/4 w-[800px] h-[600px] bg-brand-teal/5 rounded-full blur-[150px] pointer-events-none mix-blend-screen"></div>
+         <div className="fixed bottom-0 right-1/4 w-[600px] h-[600px] bg-brand-cyan/5 rounded-full blur-[150px] pointer-events-none mix-blend-screen"></div>
+         
+         <div className="min-h-full rounded-[2rem] border border-white/5 bg-surface-glass/40 backdrop-blur-3xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] relative overflow-hidden">
+            {/* Subtle Inner Glow */}
+            <div className="absolute inset-0 bg-gradient-to-b from-white/[0.03] to-transparent pointer-events-none"></div>
+            <div className="relative z-10 p-6 md:p-10">
+              {children}
+            </div>
+         </div>
       </main>
     </div>
   );

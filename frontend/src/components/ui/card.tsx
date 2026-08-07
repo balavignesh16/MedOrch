@@ -16,16 +16,22 @@ export function Card({ className, widgetSize, ...props }: CardProps) {
 
   return (
     <div
-      className={`rounded-lg border border-border-glass bg-surface-glass text-foreground shadow-sm backdrop-blur-md transition-colors hover:bg-surface-glass-hover ${spanClass} ${className || ''}`}
+      className={`group relative rounded-2xl border border-white/5 bg-surface-glass text-foreground shadow-sm backdrop-blur-xl transition-all duration-500 hover:bg-surface-glass-hover hover:border-white/10 hover:shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:-translate-y-1 overflow-hidden ${spanClass} ${className || ''}`}
       {...props}
-    />
+    >
+      {/* Inner subtle gradient overlay for MNC aesthetic */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] to-transparent pointer-events-none"></div>
+      <div className="relative z-10 h-full">
+        {props.children}
+      </div>
+    </div>
   )
 }
 
 export function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={`flex flex-col space-y-1.5 p-md ${className}`}
+      className={`flex flex-col space-y-1.5 p-md relative z-10 ${className}`}
       {...props}
     />
   )
@@ -42,6 +48,6 @@ export function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHead
 
 export function CardContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={`p-md pt-0 ${className}`} {...props} />
+    <div className={`p-md pt-0 relative z-10 h-full ${className}`} {...props} />
   )
 }
