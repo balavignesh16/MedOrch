@@ -25,7 +25,6 @@ export default async function OperationsPage(props: { searchParams: Promise<{ [k
 
   return (
     <DashboardClient 
-      filters={searchParams} 
       overviewData={overview} 
       flowData={flow}
       resourcesData={resources}

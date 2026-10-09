@@ -20,12 +20,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
 
   useEffect(() => {
-    // Check local storage for session on mount
-    const storedUser = localStorage.getItem('medorch_user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setIsLoading(false);
+    const frame = requestAnimationFrame(() => {
+      const storedUser = localStorage.getItem('medorch_user');
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
+      setIsLoading(false);
+    });
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   useEffect(() => {

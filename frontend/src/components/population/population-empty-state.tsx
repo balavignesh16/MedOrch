@@ -9,7 +9,7 @@ export function PopulationEmptyState() {
         <Users className="h-10 w-10 text-white/30" />
       </div>
       <h2 className="text-lg font-semibold text-white mb-2">
-        No Patients Found
+        No Encounters Found
       </h2>
       <p className="text-sm text-white/50 max-w-md mb-6">
         The current cohort filters are too restrictive and returned zero results. Please broaden your search criteria.

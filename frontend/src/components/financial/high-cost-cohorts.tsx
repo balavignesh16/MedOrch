@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Activity, Pill, AlertCircle, ArrowRight } from 'lucide-react';
+import { Activity, AlertCircle, ArrowRight } from 'lucide-react';
 
 interface HighCostCohortsProps {
   data: {

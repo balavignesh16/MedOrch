@@ -44,6 +44,22 @@ export const RISK_BOUNDARIES = {
   LOS_LOW: 3,
 };
 
+export const ENCOUNTER_RISK_CASE_SQL = `CASE
+  WHEN (time_in_hospital > 7 OR number_emergency > 2 OR num_medications > 20) THEN 'Critical'
+  WHEN (time_in_hospital > 5 OR number_emergency > 0 OR num_medications > 15) THEN 'High'
+  WHEN (time_in_hospital > 3 OR num_medications > 10) THEN 'Medium'
+  ELSE 'Low'
+END`;
+
+export const ENCOUNTER_RISK_FILTER_SQL = {
+  Critical: `(${ENCOUNTER_RISK_CASE_SQL}) = 'Critical'`,
+  High: `(${ENCOUNTER_RISK_CASE_SQL}) = 'High'`,
+  Medium: `(${ENCOUNTER_RISK_CASE_SQL}) = 'Medium'`,
+  Low: `(${ENCOUNTER_RISK_CASE_SQL}) = 'Low'`,
+} as const;
+
+export const HIGH_RISK_ENCOUNTER_SQL = `(${ENCOUNTER_RISK_CASE_SQL}) IN ('High', 'Critical')`;
+
 export const HEALTH_THRESHOLDS = {
   EXCELLENT: 90,
   GOOD: 75,
@@ -60,4 +76,24 @@ export const FINANCIAL_COST_MULTIPLIERS = {
   INPATIENT_VISIT: 40,
   OUTPATIENT_VISIT: 5,
   READMISSION_PENALTY: 50
-};
+} as const;
+
+export const FINANCIAL_MODEL_METADATA = {
+  VERSION: 'demo-v1',
+  UNIT: 'illustrative dollar-denominated relative cost units',
+  CLASSIFICATION: 'Estimated / synthetic demo model',
+} as const;
+
+export const OPERATIONAL_DEMO_ASSUMPTIONS = {
+  THROUGHPUT_PERIOD_DAYS: 30,
+  BED_OCCUPANCY_BASE_PERCENT: 70,
+  BED_OCCUPANCY_LOS_WEIGHT: 2,
+  RESOURCE_EFFICIENCY_PERCENT: 85,
+  WORKFLOW_EFFICIENCY_PERCENT: 88,
+  FLOW: {
+    emergency: { volume: 0.4, queue: 0.08 },
+    ward: { volume: 0.55, queue: 0.02 },
+    procedure: { volume: 0.3, queue: 0.04 },
+    discharge: { volume: 0.95, queue: 0.06 },
+  },
+} as const;

@@ -1,8 +1,9 @@
 import React from 'react';
+import type { fetchStaffingIntelligence } from '@/lib/administrationLogic';
 import { Users, Activity, Battery, TriangleAlert } from 'lucide-react';
 
 interface StaffingIntelligenceProps {
-  staffing: any;
+  staffing: Awaited<ReturnType<typeof fetchStaffingIntelligence>>;
 }
 
 export const StaffingIntelligence: React.FC<StaffingIntelligenceProps> = ({ staffing }) => {
@@ -61,7 +62,7 @@ export const StaffingIntelligence: React.FC<StaffingIntelligenceProps> = ({ staf
       <div>
         <h4 className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">Department Load Variances</h4>
         <div className="space-y-2">
-          {staffing.departments.map((dept: any, i: number) => (
+          {staffing.departments.map((dept, i) => (
             <div key={i} className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/5">
               <div className="text-sm font-medium text-white/90 w-24">{dept.name}</div>
               <div className="text-xs text-brand-gray font-mono">Ratio: {dept.ratio}</div>

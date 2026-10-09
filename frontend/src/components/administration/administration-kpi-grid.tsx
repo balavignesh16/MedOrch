@@ -1,10 +1,11 @@
 import React from 'react';
+import type { fetchAdministrativeOverview } from '@/lib/administrationLogic';
 import { KpiCard } from '@/components/dashboard/kpi-card';
-import { Activity, ShieldCheck, Users, Briefcase, GitPullRequest, Settings, CheckCircle2 } from 'lucide-react';
+import { Activity, ShieldCheck, Users, Briefcase } from 'lucide-react';
 import { AdministrativeScoreTransparency } from './administrative-score-transparency';
 
 interface AdministrationKpiGridProps {
-  overview: any;
+  overview: Awaited<ReturnType<typeof fetchAdministrativeOverview>>;
 }
 
 export const AdministrationKpiGrid: React.FC<AdministrationKpiGridProps> = ({ overview }) => {

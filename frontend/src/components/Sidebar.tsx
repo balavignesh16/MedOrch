@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Stethoscope, Settings, ShieldCheck, TrendingUp, Activity, ActivitySquare, Users, CreditCard, Map, LogOut, Bell } from 'lucide-react';
+import { LayoutDashboard, Bot, TrendingUp, Activity, ActivitySquare, Users, Map, LogOut, Bell } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 
@@ -20,8 +20,7 @@ const Sidebar = () => {
     { name: 'Administration', href: '/administration', icon: Users, roles: ['admin'] },
     { name: 'Strategy & Decision Hub', href: '/strategy', icon: Map, roles: ['admin'] },
     { name: 'Predictive Analytics', href: '/predictive', icon: ActivitySquare, roles: ['admin', 'doctor', 'billing'] },
-    { name: 'Clinical Triage', href: '/agents/clinical_triage', icon: Stethoscope, roles: ['admin', 'doctor'] },
-    { name: 'Billing & Claims', href: '/agents/billing', icon: CreditCard, roles: ['admin', 'billing'] }
+    { name: 'Analytics Assistant', href: '/assistant', icon: Bot, roles: ['admin', 'doctor', 'billing'] }
   ];
 
   const visibleLinks = links.filter(link => !user || link.roles.includes(user.role as string));

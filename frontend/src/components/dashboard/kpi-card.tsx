@@ -39,7 +39,7 @@ export function KpiCard({
   className,
   ...rest
 }: KpiCardProps) {
-  const { trendDirection, ...props } = rest as any;
+  const props = rest;
 
   const statusColors = {
     Excellent: 'text-success',
@@ -48,15 +48,7 @@ export function KpiCard({
     Critical: 'text-danger',
   };
   
-  const statusGlows = {
-    Excellent: 'bg-success',
-    Good: 'bg-brand-teal',
-    Watch: 'bg-warning',
-    Critical: 'bg-danger',
-  };
-
   const statusColor = statusColors[status];
-  const glowColor = statusGlows[status];
 
   const cardContent = (
     <Card widgetSize={widgetSize} className={`flex flex-col justify-between p-5 md:p-6 relative group hover:z-50 ${className || ''}`} {...props}>

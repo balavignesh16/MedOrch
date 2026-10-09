@@ -8,6 +8,7 @@ export interface StrategicFilterState {
 }
 
 export const fetchStrategicOverview = cache(async (filters: StrategicFilterState = {}) => {
+  void filters;
   // In a real app, this would use QueryFactory to fetch actual underlying domain metrics
   // For this deterministic model, we'll synthesize realistic metrics based on the analytical core
   const metrics = {
@@ -34,6 +35,7 @@ export const fetchStrategicOverview = cache(async (filters: StrategicFilterState
 });
 
 export const fetchEnterpriseBenchmarkProfiles = cache(async (filters: StrategicFilterState = {}) => {
+  void filters;
   return [
     { metric: 'Clinical Quality', current: 82, target: 90, bestPractice: 95, industry: 78 },
     { metric: 'Financial Efficiency', current: 78, target: 85, bestPractice: 92, industry: 75 },
@@ -44,6 +46,7 @@ export const fetchEnterpriseBenchmarkProfiles = cache(async (filters: StrategicF
 });
 
 export const fetchStrategicKpiMatrix = cache(async (filters: StrategicFilterState = {}) => {
+  void filters;
   return [
     { domain: 'Executive', kpi: 'Enterprise Readiness', current: 81, target: 85, variance: -4, trend: 'up', status: 'Good' },
     { domain: 'Clinical', kpi: 'Readmission Rate', current: 15.2, target: 12.0, variance: 3.2, trend: 'down', status: 'Watch' },
@@ -55,6 +58,7 @@ export const fetchStrategicKpiMatrix = cache(async (filters: StrategicFilterStat
 });
 
 export const fetchDecisionPrioritizationMatrix = cache(async (filters: StrategicFilterState = {}) => {
+  void filters;
   return [
     { initiative: 'Readmission Reduction Program', impact: 'High', cost: '$$', risk: 'Medium', effort: 'High', roi: '3.2x', timeToBenefit: '3 Months', score: 85 },
     { initiative: 'Post-Acute SNF Network', impact: 'Very High', cost: '$', risk: 'Low', effort: 'Medium', roi: '5.1x', timeToBenefit: '1 Month', score: 92 },
@@ -64,6 +68,7 @@ export const fetchDecisionPrioritizationMatrix = cache(async (filters: Strategic
 });
 
 export const fetchStrategicRoadmap = cache(async (filters: StrategicFilterState = {}) => {
+  void filters;
   // In a real app, these would be generated dynamically or pulled from a planning DB.
   // To meet the requirement "recommendations should originate from the same strategic/decision engine", 
   // we will tie these to the generateStrategicInsights output.
@@ -80,5 +85,6 @@ export const fetchStrategicRoadmap = cache(async (filters: StrategicFilterState 
 });
 
 export const getExecutiveBrief = cache(async (filters: StrategicFilterState = {}) => {
+  void filters;
   return generateStrategicInsights();
 });

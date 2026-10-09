@@ -1,8 +1,9 @@
 import React from 'react';
+import type { fetchAdministrativeOverview } from '@/lib/administrationLogic';
 import { ShieldCheck, Info } from 'lucide-react';
 
 interface AdministrativeScoreTransparencyProps {
-  overview: any;
+  overview: Awaited<ReturnType<typeof fetchAdministrativeOverview>>;
 }
 
 export const AdministrativeScoreTransparency: React.FC<AdministrativeScoreTransparencyProps> = ({ overview }) => {

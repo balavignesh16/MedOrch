@@ -1,4 +1,5 @@
 import React from 'react';
+import type { fetchGlobalSearch, fetchNotifications, fetchSavedWorkspaces, fetchTimeline } from '@/lib/platformLogic';
 import { EnterpriseCommandCenter } from './enterprise-command-center';
 import { GlobalSearch } from './global-search';
 import { NotificationCenter } from './notification-center';
@@ -7,10 +8,10 @@ import { ActivityTimeline } from './activity-timeline';
 import { Sparkles, Calendar } from 'lucide-react';
 
 interface HomeDashboardProps {
-  searchData: any[];
-  notifications: any[];
-  workspaces: any[];
-  timeline: any[];
+  searchData: Awaited<ReturnType<typeof fetchGlobalSearch>>;
+  notifications: Awaited<ReturnType<typeof fetchNotifications>>;
+  workspaces: Awaited<ReturnType<typeof fetchSavedWorkspaces>>;
+  timeline: Awaited<ReturnType<typeof fetchTimeline>>;
 }
 
 export function HomeDashboard({ searchData, notifications, workspaces, timeline }: HomeDashboardProps) {

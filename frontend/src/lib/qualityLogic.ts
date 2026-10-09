@@ -7,24 +7,46 @@ import {
   extractAggregates,
   buildWhereClause,
   AnalyticsFilterState
+  , ENCOUNTER_RISK_CASE_SQL
+  , HIGH_RISK_ENCOUNTER_SQL
 } from './analytics';
 
 export type QualityFilterState = AnalyticsFilterState;
 
+interface QualityTrendRow {
+  category: string;
+  count: number;
+  avg_los: number;
+  readmissions: number;
+  er_visits: number;
+  avg_meds: number;
+}
+
+interface LengthOfStayStatsRow {
+  avg_los: number | null;
+  max_los: number | null;
+  min_los: number | null;
+}
+
+interface VisitTotalsRow {
+  er: number | null;
+  inpatient: number | null;
+  outpatient: number | null;
+}
+
 // --- API Methods ---
 
-export const fetchQualityOverview = cache(async (filters: any = {}) => {
+export const fetchQualityOverview = cache(async (filters: AnalyticsFilterState = {}) => {
   const normFilters = normalizeFilters(filters);
-  const { whereClause, params } = buildWhereClause(normFilters);
-  
-  const totalPatients = QueryFactory.executeCount('hospital_readmissions', normFilters);
+  const coreMetrics = QueryFactory.executeCoreMetrics('hospital_readmissions', normFilters);
+  const totalPatients = coreMetrics.totalEncounters;
 
   if (totalPatients === 0) {
     return {
       score: 0,
       scoreBreakdown: { readmission: 0, los: 0, meds: 0, er: 0, highRisk: 0 },
       readmissionRate: 0,
-      avgLos: 0,
+      avgLos: null,
       highRiskPercent: 0,
       erVisits: 0,
       avgProcedures: 0,
@@ -34,18 +56,18 @@ export const fetchQualityOverview = cache(async (filters: any = {}) => {
     };
   }
 
-  const readmittedCount = QueryFactory.executeCount('hospital_readmissions', normFilters, `readmitted != 'NO'`);
   const agg = QueryFactory.executeAggregation('hospital_readmissions', normFilters);
-  const { avgLengthOfStay, avgMedications, avgEmergencyVisits, avgProcedures } = extractAggregates(agg);
+  const { avgMedications, avgEmergencyVisits, avgProcedures } = extractAggregates(agg);
+  const avgLengthOfStay = coreMetrics.avgLengthOfStay;
   
-  const highRiskCount = QueryFactory.executeCount('hospital_readmissions', normFilters, `(readmitted = '<30' OR time_in_hospital >= 8 OR num_medications >= 20)`);
+  const highRiskCount = QueryFactory.executeCount('hospital_readmissions', normFilters, HIGH_RISK_ENCOUNTER_SQL);
 
-  const readmissionRate = (readmittedCount / totalPatients) * 100;
+  const readmissionRate = coreMetrics.readmissionProxyRate;
   const highRiskPercent = (highRiskCount / totalPatients) * 100;
 
   const scoreResult = calculateClinicalQualityScore({
     readmissionRate,
-    avgLos: avgLengthOfStay,
+    avgLos: avgLengthOfStay ?? 0,
     avgMeds: avgMedications,
     erVisits: avgEmergencyVisits,
     highRiskPercent
@@ -65,11 +87,11 @@ export const fetchQualityOverview = cache(async (filters: any = {}) => {
   };
 });
 
-export const fetchReadmissionIntelligence = cache(async (filters: any = {}) => {
+export const fetchReadmissionIntelligence = cache(async (filters: AnalyticsFilterState = {}) => {
   const normFilters = normalizeFilters(filters);
   const { whereClause, params } = buildWhereClause(normFilters);
   
-  const distribution = QueryFactory.executeCustomQuery<{ bucket: string, count: number }>(`
+  const distribution = QueryFactory.executeCustomQuery<{ bucket: string, count: number }[]>(`
     SELECT 
       CASE 
         WHEN readmitted = '<30' THEN '< 30 Days'
@@ -82,7 +104,7 @@ export const fetchReadmissionIntelligence = cache(async (filters: any = {}) => {
     GROUP BY bucket
   `, params, []);
 
-  const byAge = QueryFactory.executeCustomQuery<{ category: string, count: number, readmitted: number }>(`
+  const byAge = QueryFactory.executeCustomQuery<{ category: string, count: number, readmitted: number }[]>(`
     SELECT 
       age as category, 
       COUNT(*) as count,
@@ -92,7 +114,7 @@ export const fetchReadmissionIntelligence = cache(async (filters: any = {}) => {
     GROUP BY age
   `, params, []);
 
-  const byGender = QueryFactory.executeCustomQuery<{ category: string, count: number, readmitted: number }>(`
+  const byGender = QueryFactory.executeCustomQuery<{ category: string, count: number, readmitted: number }[]>(`
     SELECT 
       gender as category, 
       COUNT(*) as count,
@@ -102,7 +124,7 @@ export const fetchReadmissionIntelligence = cache(async (filters: any = {}) => {
     GROUP BY gender
   `, params, []);
 
-  const byRace = QueryFactory.executeCustomQuery<{ category: string, count: number, readmitted: number }>(`
+  const byRace = QueryFactory.executeCustomQuery<{ category: string, count: number, readmitted: number }[]>(`
     SELECT 
       race as category, 
       COUNT(*) as count,
@@ -112,7 +134,7 @@ export const fetchReadmissionIntelligence = cache(async (filters: any = {}) => {
     GROUP BY race
   `, params, []);
 
-  const byDiagnosis = QueryFactory.executeCustomQuery<{ category: string, count: number, readmitted: number }>(`
+  const byDiagnosis = QueryFactory.executeCustomQuery<{ category: string, count: number, readmitted: number }[]>(`
     SELECT 
       diag_1 as category, 
       COUNT(*) as count,
@@ -124,7 +146,7 @@ export const fetchReadmissionIntelligence = cache(async (filters: any = {}) => {
     LIMIT 10
   `, params, []);
 
-  const byAdmissionType = QueryFactory.executeCustomQuery<{ category: string, count: number, readmitted: number }>(`
+  const byAdmissionType = QueryFactory.executeCustomQuery<{ category: string, count: number, readmitted: number }[]>(`
     SELECT 
       admission_type_id as category, 
       COUNT(*) as count,
@@ -134,7 +156,7 @@ export const fetchReadmissionIntelligence = cache(async (filters: any = {}) => {
     GROUP BY admission_type_id
   `, params, []);
 
-  const byDischargeDisposition = QueryFactory.executeCustomQuery<{ category: string, count: number, readmitted: number }>(`
+  const byDischargeDisposition = QueryFactory.executeCustomQuery<{ category: string, count: number, readmitted: number }[]>(`
     SELECT 
       discharge_disposition_id as category, 
       COUNT(*) as count,
@@ -155,13 +177,13 @@ export const fetchReadmissionIntelligence = cache(async (filters: any = {}) => {
   };
 });
 
-export const fetchQualityTrends = cache(async (filters: any = {}) => {
+export const fetchQualityTrends = cache(async (filters: AnalyticsFilterState = {}) => {
   const normFilters = normalizeFilters(filters);
   const { whereClause, params } = buildWhereClause(normFilters);
   
-  const rawTrends = QueryFactory.executeCustomQuery<any[]>(`
+  const rawTrends = QueryFactory.executeCustomQuery<QualityTrendRow[]>(`
     SELECT 
-      (encounter_id % 12) + 1 as month_index,
+      age as category,
       COUNT(*) as count,
       AVG(time_in_hospital) as avg_los,
       SUM(CASE WHEN readmitted = '<30' THEN 1 ELSE 0 END) as readmissions,
@@ -169,14 +191,12 @@ export const fetchQualityTrends = cache(async (filters: any = {}) => {
       AVG(num_medications) as avg_meds
     FROM hospital_readmissions
     ${whereClause}
-    GROUP BY month_index
-    ORDER BY month_index
+    GROUP BY age
+    ORDER BY age
   `, params, []);
   
-  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  
   return rawTrends.map(t => ({
-    period: monthNames[t.month_index - 1],
+    period: t.category || 'Unknown',
     readmissions: (t.readmissions / t.count) * 100,
     los: t.avg_los,
     meds: t.avg_meds,
@@ -184,20 +204,20 @@ export const fetchQualityTrends = cache(async (filters: any = {}) => {
   }));
 });
 
-export const generateQualityInsights = cache(async (filters: any = {}) => {
+export const generateQualityInsights = cache(async (filters: AnalyticsFilterState = {}) => {
   const overview = await fetchQualityOverview(filters);
   const normFilters = normalizeFilters(filters);
-  const highRiskCount = QueryFactory.executeCount('hospital_readmissions', normFilters, `(readmitted = '<30' OR time_in_hospital >= 8 OR num_medications >= 20)`);
+  const highRiskCount = QueryFactory.executeCount('hospital_readmissions', normFilters, HIGH_RISK_ENCOUNTER_SQL);
   
   return coreGenerateQualityInsights(overview.readmissionRate, highRiskCount, "All Patients");
 });
 
-export const fetchLengthOfStayAnalytics = cache(async (filters: any = {}) => {
+export const fetchLengthOfStayAnalytics = cache(async (filters: AnalyticsFilterState = {}) => {
   const normFilters = normalizeFilters(filters);
   const { whereClause, params } = buildWhereClause(normFilters);
 
   const statsQuery = `SELECT AVG(time_in_hospital) as avg_los, MAX(time_in_hospital) as max_los, MIN(time_in_hospital) as min_los FROM hospital_readmissions ${whereClause}`;
-  const statsRaw = QueryFactory.executeCustomQuery<any[]>(statsQuery, params, [{ avg_los: 0, max_los: 0, min_los: 0 }]);
+  const statsRaw = QueryFactory.executeCustomQuery<LengthOfStayStatsRow[]>(statsQuery, params, [{ avg_los: 0, max_los: 0, min_los: 0 }]);
   const stats = {
     avg_los: statsRaw[0]?.avg_los || 0,
     max_los: statsRaw[0]?.max_los || 0,
@@ -223,7 +243,7 @@ export const fetchLengthOfStayAnalytics = cache(async (filters: any = {}) => {
   return { stats, distribution, topCohorts, lowestCohorts, outliersCount };
 });
 
-export const fetchClinicalRisk = cache(async (filters: any = {}) => {
+export const fetchClinicalRisk = cache(async (filters: AnalyticsFilterState = {}) => {
   const normFilters = normalizeFilters(filters);
   const { whereClause, params } = buildWhereClause(normFilters);
   
@@ -231,12 +251,7 @@ export const fetchClinicalRisk = cache(async (filters: any = {}) => {
 
   const query = `
     SELECT 
-      CASE 
-        WHEN (time_in_hospital > 7 OR number_emergency > 2 OR num_medications > 20) THEN 'Critical'
-        WHEN (time_in_hospital > 5 OR number_emergency > 0 OR num_medications > 15) THEN 'High'
-        WHEN (time_in_hospital > 3 OR num_medications > 10) THEN 'Medium'
-        ELSE 'Low'
-      END as risk_category,
+      ${ENCOUNTER_RISK_CASE_SQL} as risk_category,
       COUNT(*) as count
     FROM hospital_readmissions
     ${whereClause}
@@ -260,7 +275,7 @@ export const fetchClinicalRisk = cache(async (filters: any = {}) => {
   return { total, distribution };
 });
 
-export const fetchMedicationQuality = cache(async (filters: any = {}) => {
+export const fetchMedicationQuality = cache(async (filters: AnalyticsFilterState = {}) => {
   const normFilters = normalizeFilters(filters);
   const { whereClause, params } = buildWhereClause(normFilters);
 
@@ -286,11 +301,11 @@ export const fetchMedicationQuality = cache(async (filters: any = {}) => {
   };
 });
 
-export const fetchEmergencyInpatientAnalytics = cache(async (filters: any = {}) => {
+export const fetchEmergencyInpatientAnalytics = cache(async (filters: AnalyticsFilterState = {}) => {
   const normFilters = normalizeFilters(filters);
   const { whereClause, params } = buildWhereClause(normFilters);
 
-  const totalsRow = QueryFactory.executeCustomQuery<any[]>(`
+  const totalsRow = QueryFactory.executeCustomQuery<VisitTotalsRow[]>(`
     SELECT 
       SUM(number_emergency) as er, 
       SUM(number_inpatient) as inpatient, 

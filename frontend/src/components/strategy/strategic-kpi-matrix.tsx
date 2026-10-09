@@ -1,8 +1,9 @@
 import React from 'react';
+import type { fetchStrategicKpiMatrix } from '@/lib/strategyLogic';
 import { ActivitySquare, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 interface StrategicKpiMatrixProps {
-  data: any[];
+  data: Awaited<ReturnType<typeof fetchStrategicKpiMatrix>>;
 }
 
 export function StrategicKpiMatrix({ data }: StrategicKpiMatrixProps) {

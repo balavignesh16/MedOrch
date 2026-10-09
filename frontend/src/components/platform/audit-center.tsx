@@ -1,8 +1,9 @@
 import React from 'react';
-import { ShieldAlert, List } from 'lucide-react';
+import type { fetchAuditLogs } from '@/lib/platformLogic';
+import { ShieldAlert } from 'lucide-react';
 
 interface AuditCenterProps {
-  logs: any[];
+  logs: Awaited<ReturnType<typeof fetchAuditLogs>>;
 }
 
 export function AuditCenter({ logs }: AuditCenterProps) {

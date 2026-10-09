@@ -10,20 +10,26 @@ import { HighCostCohorts } from '@/components/financial/high-cost-cohorts';
 import { FinancialTrends } from '@/components/financial/financial-trends';
 import { CostBreakdown } from '@/components/financial/cost-breakdown';
 import { FinancialInsights } from '@/components/financial/financial-insights';
+import type {
+  getCostIntelligence,
+  getFinancialInsights,
+  getFinancialOverview,
+  getFinancialTrends,
+  getHighCostCohorts,
+  getResourceUtilization,
+} from '@/app/actions/financialDb';
 
 interface DashboardClientProps {
-  filters: any;
-  overviewData: any;
-  costIntellData: any;
-  resourceData: any;
-  cohortsData: any;
-  trendsData: any;
-  insightsData: any;
+  overviewData: Awaited<ReturnType<typeof getFinancialOverview>>;
+  costIntellData: Awaited<ReturnType<typeof getCostIntelligence>>;
+  resourceData: Awaited<ReturnType<typeof getResourceUtilization>>;
+  cohortsData: Awaited<ReturnType<typeof getHighCostCohorts>>;
+  trendsData: Awaited<ReturnType<typeof getFinancialTrends>>;
+  insightsData: Awaited<ReturnType<typeof getFinancialInsights>>;
   totalPatients: number;
 }
 
 export function DashboardClient({
-  filters,
   overviewData,
   costIntellData,
   resourceData,

@@ -5,9 +5,9 @@ export interface PredictionAuditLog {
   timestamp: string;
   modelVersion: string;
   confidence: number;
-  userFilters: any;
-  inputFeatures: any;
-  predictionOutput: any;
+  userFilters: Record<string, unknown>;
+  inputFeatures: unknown;
+  predictionOutput: unknown;
   explainabilityMetadata: ExplainabilityMetadata;
 }
 
@@ -15,10 +15,10 @@ export function generateAuditLog(
   predictionId: string,
   modelVersion: string,
   confidence: number,
-  inputFeatures: any,
-  predictionOutput: any,
+  inputFeatures: unknown,
+  predictionOutput: unknown,
   explainabilityMetadata: ExplainabilityMetadata,
-  userFilters: any = {}
+  userFilters: Record<string, unknown> = {}
 ): PredictionAuditLog {
   const audit = {
     predictionId,

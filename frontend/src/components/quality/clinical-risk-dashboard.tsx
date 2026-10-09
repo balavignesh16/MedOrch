@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Card } from '@/components/ui/card';
-import { AlertTriangle, ShieldCheck, ExternalLink } from 'lucide-react';
+import { ShieldCheck, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { useCrossFilter } from '@/lib/useCrossFilter';
 

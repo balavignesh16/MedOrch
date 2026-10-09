@@ -1,4 +1,4 @@
-import { getModelMetadata, ModelMetadata } from './modelRegistry';
+import { getModelMetadata } from './modelRegistry';
 
 export interface MonitoringSummary {
   modelName: string;

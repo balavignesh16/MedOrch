@@ -3,9 +3,12 @@
 import grpc
 import warnings
 
-import healthcare_analytics_pb2 as healthcare__analytics__pb2
+try:
+    from . import healthcare_analytics_pb2 as healthcare__analytics__pb2
+except ImportError:
+    import healthcare_analytics_pb2 as healthcare__analytics__pb2
 
-GRPC_GENERATED_VERSION = '1.82.1'
+GRPC_GENERATED_VERSION = '1.83.0'
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
 

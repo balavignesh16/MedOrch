@@ -1,4 +1,4 @@
-import { Insight } from './types';
+import { AnalyticsFilterState, Insight, StrategicInsight } from './types';
 import { MODULES, SEVERITY } from './constants';
 import { HEALTH_THRESHOLDS } from './config';
 
@@ -11,8 +11,8 @@ export function generateHealthIndexInsights(healthIndex: number): Insight[] {
       severity: SEVERITY.CRITICAL,
       confidence: 95,
       supportingMetric: `${healthIndex.toFixed(0)}/100 Index Score`,
-      businessImpact: "High likelihood of regulatory penalties and poor patient outcomes.",
-      recommendedAction: "Deploy care management teams to high-risk cohorts immediately.",
+      businessImpact: "The configured demonstration index is below its internal review threshold.",
+      recommendedAction: "Review the underlying encounter-level metrics; do not use this heuristic for clinical decisions.",
       relatedDashboard: MODULES.RISK_SEGMENTATION
     });
   } else {
@@ -38,23 +38,24 @@ export function generateDiseaseInsights(topDisease: { disease: string, riskLevel
     severity: topDisease.riskLevel === 'Critical' ? SEVERITY.CRITICAL : topDisease.riskLevel === 'High' ? SEVERITY.WARNING : SEVERITY.INFO,
     confidence: 88,
     supportingMetric: "Highest frequency in selected cohort",
-    clinicalImpact: "Driving majority of inpatient utilization and resource consumption.",
-    recommendedAction: "Review standardized care pathways for this diagnosis.",
+    clinicalImpact: "This diagnosis has the highest encounter frequency in the selected cohort.",
+    recommendedAction: "Review the source encounter distribution before drawing operational conclusions.",
     relatedDashboard: MODULES.DISEASE_INTELLIGENCE
   }];
 }
 
 export function generateQualityInsights(readmissionRate: number, highRiskCount: number, topReadmissionCohort: string): Insight[] {
+  void topReadmissionCohort;
   const insights: Insight[] = [];
 
   if (highRiskCount > 0) {
     insights.push({
-      title: "High Risk Population Escalation",
+      title: "High Risk Encounter Heuristic",
       severity: SEVERITY.CRITICAL,
       confidence: 95,
-      supportingMetric: `${highRiskCount.toLocaleString()} High Risk Patients`,
-      clinicalImpact: "Significantly elevated risk of 30-day readmissions and mortality.",
-      recommendedAction: "Trigger immediate multidisciplinary care review for High Risk cohort.",
+      supportingMetric: `${highRiskCount.toLocaleString()} High Risk Encounters`,
+      clinicalImpact: "These encounters match the configured LOS, emergency-use, or medication-count rule.",
+      recommendedAction: "Review the underlying records; this heuristic is not a clinical risk prediction.",
       affectedPatients: highRiskCount,
       relatedDashboard: MODULES.CLINICAL_RISK
     });
@@ -62,23 +63,23 @@ export function generateQualityInsights(readmissionRate: number, highRiskCount: 
 
   if (readmissionRate > 15) {
     insights.push({
-      title: "Readmission Target Breached",
+      title: "Readmission Proxy Above Demo Reference",
       severity: SEVERITY.WARNING,
       confidence: 92,
-      supportingMetric: `${readmissionRate.toFixed(1)}% Readmission`,
-      clinicalImpact: "Failing to meet CMS readmission targets for the current quarter.",
-      recommendedAction: "Audit discharge planning protocols for the Top 10 longest stay cohorts.",
-      affectedPatients: Math.floor(highRiskCount * 1.2), // Rough heuristic
+      supportingMetric: `${readmissionRate.toFixed(1)}% <30-Day Proxy`,
+      clinicalImpact: "The source category exceeds the configured 15% demonstration reference.",
+      recommendedAction: "Inspect the contributing encounter categories; no regulatory conclusion is supported.",
+      affectedPatients: highRiskCount,
       relatedDashboard: MODULES.READMISSION_INTELLIGENCE
     });
   } else {
     insights.push({
-      title: "Readmission Rates Stable",
+      title: "Readmission Proxy Within Demo Reference",
       severity: SEVERITY.POSITIVE,
       confidence: 92,
-      supportingMetric: `${readmissionRate.toFixed(1)}% Readmission`,
-      clinicalImpact: "Meeting or exceeding CMS readmission targets.",
-      recommendedAction: "Maintain current discharge planning protocols.",
+      supportingMetric: `${readmissionRate.toFixed(1)}% <30-Day Proxy`,
+      clinicalImpact: "The source category is within the configured 15% demonstration reference.",
+      recommendedAction: "Continue monitoring the source data without inferring regulatory performance.",
       affectedPatients: highRiskCount,
       relatedDashboard: MODULES.READMISSION_INTELLIGENCE
     });
@@ -98,32 +99,32 @@ export function generateFinancialInsights(metrics: {
   const insights: Insight[] = [];
 
   insights.push({
-    title: "Readmission Financial Penalty",
+    title: "Estimated Readmission Weight",
     severity: metrics.readmissionCost > (metrics.totalCost * 0.15) ? SEVERITY.CRITICAL : SEVERITY.WARNING,
     confidence: 96,
     supportingMetric: `$${(metrics.readmissionCost / 1000).toFixed(1)}k Readmission Cost`,
-    businessImpact: "Avoidable readmissions are consuming a disproportionate share of the operational budget.",
-    recommendedAction: "Implement aggressive transition-of-care programs for highest risk cohorts.",
+    businessImpact: "This is the readmission component of the synthetic relative-cost model.",
+    recommendedAction: "Review model inputs; do not interpret this value as an actual financial penalty.",
     relatedDashboard: "Financial Dashboard"
   });
 
   insights.push({
-    title: "Emergency Utilization Excess",
+    title: "Estimated Emergency Utilization Weight",
     severity: metrics.erCost > (metrics.totalCost * 0.1) ? SEVERITY.WARNING : SEVERITY.INFO,
     confidence: 90,
     supportingMetric: `$${(metrics.erCost / 1000).toFixed(1)}k ER Utilization Cost`,
-    businessImpact: "High ER utilization indicates failures in primary care and outpatient management.",
-    recommendedAction: "Expand telehealth and urgent care diversion programs.",
+    businessImpact: "This is the emergency-visit component of the synthetic relative-cost model.",
+    recommendedAction: "Review recorded utilization before considering operational action.",
     relatedDashboard: "Resource Utilization"
   });
 
   insights.push({
-    title: "Polypharmacy Financial Burden",
+    title: "Estimated Medication Weight",
     severity: metrics.polypharmacyCost > (metrics.totalCost * 0.05) ? SEVERITY.WARNING : SEVERITY.INFO,
     confidence: 88,
     supportingMetric: `$${(metrics.polypharmacyCost / 1000).toFixed(1)}k Polypharmacy Cost`,
-    businessImpact: "Excessive medication regimens drive up pharmacy costs and adverse event risks.",
-    recommendedAction: "Initiate pharmacist-led medication reconciliation for patients with >15 meds.",
+    businessImpact: "This is the medication-count component of the synthetic relative-cost model.",
+    recommendedAction: "Review source records; this estimate does not establish cost or clinical risk.",
     relatedDashboard: "Resource Utilization"
   });
 
@@ -131,9 +132,9 @@ export function generateFinancialInsights(metrics: {
     title: "High-Cost Cohort Concentration",
     severity: SEVERITY.CRITICAL,
     confidence: 98,
-    supportingMetric: `${metrics.highRiskCount.toLocaleString()} High Risk Patients`,
-    businessImpact: "A small percentage of patients are responsible for the vast majority of healthcare expenditure.",
-    recommendedAction: "Enroll top 5% highest cost patients in intensive care management.",
+    supportingMetric: `${metrics.highRiskCount.toLocaleString()} High Risk Encounters`,
+    businessImpact: "These encounters match the configured utilization heuristic.",
+    recommendedAction: "Inspect encounter-level drivers; no expenditure concentration is established.",
     relatedDashboard: "High Cost Cohorts"
   });
 
@@ -142,83 +143,25 @@ export function generateFinancialInsights(metrics: {
     severity: metrics.avgCost > 3000 ? SEVERITY.CRITICAL : metrics.avgCost > 2000 ? SEVERITY.WARNING : SEVERITY.POSITIVE,
     confidence: 94,
     supportingMetric: `$${metrics.avgCost.toFixed(0)} Avg Cost/Encounter`,
-    businessImpact: "Overall encounter costs determine the financial sustainability of value-based contracts.",
-    recommendedAction: "Review standard clinical pathways for the top 3 most common diagnoses.",
+    businessImpact: "This score summarizes configured synthetic cost weights.",
+    recommendedAction: "Use only for demonstration and model comparison.",
     relatedDashboard: "Cost Intelligence"
   });
 
   return insights;
 }
 
-export function generateOperationalInsights(filters: any): Insight[] {
-  const insights: Insight[] = [];
-
-  // Insight 1: Capacity Bottleneck
-  insights.push({
-    title: 'Emergency Department Congestion',
-    severity: SEVERITY.CRITICAL,
-    confidence: 94,
-    supportingMetric: '18% Drop-off Rate in ER',
-    operationalImpact: 'Increased wait times leading to patient elopement and delayed critical care.',
-    rootCause: 'Shortage of available inpatient telemetry beds blocking ER admissions.',
-    recommendedAction: 'Activate surge protocols and expedite inpatient discharges.',
-    relatedDashboard: 'Patient Flow',
-    affectedPopulation: 'High Risk Trauma and Cardiac'
-  });
-
-  // Insight 2: Resource Underutilization
-  insights.push({
-    title: 'Operating Room Underutilization',
-    severity: SEVERITY.WARNING,
-    confidence: 89,
-    supportingMetric: '62% OR Capacity',
-    operationalImpact: 'Lost revenue potential and extended waitlists for elective procedures.',
-    rootCause: 'Late cancellations and inefficient block scheduling.',
-    recommendedAction: 'Implement dynamic block reallocation 48 hours prior.',
-    relatedDashboard: 'Resource Utilization',
-    affectedPopulation: 'Elective Surgery Cohorts'
-  });
-
-  // Insight 3: Length of Stay Efficiency
-  insights.push({
-    title: 'Length of Stay Efficiency Improvement',
-    severity: SEVERITY.POSITIVE,
-    confidence: 91,
-    supportingMetric: '4.2 Days Avg LOS',
-    operationalImpact: 'Increased throughput and availability of 12 additional beds daily.',
-    rootCause: 'Successful implementation of early discharge planning protocols.',
-    recommendedAction: 'Standardize early discharge protocols across all remaining wards.',
-    relatedDashboard: 'Capacity Dashboard',
-    affectedPopulation: 'General Medicine'
-  });
-
-  // Insight 4: Staffing Risk
-  insights.push({
-    title: 'Weekend Staffing Risk',
-    severity: SEVERITY.WARNING,
-    confidence: 85,
-    supportingMetric: '1:8 Nurse to Patient Ratio',
-    operationalImpact: 'Higher risk of adverse events and delayed medication administration.',
-    rootCause: 'Unexpected absenteeism in Med-Surg units during weekends.',
-    recommendedAction: 'Deploy cross-trained float pool staff to Med-Surg.',
-    relatedDashboard: 'Capacity Dashboard',
-    affectedPopulation: 'Med-Surg Inpatients'
-  });
-
-  // Insight 5: Discharge Bottleneck
-  insights.push({
-    title: 'Post-Acute Placement Delays',
+export function generateOperationalInsights(filters: AnalyticsFilterState): Insight[] {
+  void filters;
+  return [{
+    title: 'Operational Scenario Demonstration',
     severity: SEVERITY.INFO,
-    confidence: 88,
-    supportingMetric: '2.4 Days Excess LOS',
-    operationalImpact: 'Reduced inpatient throughput and increased uncompensated care costs.',
-    rootCause: 'Lack of available beds in regional Skilled Nursing Facilities (SNFs).',
-    recommendedAction: 'Expand preferred provider network for post-acute care.',
-    relatedDashboard: 'Bottleneck Intelligence',
-    affectedPopulation: 'Elderly / Orthopedic'
-  });
-
-  return insights;
+    confidence: 0,
+    supportingMetric: 'No live operational feed connected',
+    operationalImpact: 'Capacity, flow, staffing, and delay scenarios are synthetic.',
+    recommendedAction: 'Connect validated operational sources before making operational decisions.',
+    relatedDashboard: 'Operational Dashboard',
+  }];
 }
 
 export interface PredictiveInsight {
@@ -232,7 +175,8 @@ export interface PredictiveInsight {
   relatedDashboard: string;
 }
 
-export function generatePredictiveInsights(filters: any): PredictiveInsight[] {
+export function generatePredictiveInsights(filters: AnalyticsFilterState): PredictiveInsight[] {
+  void filters;
   const insights: PredictiveInsight[] = [];
 
   insights.push({
@@ -293,7 +237,8 @@ export function generatePredictiveInsights(filters: any): PredictiveInsight[] {
   return insights;
 }
 
-export function generateAdministrativeInsights(filters: any): Insight[] {
+export function generateAdministrativeInsights(filters: AnalyticsFilterState): Insight[] {
+  void filters;
   const insights: Insight[] = [];
 
   insights.push({
@@ -354,7 +299,7 @@ export function generateAdministrativeInsights(filters: any): Insight[] {
   return insights;
 }
 
-export function generateStrategicInsights(): any[] {
+export function generateStrategicInsights(): StrategicInsight[] {
   return [
     {
       title: 'Targeted Readmission Reduction',

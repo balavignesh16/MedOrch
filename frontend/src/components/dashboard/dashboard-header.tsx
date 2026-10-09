@@ -1,6 +1,6 @@
 import React from 'react';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
-import { Bell, Moon, User, Search, Settings } from 'lucide-react';
+import { Bell, User, Search, Settings } from 'lucide-react';
 
 interface DashboardHeaderProps {
   title: string;
@@ -8,7 +8,7 @@ interface DashboardHeaderProps {
   showDatePicker?: boolean;
 }
 
-export function DashboardHeader({ title, description, showDatePicker = true }: DashboardHeaderProps) {
+export function DashboardHeader({ title, description }: DashboardHeaderProps) {
   return (
     <>
       <header className="mb-8 relative z-50">

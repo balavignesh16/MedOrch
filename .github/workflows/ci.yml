@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  secret-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Scan repository and history with Gitleaks
+        run: >-
+          docker run --rm
+          -v "${{ github.workspace }}:/repo"
+          ghcr.io/gitleaks/gitleaks:v8.29.1
+          detect --source=/repo --redact --no-banner --log-opts="--all"
+      - name: Reject known NVIDIA credential patterns
+        run: |
+          if git grep -n 'nvapi-'; then
+            echo 'Potential NVIDIA credential found in tracked files.' >&2
+            exit 1
+          fi
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm audit
+
+  engine:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: engine/requirements-dev.txt
+      - run: python -m pip install -r engine/requirements-dev.txt -r engine/requirements-ml.txt
+      - run: python -m pytest engine
+
+  gateway:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: gateway
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: gateway/go.mod
+          cache-dependency-path: gateway/go.sum
+      - run: go test ./...
+
+  proto-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: gateway/go.mod
+      - run: python -m pip install -r engine/requirements.txt
+      - run: go install google.golang.org/protobuf/cmd/protoc-gen-go@latest google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+      - run: echo "$HOME/go/bin" >> "$GITHUB_PATH"
+      - run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+      - run: bash scripts/generate_protos.sh
+      - name: Fail if generated files differ from the committed ones
+        run: git diff --exit-code -- engine/healthcare_analytics_pb2.py engine/healthcare_analytics_pb2_grpc.py gateway/pb/

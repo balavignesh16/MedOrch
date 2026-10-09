@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { ArrowRight, AlertTriangle, Users, Clock, AlertCircle } from 'lucide-react';
+import { ArrowRight, AlertTriangle, Users } from 'lucide-react';
 import Link from 'next/link';
 
 interface FlowStage {
@@ -25,10 +25,11 @@ export function PatientFlowDashboard({ flowData }: PatientFlowDashboardProps) {
       <CardHeader className="border-b border-white/5">
         <CardTitle className="text-lg flex items-center gap-2">
           <Users className="h-5 w-5 text-brand-cyan" />
-          Patient Flow Dynamics
+          Synthetic Patient Flow Scenario
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6 overflow-x-auto">
+        <p className="text-xs text-warning mb-4">Volumes, times, queues, drop-off rates, and capacity values are illustrative estimates.</p>
         <div className="flex items-start min-w-[1000px] gap-2">
           {flowData.map((stage, i) => (
             <React.Fragment key={stage.stage}>

@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { PredictiveKpiGrid } from '@/components/predictive/predictive-kpi-grid';
 import { HighRiskPatients } from '@/components/predictive/high-risk-patients';
 import { PredictionDistribution } from '@/components/predictive/prediction-distribution';
@@ -13,20 +12,27 @@ import { ModelExplainability } from '@/components/predictive/model-explainabilit
 import { PredictionLifecycle } from '@/components/predictive/prediction-lifecycle';
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 import { FilterChips } from '@/components/dashboard/filter-chips';
+import type {
+  getDemandForecast,
+  getHighRiskPatients,
+  getInterventions,
+  getPredictionDistribution,
+  getPredictionOverview,
+  getPredictiveInsights,
+} from '@/app/actions/predictiveDb';
+import type { ModelMetadata } from '@/lib/ml/modelMetadata';
 
 interface DashboardClientProps {
-  filters: any;
-  overview: any;
-  highRiskPatients: any[];
-  predictionDistribution: any[];
-  demandForecast: any[];
-  interventions: any[];
-  insights: any[];
-  modelMetadata: any;
+  overview: Awaited<ReturnType<typeof getPredictionOverview>>;
+  highRiskPatients: Awaited<ReturnType<typeof getHighRiskPatients>>;
+  predictionDistribution: Awaited<ReturnType<typeof getPredictionDistribution>>;
+  demandForecast: Awaited<ReturnType<typeof getDemandForecast>>;
+  interventions: Awaited<ReturnType<typeof getInterventions>>;
+  insights: Awaited<ReturnType<typeof getPredictiveInsights>>;
+  modelMetadata: ModelMetadata;
 }
 
 export const DashboardClient: React.FC<DashboardClientProps> = ({
-  filters,
   overview,
   highRiskPatients,
   predictionDistribution,

@@ -1,0 +1,34 @@
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Python
+**/__pycache__/
+**/*.py[cod]
+**/.pytest_cache/
+**/.coverage
+
+# JavaScript
+**/node_modules/
+**/.next/
+**/coverage/
+**/*.tsbuildinfo
+
+# Local runtime output
+*.log
+tmp/
+
+# Privacy-aware audit log (generated at runtime; never committed — see
+# engine/audit_log.py and .env.example's AI_AUDIT_DB_PATH documentation)
+database/audit.db
+
+# Raw source CSV for the predictive model: not used by any code at runtime
+# or training time (engine/ml/train_readmission_model.py reads directly
+# from database/medorch.db instead); kept out of version control to avoid
+# a redundant 19MB file.
+/diabetic_data.csv
+

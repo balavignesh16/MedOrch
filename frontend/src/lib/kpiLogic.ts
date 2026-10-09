@@ -9,18 +9,17 @@ import {
   SummaryInsight
 } from './analytics';
 
-export type { FilterState };
+export type { FilterState, SummaryInsight };
 
 // --------------------------------------------------------------------------
 // Cached Data Fetchers (Performance Enhancement 6)
 // --------------------------------------------------------------------------
 
-export const fetchRawKpiMetrics = cache(async (filters: any = {}) => {
+export const fetchRawKpiMetrics = cache(async (filters: FilterState = {}) => {
   const normFilters = normalizeFilters(filters);
   const { whereClause, params } = buildWhereClause(normFilters);
 
-  const totalEncounters = QueryFactory.executeCount('hospital_readmissions', normFilters);
-  const agg = QueryFactory.executeAggregation('hospital_readmissions', normFilters);
+  const coreMetrics = QueryFactory.executeCoreMetrics('hospital_readmissions', normFilters);
 
   const readmissionRow = QueryFactory.executeCustomQuery<{ readmitted: string, count: number }[]>(
     `SELECT readmitted, COUNT(*) as count FROM hospital_readmissions ${whereClause} GROUP BY readmitted`,
@@ -41,8 +40,9 @@ export const fetchRawKpiMetrics = cache(async (filters: any = {}) => {
   );
 
   return {
-    totalEncounters,
-    avgTimeInHospital: agg.avg_time || 0,
+    totalEncounters: coreMetrics.totalEncounters,
+    avgTimeInHospital: coreMetrics.avgLengthOfStay,
+    readmissionProxyRate: coreMetrics.readmissionProxyRate,
     readmissionBreakdown: readmissionRow,
     ageDistribution,
     medsByReadmission

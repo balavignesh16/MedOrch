@@ -24,6 +24,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             {/* Subtle Inner Glow */}
             <div className="absolute inset-0 bg-gradient-to-b from-white/[0.03] to-transparent pointer-events-none"></div>
             <div className="relative z-10 p-6 md:p-10">
+              <div className="mb-5 rounded-xl border border-amber-400/20 bg-amber-400/10 px-4 py-2 text-center text-xs font-semibold text-amber-200">
+                Development demo · Bundled de-identified and synthetic data · Not for clinical decisions
+              </div>
               {children}
             </div>
          </div>

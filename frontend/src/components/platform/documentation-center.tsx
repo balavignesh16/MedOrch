@@ -1,8 +1,9 @@
 import React from 'react';
+import type { fetchDocumentationDirectory } from '@/lib/platformLogic';
 import { BookOpen, FileText, ChevronRight } from 'lucide-react';
 
 interface DocumentationCenterProps {
-  docs: any[];
+  docs: Awaited<ReturnType<typeof fetchDocumentationDirectory>>;
 }
 
 export function DocumentationCenter({ docs }: DocumentationCenterProps) {

@@ -10,20 +10,27 @@ import { BottleneckIntelligence } from '@/components/operations/bottleneck-intel
 import { OperationalResources } from '@/components/operations/operational-resources';
 import { OperationalTrends } from '@/components/operations/operational-trends';
 import { OperationalInsights } from '@/components/operations/operational-insights';
+import type {
+  getBottlenecks,
+  getCapacityMetrics,
+  getOperationalInsights,
+  getOperationalOverview,
+  getOperationalResources,
+  getOperationalTrends,
+  getPatientFlow,
+} from '@/app/actions/operationalDb';
 
 interface DashboardClientProps {
-  filters: any;
-  overviewData: any;
-  flowData: any;
-  resourcesData: any;
-  capacityData: any;
-  bottlenecksData: any;
-  trendsData: any;
-  insightsData: any;
+  overviewData: Awaited<ReturnType<typeof getOperationalOverview>>;
+  flowData: Awaited<ReturnType<typeof getPatientFlow>>;
+  resourcesData: Awaited<ReturnType<typeof getOperationalResources>>;
+  capacityData: Awaited<ReturnType<typeof getCapacityMetrics>>;
+  bottlenecksData: Awaited<ReturnType<typeof getBottlenecks>>;
+  trendsData: Awaited<ReturnType<typeof getOperationalTrends>>;
+  insightsData: Awaited<ReturnType<typeof getOperationalInsights>>;
 }
 
 export function DashboardClient({ 
-  filters, 
   overviewData, 
   flowData,
   resourcesData,

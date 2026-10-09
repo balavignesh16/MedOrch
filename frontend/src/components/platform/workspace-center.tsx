@@ -1,8 +1,9 @@
 import React from 'react';
+import type { fetchSavedWorkspaces } from '@/lib/platformLogic';
 import { LayoutTemplate, Bookmark, Filter, PieChart, Star } from 'lucide-react';
 
 interface WorkspaceCenterProps {
-  workspaces: any[];
+  workspaces: Awaited<ReturnType<typeof fetchSavedWorkspaces>>;
 }
 
 export function WorkspaceCenter({ workspaces }: WorkspaceCenterProps) {

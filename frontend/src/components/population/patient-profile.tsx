@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Activity, AlertCircle, Clock, Pill, Cross, ActivitySquare, HeartPulse } from 'lucide-react';
+import { User, Activity, AlertCircle, Clock, Pill, ActivitySquare, HeartPulse } from 'lucide-react';
 
 interface PatientProfileProps {
   profile: {

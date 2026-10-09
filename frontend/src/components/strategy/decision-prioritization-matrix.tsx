@@ -1,8 +1,9 @@
 import React from 'react';
+import type { fetchDecisionPrioritizationMatrix } from '@/lib/strategyLogic';
 import { BarChart2 } from 'lucide-react';
 
 interface DecisionPrioritizationMatrixProps {
-  data: any[];
+  data: Awaited<ReturnType<typeof fetchDecisionPrioritizationMatrix>>;
 }
 
 export function DecisionPrioritizationMatrix({ data }: DecisionPrioritizationMatrixProps) {

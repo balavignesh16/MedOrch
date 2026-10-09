@@ -21,14 +21,60 @@ message Citation {
   string snippet = 3;
 }
 
+// Terminal or intermediate outcome of a single ProcessQuery stream.
+// ANALYZING is used for intermediate, non-final events only.
+enum ExecutionStatus {
+  EXECUTION_STATUS_UNSPECIFIED = 0;
+  EXECUTION_STATUS_ANALYZING = 1;
+  EXECUTION_STATUS_OK = 2;
+  EXECUTION_STATUS_UNSUPPORTED = 3;
+  EXECUTION_STATUS_REJECTED = 4;
+  EXECUTION_STATUS_ERROR = 5;
+  EXECUTION_STATUS_TIMEOUT = 6;
+  EXECUTION_STATUS_CANCELLED = 7;
+}
+
 message InsightResponse {
   string response_id = 1;
   string summary_text = 2;
-  
+
   // JSON payload containing the numerical data for D3/Recharts
   // e.g., {"metrics": {"risk_increase": 15.2, "cost_impact": 45000}}
-  string visualization_data_json = 3; 
-  
+  string visualization_data_json = 3;
+
   repeated Citation research_citations = 4;
-  bool pii_scrubbed = 5; // Cyber GRC flag
+
+  // Legacy compatibility field. True only once the complete outbound payload
+  // (summary, visualization JSON, citations, errors) has been inspected and
+  // contains no remaining detected identifiers. Superseded by pii_detected /
+  // pii_redacted below; kept for backward compatibility during migration.
+  bool pii_scrubbed = 5;
+
+  // The validated SQL statement that was actually executed against the
+  // read-only database. This is never raw, unvalidated model output.
+  string executed_sql = 6;
+
+  ExecutionStatus execution_status = 7;
+
+  // Identifier of the model that produced this response, e.g.
+  // "meta/llama-3.1-70b-instruct". Never a chain-of-thought or reasoning trace.
+  string model_version = 8;
+
+  // Correlates this response to a row in the privacy-aware audit log.
+  string audit_id = 9;
+
+  // True on exactly one terminal event per request stream.
+  bool is_final = 10;
+
+  // Stable machine-readable error identifier for the client. Never a raw
+  // exception message, stack trace, database path, or credential.
+  string error_code = 11;
+
+  // True when a prohibited identifier pattern (e.g. patient_nbr,
+  // encounter_id) was found anywhere in the outbound payload.
+  bool pii_detected = 12;
+
+  // True when all detected identifiers were successfully removed before
+  // this response was sent.
+  bool pii_redacted = 13;
 }

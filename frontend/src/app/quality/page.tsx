@@ -71,7 +71,7 @@ export default async function QualityPage(props: QualityPageProps) {
         </div>
         <div className="space-y-6">
           <LosAnalytics data={losData} />
-          <UtilizationAnalysis data={utilizationData} totalPatients={overview.totalPatients} />
+          <UtilizationAnalysis data={utilizationData} totalEncounters={overview.totalPatients} />
         </div>
       </div>
 

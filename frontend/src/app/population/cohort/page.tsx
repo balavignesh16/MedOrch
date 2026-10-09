@@ -1,19 +1,20 @@
 import React from 'react';
 import Link from 'next/link';
-import { ChevronLeft, Users, FileText } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import { CommandPalette } from '@/components/ui/command-palette';
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 import { DashboardFooter } from '@/components/dashboard/dashboard-footer';
 import { FilterChips } from '@/components/dashboard/filter-chips';
 import { getCohortList } from '@/app/actions/populationDb';
 import { CohortTable } from '@/components/population/cohort-table';
+import { flattenSearchParams, RawSearchParams } from '@/lib/searchParams';
 
 export const dynamic = 'force-dynamic';
 
-export default async function CohortDrilldownPage(props: { searchParams: Promise<any> }) {
+export default async function CohortDrilldownPage(props: { searchParams: Promise<RawSearchParams> }) {
   const searchParams = await props.searchParams;
-  const safeParams = searchParams ? Object.fromEntries(Object.entries(searchParams)) : {};
-  const queryString = new URLSearchParams(safeParams as any).toString();
+  const safeParams = flattenSearchParams(searchParams);
+  const queryString = new URLSearchParams(safeParams).toString();
   const backUrl = queryString ? `/population?${queryString}` : '/population';
 
   const page = parseInt(safeParams.page || '1', 10);

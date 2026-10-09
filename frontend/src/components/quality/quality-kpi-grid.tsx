@@ -1,9 +1,12 @@
 import React from 'react';
 import { KpiCard } from '@/components/dashboard/kpi-card';
-import { Activity, Users, Clock, AlertTriangle, Pill, ShieldCheck, FileText, ArrowRight } from 'lucide-react';
+import { Activity, Clock, AlertTriangle, Pill, ShieldCheck, FileText, ArrowRight } from 'lucide-react';
+import type { fetchQualityOverview } from '@/lib/qualityLogic';
+
+const BUNDLED_METADATA = { lastUpdated: 'Bundled dataset', dataSource: 'De-identified demo data', refreshPolicy: 'On page load', confidence: 'Derived', target: 'Demo only' };
 
 interface QualityKpiGridProps {
-  overview: any;
+  overview: Awaited<ReturnType<typeof fetchQualityOverview>>;
 }
 
 export function QualityKpiGrid({ overview }: QualityKpiGridProps) {
@@ -19,7 +22,7 @@ export function QualityKpiGrid({ overview }: QualityKpiGridProps) {
         <span className="text-brand-cyan font-medium">{target}</span>
       </div>
       <div className="flex justify-between border-b border-white/10 pb-1">
-        <span className="text-white/50">Benchmark (CMS/HEDIS)</span>
+        <span className="text-white/50">Configured demo reference</span>
         <span className="text-white/70">{benchmark}</span>
       </div>
       <div className="flex justify-between border-b border-white/10 pb-1">
@@ -43,7 +46,7 @@ export function QualityKpiGrid({ overview }: QualityKpiGridProps) {
         value={overview.score}
         status={overview.score >= 90 ? 'Excellent' : overview.score >= 75 ? 'Good' : overview.score >= 60 ? 'Watch' : 'Critical'}
         icon={<ShieldCheck className="h-5 w-5" />}
-        metadata={{ lastUpdated: 'Live', dataSource: 'Risk Engine', refreshPolicy: 'Real-time', confidence: '99%', target: '100' }}
+        metadata={{ lastUpdated: 'Bundled dataset', dataSource: 'Rule-based demo score', refreshPolicy: 'On page load', confidence: 'Not validated', target: 'Demo only' }}
         popoverContent={
           <div className="space-y-2">
             <div className="flex justify-between border-b border-white/10 pb-2 mb-2">
@@ -54,7 +57,7 @@ export function QualityKpiGrid({ overview }: QualityKpiGridProps) {
             </div>
             <div className="text-white/90 font-medium border-b border-white/10 pb-2 mb-2 flex justify-between">
               <span>Score Breakdown (Max 100)</span>
-              <span className="text-white/50 text-[10px] uppercase">Live</span>
+              <span className="text-white/50 text-[10px] uppercase">Demo heuristic</span>
             </div>
             <div className="flex justify-between">
               <span className="text-white/50">Base Score</span>
@@ -89,47 +92,47 @@ export function QualityKpiGrid({ overview }: QualityKpiGridProps) {
       />
 
       <KpiCard
-        title="Readmission Rate"
+        title="<30-Day Readmission Proxy"
         value={`${overview.readmissionRate.toFixed(1)}%`}
         status={overview.readmissionRate > 15 ? 'Critical' : overview.readmissionRate > 10 ? 'Watch' : 'Good'}
         icon={<Activity className="h-5 w-5" />}
-        metadata={{ lastUpdated: 'Live', dataSource: 'EMR', refreshPolicy: 'Real-time', confidence: '99%', target: '< 10%' }}
+        metadata={{ lastUpdated: 'Bundled dataset', dataSource: 'De-identified demo data', refreshPolicy: 'On page load', confidence: 'Source category', target: '< 10%' }}
         popoverContent={renderBenchmarkPopover(
           `${overview.readmissionRate.toFixed(1)}%`,
           '< 10.0%',
-          '15.2% (National Avg)',
+          '15% configured reference',
           `${(overview.readmissionRate - 10).toFixed(1)}% from target`,
-          'High readmission rates incur CMS penalties and indicate poor care transitions.'
+          'This source-category proxy cannot establish regulatory performance or care quality.'
         )}
       />
 
       <KpiCard
         title="Avg Length of Stay"
-        value={`${overview.avgLos.toFixed(1)}d`}
-        status={overview.avgLos > 5 ? 'Critical' : overview.avgLos > 4 ? 'Watch' : 'Good'}
+        value={overview.avgLos === null ? 'N/A' : `${overview.avgLos.toFixed(1)}d`}
+        status={overview.avgLos === null ? 'Watch' : overview.avgLos > 5 ? 'Critical' : overview.avgLos > 4 ? 'Watch' : 'Good'}
         icon={<Clock className="h-5 w-5" />}
-        metadata={{ lastUpdated: 'Live', dataSource: 'EMR', refreshPolicy: 'Real-time', confidence: '99%', target: '< 4.0d' }}
+        metadata={{ lastUpdated: 'Bundled dataset', dataSource: 'De-identified demo data', refreshPolicy: 'On page load', confidence: 'Derived', target: '< 4.0d' }}
         popoverContent={renderBenchmarkPopover(
-          `${overview.avgLos.toFixed(1)}d`,
+          overview.avgLos === null ? 'N/A' : `${overview.avgLos.toFixed(1)}d`,
           '< 4.0d',
-          '4.5d (Peer Group)',
-          `${(overview.avgLos - 4).toFixed(1)}d from target`,
+          '4.5d configured reference',
+          overview.avgLos === null ? 'No valid LOS records' : `${(overview.avgLos - 4).toFixed(1)}d from target`,
           'Prolonged LOS increases risk of hospital-acquired infections and resource constraints.'
         )}
       />
 
       <KpiCard
-        title="High Risk Patients"
+        title="High Risk Encounters"
         value={`${overview.highRiskPercent.toFixed(1)}%`}
         status={overview.highRiskPercent > 25 ? 'Critical' : 'Watch'}
         icon={<AlertTriangle className="h-5 w-5" />}
-        metadata={{ lastUpdated: 'Live', dataSource: 'Risk Engine', refreshPolicy: 'Real-time', confidence: '95%', target: '< 20%' }}
+        metadata={{ lastUpdated: 'Bundled dataset', dataSource: 'Rule-based encounter heuristic', refreshPolicy: 'On page load', confidence: 'Not validated', target: 'Demo only' }}
         popoverContent={renderBenchmarkPopover(
           `${overview.highRiskPercent.toFixed(1)}%`,
           '< 20.0%',
           '22.5% (Regional Avg)',
           `${(overview.highRiskPercent - 20).toFixed(1)}% from target`,
-          'High risk patients account for 80% of preventable readmissions and excessive costs.'
+          'This percentage reports encounters matching configured utilization thresholds.'
         )}
       />
 
@@ -138,11 +141,11 @@ export function QualityKpiGrid({ overview }: QualityKpiGridProps) {
         value={overview.erVisits.toFixed(1)}
         status={overview.erVisits > 1.5 ? 'Critical' : 'Good'}
         icon={<Activity className="h-5 w-5" />}
-        metadata={{ lastUpdated: 'Live', dataSource: 'Admissions', refreshPolicy: 'Real-time', confidence: '99%', target: '< 1.0' }}
+        metadata={BUNDLED_METADATA}
         popoverContent={renderBenchmarkPopover(
           overview.erVisits.toFixed(1),
           '< 1.0',
-          '1.2 (National Avg)',
+          '1.2 configured reference',
           `${(overview.erVisits - 1).toFixed(1)} from target`,
           'Frequent ER utilization suggests failed ambulatory care and primary care gaps.'
         )}
@@ -153,11 +156,11 @@ export function QualityKpiGrid({ overview }: QualityKpiGridProps) {
         value={overview.avgProcedures.toFixed(1)}
         status={'Good'}
         icon={<FileText className="h-5 w-5" />}
-        metadata={{ lastUpdated: 'Live', dataSource: 'EMR', refreshPolicy: 'Real-time', confidence: '99%', target: 'N/A' }}
+        metadata={BUNDLED_METADATA}
         popoverContent={renderBenchmarkPopover(
           overview.avgProcedures.toFixed(1),
           'N/A',
-          '1.5 (Peer Group)',
+          '1.5 configured reference',
           '0.0',
           'Tracking procedures helps identify over-utilization of unnecessary surgical interventions.'
         )}
@@ -168,11 +171,11 @@ export function QualityKpiGrid({ overview }: QualityKpiGridProps) {
         value={overview.avgMeds.toFixed(1)}
         status={overview.avgMeds > 15 ? 'Critical' : 'Good'}
         icon={<Pill className="h-5 w-5" />}
-        metadata={{ lastUpdated: 'Live', dataSource: 'Pharmacy', refreshPolicy: 'Real-time', confidence: '99%', target: '< 10' }}
+        metadata={BUNDLED_METADATA}
         popoverContent={renderBenchmarkPopover(
           overview.avgMeds.toFixed(1),
           '< 10.0',
-          '12.5 (National Avg)',
+          '12.5 configured reference',
           `${(overview.avgMeds - 10).toFixed(1)} from target`,
           'Polypharmacy increases risk of adverse drug events and readmissions, especially in elderly.'
         )}
@@ -183,11 +186,11 @@ export function QualityKpiGrid({ overview }: QualityKpiGridProps) {
         value={`+${overview.improvementScore}%`}
         status={'Excellent'}
         icon={<ArrowRight className="h-5 w-5" />}
-        metadata={{ lastUpdated: 'Live', dataSource: 'Analytics Engine', refreshPolicy: 'Real-time', confidence: '99%', target: '> 5%' }}
+        metadata={{ ...BUNDLED_METADATA, confidence: 'Synthetic fixed value' }}
         popoverContent={renderBenchmarkPopover(
           `+${overview.improvementScore}%`,
           '> 5.0%',
-          '3.0% (Peer Group)',
+          '3.0% configured reference',
           `+${(overview.improvementScore - 5).toFixed(1)}% above target`,
           'Tracks quarter-over-quarter improvements in overall clinical quality metrics.'
         )}

@@ -5,14 +5,15 @@ export function calculateGrowth(current: number, previous: number): number {
 
 export function buildCostSqlExpression(): string {
   return `(
-    100 +
-    (time_in_hospital * 25) +
-    (num_medications * 3) +
-    (num_lab_procedures * 5) +
-    (num_procedures * 20) +
-    (number_emergency * 30) +
-    (number_inpatient * 40) +
-    (number_outpatient * 5) +
-    CASE WHEN readmitted = '<30' THEN 50 ELSE 0 END
+    ${COST.BASE_ENCOUNTER} +
+    (time_in_hospital * ${COST.LOS_PER_DAY}) +
+    (num_medications * ${COST.MEDICATION}) +
+    (num_lab_procedures * ${COST.LAB_PROCEDURE}) +
+    (num_procedures * ${COST.CLINICAL_PROCEDURE}) +
+    (number_emergency * ${COST.EMERGENCY_VISIT}) +
+    (number_inpatient * ${COST.INPATIENT_VISIT}) +
+    (number_outpatient * ${COST.OUTPATIENT_VISIT}) +
+    CASE WHEN readmitted = '<30' THEN ${COST.READMISSION_PENALTY} ELSE 0 END
   )`;
 }
+import { FINANCIAL_COST_MULTIPLIERS as COST } from './config';

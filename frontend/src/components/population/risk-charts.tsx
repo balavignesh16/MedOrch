@@ -22,7 +22,7 @@ export function RiskCharts({ distribution, pyramid }: RiskChartsProps) {
     { name: 'Low', value: distribution.Low, color: '#52c41a' },
   ];
 
-  const totalRiskPatients = distribution.Critical + distribution.High;
+  const totalRiskEncounters = distribution.Critical + distribution.High;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
@@ -34,11 +34,11 @@ export function RiskCharts({ distribution, pyramid }: RiskChartsProps) {
             <h3 className="text-sm font-semibold text-white">High Risk Summary</h3>
           </div>
           <p className="text-xs text-white/50 mb-4">
-            Patients classified as High or Critical risk based on recent ED visits, extended LOS, or extreme polypharmacy.
+            Encounters classified as High or Critical by the displayed utilization heuristic.
           </p>
           <div className="flex items-end gap-2">
-            <span className="text-4xl font-bold text-white">{totalRiskPatients.toLocaleString()}</span>
-            <span className="text-sm text-white/40 mb-1">patients</span>
+            <span className="text-4xl font-bold text-white">{totalRiskEncounters.toLocaleString()}</span>
+            <span className="text-sm text-white/40 mb-1">encounters</span>
           </div>
         </div>
 
@@ -94,7 +94,7 @@ export function RiskCharts({ distribution, pyramid }: RiskChartsProps) {
                 width={70}
               />
               <Tooltip 
-                formatter={(value: number, name: string) => [Math.abs(value).toLocaleString(), name]}
+                formatter={(value, name) => [Math.abs(Number(value ?? 0)).toLocaleString(), String(name)]}
                 cursor={{ fill: 'rgba(255,255,255,0.05)' }}
                 contentStyle={{ backgroundColor: '#111', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '8px' }}
               />

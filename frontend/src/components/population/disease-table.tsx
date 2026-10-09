@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ArrowUpRight, ArrowDownRight, Activity, ExternalLink, Eye } from 'lucide-react';
 
 interface DiseaseData {
@@ -23,6 +24,7 @@ interface DiseaseTableProps {
 }
 
 export function DiseaseTable({ data, cohortTotal }: DiseaseTableProps) {
+  const router = useRouter();
   if (!data || data.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-8 text-white/50 bg-surface-black border border-border-glass rounded-xl" role="region" aria-label="Disease Intelligence Empty State" tabIndex={0}>
@@ -51,8 +53,8 @@ export function DiseaseTable({ data, cohortTotal }: DiseaseTableProps) {
           <thead className="text-xs text-white/50 uppercase bg-surface-black/30">
             <tr>
               <th className="px-4 py-3 font-medium">Diagnosis</th>
-              <th className="px-4 py-3 font-medium text-right">Patients</th>
-              <th className="px-4 py-3 font-medium text-center w-24">Pop %</th>
+              <th className="px-4 py-3 font-medium text-right">Encounters</th>
+              <th className="px-4 py-3 font-medium text-center w-24">Cohort %</th>
               <th className="px-4 py-3 font-medium text-right">Avg Age</th>
               <th className="px-4 py-3 font-medium text-center">Gender Dist (F/M)</th>
               <th className="px-4 py-3 font-medium text-right">Readmission %</th>
@@ -80,7 +82,7 @@ export function DiseaseTable({ data, cohortTotal }: DiseaseTableProps) {
                   <td className="px-4 py-3">
                     <div className="flex flex-col items-center gap-1">
                       <span className="text-xs text-white/70">{popPercent.toFixed(1)}%</span>
-                      <div className="w-full bg-surface-black h-1.5 rounded-full overflow-hidden" aria-label={`${popPercent.toFixed(1)}% of population`}>
+                      <div className="w-full bg-surface-black h-1.5 rounded-full overflow-hidden" aria-label={`${popPercent.toFixed(1)}% of encounter cohort`}>
                         <div className="bg-brand-cyan h-full rounded-full" style={{ width: `${Math.min(popPercent, 100)}%` }} />
                       </div>
                     </div>
@@ -122,7 +124,7 @@ export function DiseaseTable({ data, cohortTotal }: DiseaseTableProps) {
                   <td className="px-4 py-3 text-center">
                     <div className="flex justify-center items-center gap-2">
                       <button 
-                        onClick={() => window.location.href = `/population/cohort?diag_1=${encodeURIComponent(row.disease)}`}
+                        onClick={() => router.push(`/population/cohort?diag_1=${encodeURIComponent(row.disease)}`)}
                         className="text-brand-cyan/50 hover:text-brand-cyan transition-colors" 
                         aria-label={`Quick view ${row.disease}`}
                         title="Quick View"

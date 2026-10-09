@@ -1,25 +1,26 @@
 package main
 
 import (
-	"context"
 	"io"
 	"log"
 	"net"
+	"os"
 
+	pb "github.com/medorch/gateway/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	pb "github.com/medorch/gateway/pb"
 )
 
 type server struct {
 	pb.UnimplementedAnalyticsEngineServer
+	engineAddress string
 }
 
 func (s *server) ProcessQuery(req *pb.QueryRequest, stream pb.AnalyticsEngine_ProcessQueryServer) error {
 	log.Printf("API Gateway intercepting query [%s] for AGENT [%s]: %s", req.QueryId, req.AgentTarget, req.NaturalLanguagePrompt)
 
 	// Dial the Python LangGraph Engine on port 50052
-	conn, err := grpc.Dial("127.0.0.1:50052", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(s.engineAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Printf("Failed to connect to Python Engine: %v", err)
 		return err
@@ -29,7 +30,7 @@ func (s *server) ProcessQuery(req *pb.QueryRequest, stream pb.AnalyticsEngine_Pr
 	client := pb.NewAnalyticsEngineClient(conn)
 
 	// Forward the request to Python
-	pythonStream, err := client.ProcessQuery(context.Background(), req)
+	pythonStream, err := client.ProcessQuery(stream.Context(), req)
 	if err != nil {
 		log.Printf("Error calling Python Engine: %v", err)
 		return err
@@ -58,16 +59,25 @@ func (s *server) ProcessQuery(req *pb.QueryRequest, stream pb.AnalyticsEngine_Pr
 }
 
 func main() {
-	lis, err := net.Listen("tcp", ":50051")
+	gatewayAddress := envOrDefault("GATEWAY_ADDRESS", ":50051")
+	engineAddress := envOrDefault("ANALYTICS_ENGINE_ADDRESS", "127.0.0.1:50052")
+	lis, err := net.Listen("tcp", gatewayAddress)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
 	s := grpc.NewServer()
-	pb.RegisterAnalyticsEngineServer(s, &server{})
-	
-	log.Printf("API Gateway (gRPC Proxy) listening on port 50051...")
+	pb.RegisterAnalyticsEngineServer(s, &server{engineAddress: engineAddress})
+
+	log.Printf("API Gateway listening on %s and proxying to %s", gatewayAddress, engineAddress)
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
+}
+
+func envOrDefault(name, fallback string) string {
+	if value := os.Getenv(name); value != "" {
+		return value
+	}
+	return fallback
 }

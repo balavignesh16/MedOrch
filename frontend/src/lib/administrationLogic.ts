@@ -1,10 +1,10 @@
 import { cache } from 'react';
-import { QueryFactory, normalizeFilters, AnalyticsFilterState, calculateAdministrativeScore, generateAdministrativeInsights as coreGenerateAdministrativeInsights } from './analytics';
+import { AnalyticsFilterState, calculateAdministrativeScore, generateAdministrativeInsights as coreGenerateAdministrativeInsights } from './analytics';
 
 export type AdministrativeFilterState = AnalyticsFilterState;
 
 export const fetchAdministrativeOverview = cache(async (filters: AdministrativeFilterState) => {
-  const normalized = normalizeFilters(filters);
+  void filters;
   
   const metrics = {
     departmentPerformance: 88,
@@ -26,6 +26,7 @@ export const fetchAdministrativeOverview = cache(async (filters: AdministrativeF
 });
 
 export const fetchDepartmentScorecards = cache(async (filters: AdministrativeFilterState) => {
+  void filters;
   return [
     { id: 'DEP-001', name: 'Emergency', score: 82, capacity: 95, utilization: 92, efficiency: 78, compliance: 98, trend: 'stable', risk: 'High', status: 'Warning' },
     { id: 'DEP-002', name: 'Intensive Care', score: 88, capacity: 98, utilization: 96, efficiency: 84, compliance: 99, trend: 'down', risk: 'Critical', status: 'Watch' },
@@ -36,6 +37,7 @@ export const fetchDepartmentScorecards = cache(async (filters: AdministrativeFil
 });
 
 export const fetchStaffingIntelligence = cache(async (filters: AdministrativeFilterState) => {
+  void filters;
   return {
     estimatedLoad: 92,
     staffToPatientRatio: '1:5.2',
@@ -52,6 +54,7 @@ export const fetchStaffingIntelligence = cache(async (filters: AdministrativeFil
 });
 
 export const fetchCapacityAllocation = cache(async (filters: AdministrativeFilterState) => {
+  void filters;
   return {
     totalBeds: 500,
     allocatedBeds: 460,
@@ -68,6 +71,7 @@ export const fetchCapacityAllocation = cache(async (filters: AdministrativeFilte
 });
 
 export const fetchComplianceDashboard = cache(async (filters: AdministrativeFilterState) => {
+  void filters;
   return {
     compliancePercent: 96,
     documentationQuality: 92,
@@ -86,6 +90,7 @@ export const fetchComplianceDashboard = cache(async (filters: AdministrativeFilt
 });
 
 export const fetchAdministrativeGovernance = cache(async (filters: AdministrativeFilterState) => {
+  void filters;
   return {
     governanceScore: 94,
     policyCompliance: 98,
@@ -97,6 +102,7 @@ export const fetchAdministrativeGovernance = cache(async (filters: Administrativ
 });
 
 export const fetchAdministrativeTrends = cache(async (filters: AdministrativeFilterState) => {
+  void filters;
   return [
     { date: '2026-08-01', performance: 88, staffing: 85, capacity: 90, compliance: 95 },
     { date: '2026-08-02', performance: 89, staffing: 84, capacity: 91, compliance: 95 },

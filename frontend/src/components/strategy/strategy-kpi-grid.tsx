@@ -1,9 +1,10 @@
 import React from 'react';
+import type { fetchStrategicOverview } from '@/lib/strategyLogic';
 import { KpiCard } from '@/components/dashboard/kpi-card';
-import { Target, ShieldCheck, Activity, Award, TrendingUp, Users } from 'lucide-react';
+import { Target, ShieldCheck, Activity, TrendingUp } from 'lucide-react';
 
 interface StrategyKpiGridProps {
-  overview: any;
+  overview: Awaited<ReturnType<typeof fetchStrategicOverview>>;
 }
 
 export function StrategyKpiGrid({ overview }: StrategyKpiGridProps) {

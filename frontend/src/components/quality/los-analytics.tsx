@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Card } from '@/components/ui/card';
-import { Clock, TrendingUp, TrendingDown, AlertCircle, ExternalLink } from 'lucide-react';
+import { TrendingUp, TrendingDown, AlertCircle, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { useCrossFilter } from '@/lib/useCrossFilter';
 
@@ -59,7 +59,7 @@ export function LosAnalytics({ data }: LosAnalyticsProps) {
               <thead className="text-xs text-white/50 border-b border-white/10">
                 <tr>
                   <th className="pb-2 font-medium">Diagnosis</th>
-                  <th className="pb-2 font-medium text-right">Patients</th>
+                  <th className="pb-2 font-medium text-right">Encounters</th>
                   <th className="pb-2 font-medium text-right">Avg LOS</th>
                   <th className="pb-2 font-medium text-center">Actions</th>
                 </tr>
@@ -97,7 +97,7 @@ export function LosAnalytics({ data }: LosAnalyticsProps) {
               <thead className="text-xs text-white/50 border-b border-white/10">
                 <tr>
                   <th className="pb-2 font-medium">Diagnosis</th>
-                  <th className="pb-2 font-medium text-right">Patients</th>
+                  <th className="pb-2 font-medium text-right">Encounters</th>
                   <th className="pb-2 font-medium text-right">Avg LOS</th>
                   <th className="pb-2 font-medium text-center">Actions</th>
                 </tr>

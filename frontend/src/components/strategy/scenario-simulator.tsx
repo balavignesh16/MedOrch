@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Calculator, ArrowRight, Activity, Percent } from 'lucide-react';
+import { Calculator, ArrowRight } from 'lucide-react';
 
 export function ScenarioSimulator() {
   const [readmission, setReadmission] = useState(15.2);

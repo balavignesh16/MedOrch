@@ -1,18 +1,23 @@
 import Database from 'better-sqlite3';
-import path from 'path';
-
-const dbPath = path.resolve(process.cwd(), '../database/medorch.db');
+import { getDatabasePath } from '@/lib/databaseConfig';
+import type { SqlValue } from './types';
 
 let dbInstance: Database.Database | null = null;
 
 export function getDb() {
   if (!dbInstance) {
-    dbInstance = new Database(dbPath, { readonly: true });
+    dbInstance = new Database(getDatabasePath(), { readonly: true });
+    dbInstance.pragma('query_only = ON');
   }
   return dbInstance;
 }
 
-export function safeQuery<T>(query: string, params: any[] = [], fallback: T): T {
+export function closeAnalyticsDatabase(): void {
+  dbInstance?.close();
+  dbInstance = null;
+}
+
+export function safeQuery<T>(query: string, params: readonly SqlValue[] = [], fallback: T): T {
   try {
     const db = getDb();
     return db.prepare(query).all(...params) as T;
@@ -22,7 +27,7 @@ export function safeQuery<T>(query: string, params: any[] = [], fallback: T): T 
   }
 }
 
-export function safeGetQuery<T>(query: string, params: any[] = [], fallback: T): T {
+export function safeGetQuery<T>(query: string, params: readonly SqlValue[] = [], fallback: T): T {
   try {
     const db = getDb();
     const res = db.prepare(query).get(...params) as T;

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Activity, Stethoscope, BriefcaseMedical } from 'lucide-react';
+import { BriefcaseMedical } from 'lucide-react';
 
 interface ResourceItem {
   name: string;
@@ -24,7 +24,7 @@ export function OperationalResources({ resources }: OperationalResourcesProps) {
       <CardHeader className="border-b border-white/5">
         <CardTitle className="text-lg flex items-center gap-2">
           <BriefcaseMedical className="h-5 w-5 text-brand-teal" />
-          Resource Utilization
+              Synthetic Resource Utilization Scenario
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">

@@ -10,14 +10,15 @@ import { PatientSummary } from '@/components/population/patient-summary';
 import { PatientTimeline } from '@/components/population/patient-timeline';
 import { getPatientDetail } from '@/app/actions/populationDb';
 import { notFound } from 'next/navigation';
+import { flattenSearchParams, RawSearchParams } from '@/lib/searchParams';
 
 export const dynamic = 'force-dynamic';
 
-export default async function PatientDetail(props: { params: Promise<{ id: string }>, searchParams: Promise<any> }) {
+export default async function PatientDetail(props: { params: Promise<{ id: string }>, searchParams: Promise<RawSearchParams> }) {
   const params = await props.params;
   const searchParams = await props.searchParams;
-  const safeParams = searchParams ? Object.fromEntries(Object.entries(searchParams)) : {};
-  const queryString = new URLSearchParams(safeParams as any).toString();
+  const safeParams = flattenSearchParams(searchParams);
+  const queryString = new URLSearchParams(safeParams).toString();
   const backUrl = queryString ? `/population/cohort?${queryString}` : '/population/cohort';
 
   const data = await getPatientDetail(params.id);

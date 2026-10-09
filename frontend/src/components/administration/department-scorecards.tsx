@@ -1,9 +1,10 @@
 import React from 'react';
+import type { fetchDepartmentScorecards } from '@/lib/administrationLogic';
 import Link from 'next/link';
 import { LayoutDashboard, ArrowUpRight, ArrowDownRight, Minus, ArrowRight } from 'lucide-react';
 
 interface DepartmentScorecardsProps {
-  scorecards: any[];
+  scorecards: Awaited<ReturnType<typeof fetchDepartmentScorecards>>;
 }
 
 export const DepartmentScorecards: React.FC<DepartmentScorecardsProps> = ({ scorecards }) => {

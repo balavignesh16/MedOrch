@@ -1,18 +1,9 @@
 import React from 'react';
 import { AlertCircle, CheckCircle, Info, Flame, Activity } from 'lucide-react';
-
-interface InsightData {
-  title: string;
-  severity: 'Positive' | 'Warning' | 'Critical' | 'Info' | string;
-  confidence: number;
-  supportingMetric: string;
-  businessImpact?: string;
-  recommendedAction?: string;
-  relatedDashboard?: string;
-}
+import type { Insight } from '@/lib/analytics';
 
 interface FinancialInsightsProps {
-  insights: InsightData[];
+  insights: Insight[];
 }
 
 export function FinancialInsights({ insights }: FinancialInsightsProps) {
@@ -58,7 +49,7 @@ export function FinancialInsights({ insights }: FinancialInsightsProps) {
                         <span className={`w-1.5 h-1.5 rounded-full ${insight.severity === 'Critical' ? 'bg-danger' : insight.severity === 'Warning' ? 'bg-warning' : insight.severity === 'Positive' ? 'bg-success' : 'bg-brand-cyan'}`}></span>
                         {insight.severity} Severity
                         <span className="mx-1">•</span>
-                        {insight.confidence}% Confidence
+                        Synthetic model insight
                       </span>
                     </div>
                     <span className="text-xs font-bold text-brand-cyan bg-surface-black border border-white/10 px-2 py-1 rounded inline-block">

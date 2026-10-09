@@ -12,7 +12,7 @@ export function performGlobalSearch(query: string): PlatformSearchResult[] {
   const isNumeric = /^\d+$/.test(q);
   if (isNumeric) {
     try {
-      const dbPatients = QueryFactory.executeCustomQuery<any>(
+      const dbPatients = QueryFactory.executeCustomQuery<Array<{ patient_nbr: number | string }>>(
         `SELECT DISTINCT patient_nbr FROM hospital_readmissions WHERE CAST(patient_nbr AS TEXT) LIKE ? LIMIT 5`,
         [`%${q}%`],
         []

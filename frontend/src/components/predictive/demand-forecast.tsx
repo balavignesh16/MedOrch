@@ -1,7 +1,8 @@
 import React from 'react';
+import type { fetchDemandForecast } from '@/lib/predictiveLogic';
 
 interface DemandForecastProps {
-  forecast: any[];
+  forecast: Awaited<ReturnType<typeof fetchDemandForecast>>;
 }
 
 export const DemandForecast: React.FC<DemandForecastProps> = ({ forecast }) => {

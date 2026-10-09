@@ -1,8 +1,9 @@
 import React from 'react';
-import { ShieldAlert, FileText, CheckCircle2, TrendingUp, AlertOctagon } from 'lucide-react';
+import type { fetchComplianceDashboard } from '@/lib/administrationLogic';
+import { ShieldAlert, CheckCircle2, AlertOctagon } from 'lucide-react';
 
 interface ComplianceDashboardProps {
-  compliance: any;
+  compliance: Awaited<ReturnType<typeof fetchComplianceDashboard>>;
 }
 
 export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({ compliance }) => {
@@ -44,7 +45,7 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({ compli
         <div>
           <h4 className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">Department Compliance Ranking</h4>
           <div className="space-y-3">
-            {compliance.departmentRanking.map((dept: any, index: number) => (
+            {compliance.departmentRanking.map((dept, index) => (
               <div key={index} className="flex items-center justify-between group cursor-default">
                 <div className="flex items-center gap-3">
                   <span className="text-xs font-mono text-brand-gray w-4">{dept.rank}.</span>

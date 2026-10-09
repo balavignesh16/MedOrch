@@ -1,8 +1,11 @@
 import React from 'react';
-import { Activity, Pill, Beaker, Clock, AlertCircle } from 'lucide-react';
+import { Activity, Pill, Beaker, Clock } from 'lucide-react';
+import type { fetchPatientDetail } from '@/lib/populationLogic';
+
+type PatientDetail = NonNullable<Awaited<ReturnType<typeof fetchPatientDetail>>>;
 
 interface PatientTimelineProps {
-  encounters: any[];
+  encounters: PatientDetail['encounters'];
 }
 
 export function PatientTimeline({ encounters }: PatientTimelineProps) {
@@ -11,7 +14,7 @@ export function PatientTimeline({ encounters }: PatientTimelineProps) {
       <h3 className="text-sm font-semibold text-white mb-6 uppercase tracking-wider">Longitudinal Clinical Timeline</h3>
       
       <div className="relative border-l border-white/10 ml-4 space-y-8 pb-4">
-        {encounters.map((encounter, idx) => (
+        {encounters.map((encounter) => (
           <div key={encounter.encounter_id} className="relative pl-8">
             <span className={`absolute -left-[9px] top-1 h-4 w-4 rounded-full border-2 border-surface-obsidian ${
               encounter.risk_level === 'High' ? 'bg-brand-orange' : 'bg-brand-cyan'

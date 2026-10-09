@@ -1,9 +1,11 @@
 import React from 'react';
 import { BrainCircuit } from 'lucide-react';
+import type { ExplainabilityMetadata } from '@/lib/ml/explainability';
+import type { ModelMetadata } from '@/lib/ml/modelMetadata';
 
 interface ModelExplainabilityProps {
-  metadata: any;
-  explainability: any;
+  metadata: ModelMetadata;
+  explainability: ExplainabilityMetadata;
 }
 
 export const ModelExplainability: React.FC<ModelExplainabilityProps> = ({ metadata, explainability }) => {
@@ -27,26 +29,27 @@ export const ModelExplainability: React.FC<ModelExplainabilityProps> = ({ metada
           {metadata?.name || 'Unknown'} (v{metadata?.version || '1.0'})
         </p>
         <p className="text-xs text-brand-gray">
-          {explainability.reasoning || 'Standard baseline prediction.'}
+          {explainability.summary || 'Standard baseline prediction.'}
         </p>
       </div>
 
       <h4 className="text-[11px] uppercase tracking-wider font-semibold text-white/70 mb-4">Top Drivers</h4>
       <div className="space-y-4">
-        {explainability.drivers?.map((driver: any, i: number) => (
+        {explainability.topDrivers.map((driver, i) => (
           <div key={i}>
             <div className="flex justify-between text-xs mb-1">
-              <span className="text-white/90">{driver.factor}</span>
-              <span className="text-brand-cyan font-mono">{driver.impact}%</span>
+              <span className="text-white/90">{driver.feature}</span>
+              <span className="text-brand-cyan font-mono">{Math.round(driver.importance * 100)}%</span>
             </div>
             <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
               <div 
                 className="h-full bg-gradient-to-r from-brand-cyan to-brand-purple rounded-full shadow-[0_0_8px_rgba(34,211,238,0.5)]"
-                style={{ width: `${driver.impact}%` }}
+                style={{ width: `${driver.importance * 100}%` }}
               />
             </div>
           </div>
-        )) || (
+        ))}
+        {explainability.topDrivers.length === 0 && (
           <div>
             <div className="flex justify-between text-xs mb-1">
               <span className="text-white/90">Baseline Risk</span>

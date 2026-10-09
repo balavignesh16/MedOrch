@@ -1,16 +1,17 @@
 import React from 'react';
 import Database from 'better-sqlite3';
-import path from 'path';
 import PatientsTable from '@/components/PatientsTable';
+import { getDatabasePath } from '@/lib/databaseConfig';
+import type { PatientListRow } from '@/lib/patientTypes';
 
 // We must tell Next.js to dynamically render this route if we read directly from DB at request time
 export const dynamic = 'force-dynamic';
 
-function getPatients() {
+function getPatients(): PatientListRow[] {
+  let db: Database.Database | null = null;
   try {
-    // Resolve the absolute path to the sqlite file created by python in /database
-    const dbPath = path.resolve(process.cwd(), '../database/medorch.db');
-    const db = new Database(dbPath, { readonly: true });
+    db = new Database(getDatabasePath(), { readonly: true });
+    db.pragma('query_only = ON');
     
     // Get patients and their latest admission status
     const query = `
@@ -30,12 +31,12 @@ function getPatients() {
       LIMIT 100
     `;
     
-    const rows = db.prepare(query).all();
-    db.close();
-    return rows as any[];
+    return db.prepare(query).all() as PatientListRow[];
   } catch (error) {
     console.error("Error fetching patients from DB:", error);
     return [];
+  } finally {
+    db?.close();
   }
 }
 

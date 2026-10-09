@@ -9,6 +9,6 @@ export function validatePagination(page: number, limit: number, total: number) {
   return { page: validPage > totalPages && totalPages > 0 ? totalPages : validPage, limit: validLimit, totalPages };
 }
 
-export function isValidFilter(value: any): boolean {
+export function isValidFilter(value: unknown): boolean {
   return value !== undefined && value !== null && String(value).trim() !== '' && String(value) !== '?';
 }

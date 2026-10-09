@@ -2,18 +2,7 @@ import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Lightbulb, AlertTriangle, Info, CheckCircle2, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-
-interface Insight {
-  title: string;
-  severity: string;
-  confidence: number;
-  supportingMetric: string;
-  operationalImpact?: string;
-  rootCause?: string;
-  recommendedAction: string;
-  relatedDashboard: string;
-  affectedPopulation?: string;
-}
+import type { Insight } from '@/lib/analytics';
 
 interface OperationalInsightsProps {
   insights: Insight[];
@@ -49,7 +38,7 @@ export function OperationalInsights({ insights }: OperationalInsightsProps) {
                   <h4 className="font-bold text-white text-sm">{insight.title}</h4>
                 </div>
                 <span className="text-[10px] bg-white/10 text-brand-cyan px-2 py-0.5 rounded-full font-bold">
-                  {insight.confidence}% Confidence
+                  Synthetic scenario
                 </span>
               </div>
               <p className="text-sm text-white/70 mb-3">

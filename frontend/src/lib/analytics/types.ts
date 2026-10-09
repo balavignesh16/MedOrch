@@ -6,6 +6,10 @@ export interface AnalyticsFilterState {
   discharge_disposition_id?: string;
   readmitted?: string;
   time_period?: string;
+  timeframe?: string;
+  cohort?: string;
+  department?: string;
+  facility?: string;
   diag_1?: string;
   riskLevel?: string;
   los?: string;
@@ -14,9 +18,13 @@ export interface AnalyticsFilterState {
 
 export interface AnalyticsQuery {
   whereClause: string;
-  params: any[];
+  params: SqlValue[];
   conditionsCount: number;
 }
+
+export type SqlValue = string | number | bigint | Buffer | null;
+
+export type UnknownRecord = Record<string, unknown>;
 
 export interface AggregationResult {
   count: number;
@@ -26,17 +34,27 @@ export interface AggregationResult {
   avg_proc?: number;
 }
 
+export interface CoreMetricResult {
+  totalEncounters: number;
+  readmissionNumerator: number;
+  readmissionDenominator: number;
+  readmissionProxyRate: number;
+  avgLengthOfStay: number | null;
+}
+
 export interface Insight {
-  title?: string;
-  severity?: 'Positive' | 'Warning' | 'Critical' | 'Info' | string;
-  confidence?: number;
-  supportingMetric?: string;
+  title: string;
+  severity: 'Positive' | 'Warning' | 'Critical' | 'Info' | string;
+  confidence: number;
+  supportingMetric: string;
   clinicalImpact?: string;
   businessImpact?: string;
-  recommendedAction?: string;
+  operationalImpact?: string;
+  rootCause?: string;
+  recommendedAction: string;
   affectedPopulation?: string;
   affectedPatients?: number;
-  relatedDashboard?: string;
+  relatedDashboard: string;
   timestamp?: string;
   text?: string;
   type?: 'Positive' | 'Warning' | 'Critical' | 'Info';

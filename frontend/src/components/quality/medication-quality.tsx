@@ -75,7 +75,7 @@ export function MedicationQuality({ data }: MedicationQualityProps) {
               <thead className="text-xs text-white/50 border-b border-white/10">
                 <tr>
                   <th className="pb-2 font-medium">Diagnosis</th>
-                  <th className="pb-2 font-medium text-right">Patients</th>
+                  <th className="pb-2 font-medium text-right">Encounters</th>
                   <th className="pb-2 font-medium text-right">Avg Meds</th>
                   <th className="pb-2 font-medium text-center">Actions</th>
                 </tr>

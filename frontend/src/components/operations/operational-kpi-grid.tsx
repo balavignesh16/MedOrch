@@ -1,9 +1,11 @@
 import React from 'react';
+import type { fetchOperationalOverview } from '@/lib/operationalLogic';
+import type { KpiStatus } from '@/lib/analytics';
 import { KpiCard } from '@/components/dashboard/kpi-card';
 import { Activity, Users, ActivitySquare, AlertTriangle, TrendingUp, Clock, FileText, CheckCircle2 } from 'lucide-react';
 
 interface OperationalKpiGridProps {
-  overview: any;
+  overview: Awaited<ReturnType<typeof fetchOperationalOverview>>;
 }
 
 export function OperationalKpiGrid({ overview }: OperationalKpiGridProps) {
@@ -45,11 +47,11 @@ export function OperationalKpiGrid({ overview }: OperationalKpiGridProps) {
     </div>
   );
 
-  const getGrade = (score: number) => {
-    if (score >= 90) return { grade: 'A (Excellent)', color: 'text-success' };
-    if (score >= 75) return { grade: 'B (Good)', color: 'text-brand-teal' };
-    if (score >= 60) return { grade: 'C (Watch)', color: 'text-warning' };
-    return { grade: 'D (Critical)', color: 'text-danger' };
+  const getGrade = (score: number): { grade: string; color: string; status: KpiStatus } => {
+    if (score >= 90) return { grade: 'A (Excellent)', color: 'text-success', status: 'Excellent' };
+    if (score >= 75) return { grade: 'B (Good)', color: 'text-brand-teal', status: 'Good' };
+    if (score >= 60) return { grade: 'C (Watch)', color: 'text-warning', status: 'Watch' };
+    return { grade: 'D (Critical)', color: 'text-danger', status: 'Critical' };
   };
 
   const gradeInfo = getGrade(overview.score || 0);
@@ -60,9 +62,9 @@ export function OperationalKpiGrid({ overview }: OperationalKpiGridProps) {
       <KpiCard
         title="Operational Score"
         value={overview.score}
-        status={gradeInfo.grade.split(' ')[1].replace(/[()]/g, '') as any}
+        status={gradeInfo.status}
         icon={<Activity className="h-5 w-5" />}
-        metadata={{ lastUpdated: 'Live', dataSource: 'Risk Engine', refreshPolicy: 'Real-time', confidence: '99%', target: '100' }}
+        metadata={DEMO_METADATA}
         popoverContent={
           <div className="space-y-2">
             <div className="flex justify-between border-b border-white/10 pb-2 mb-2">
@@ -107,13 +109,12 @@ export function OperationalKpiGrid({ overview }: OperationalKpiGridProps) {
       />
 
       <KpiCard
-        title="Avg Daily Throughput"
+        title="Estimated Daily Encounter Volume"
         value={overview.throughput.toLocaleString()}
-        trend="+5.2% vs last month"
-        trendDirection="up"
-        status="Normal"
+        trend={{ value: 5.2, direction: 'up', period: 'last month' }}
+        status="Good"
         icon={<Users className="h-5 w-5 text-white/70" />}
-        metadata={{ lastUpdated: '10m ago', dataSource: 'ADT System', refreshPolicy: 'Hourly', confidence: '99%', target: '50/day' }}
+        metadata={DEMO_METADATA}
         popoverContent={renderMetricPopover(
           overview.throughput.toString(),
           '50 patients/day',
@@ -126,13 +127,12 @@ export function OperationalKpiGrid({ overview }: OperationalKpiGridProps) {
       />
 
       <KpiCard
-        title="Bed Occupancy"
+        title="Estimated Bed Occupancy"
         value={`${overview.bedOccupancy}%`}
-        trend="+2.1% vs target"
-        trendDirection="up"
-        status={overview.bedOccupancy > 85 ? 'Warning' : 'Normal'}
+        trend={{ value: 2.1, direction: 'up', period: 'target' }}
+        status={overview.bedOccupancy > 85 ? 'Watch' : 'Good'}
         icon={<ActivitySquare className="h-5 w-5 text-warning" />}
-        metadata={{ lastUpdated: 'Live', dataSource: 'Bed Management', refreshPolicy: 'Real-time', confidence: '98%', target: '85%' }}
+        metadata={DEMO_METADATA}
         popoverContent={renderMetricPopover(
           `${overview.bedOccupancy}%`,
           '85%',
@@ -145,13 +145,12 @@ export function OperationalKpiGrid({ overview }: OperationalKpiGridProps) {
       />
 
       <KpiCard
-        title="Emergency Load"
+        title="Recorded ER Visits / Encounter"
         value={`${overview.erLoad.toFixed(1)}%`}
-        trend="+4.0% vs last week"
-        trendDirection="up"
-        status={overview.erLoad > 20 ? 'Critical' : 'Normal'}
+        trend={{ value: 4.0, direction: 'up', period: 'last week' }}
+        status={overview.erLoad > 20 ? 'Critical' : 'Good'}
         icon={<AlertTriangle className={`h-5 w-5 ${overview.erLoad > 20 ? 'text-danger' : 'text-white/70'}`} />}
-        metadata={{ lastUpdated: '5m ago', dataSource: 'EDIS', refreshPolicy: 'Real-time', confidence: '99%', target: '15%' }}
+        metadata={DEMO_METADATA}
         popoverContent={renderMetricPopover(
           `${overview.erLoad.toFixed(1)}%`,
           '15%',
@@ -164,13 +163,12 @@ export function OperationalKpiGrid({ overview }: OperationalKpiGridProps) {
       />
 
       <KpiCard
-        title="Inpatient Load"
+        title="Recorded Inpatient Visits / Encounter"
         value={`${overview.inpatientLoad.toFixed(1)}%`}
-        trend="-1.2% vs target"
-        trendDirection="down"
-        status="Normal"
+        trend={{ value: 1.2, direction: 'down', period: 'target' }}
+        status="Good"
         icon={<CheckCircle2 className="h-5 w-5 text-white/70" />}
-        metadata={{ lastUpdated: '1h ago', dataSource: 'EHR', refreshPolicy: 'Daily', confidence: '99%', target: '20%' }}
+        metadata={DEMO_METADATA}
         popoverContent={renderMetricPopover(
           `${overview.inpatientLoad.toFixed(1)}%`,
           '20%',
@@ -183,13 +181,12 @@ export function OperationalKpiGrid({ overview }: OperationalKpiGridProps) {
       />
 
       <KpiCard
-        title="Outpatient Load"
+        title="Recorded Outpatient Visits / Encounter"
         value={`${overview.outpatientLoad.toFixed(1)}%`}
-        trend="+2.5% vs target"
-        trendDirection="up"
-        status="Normal"
+        trend={{ value: 2.5, direction: 'up', period: 'target' }}
+        status="Good"
         icon={<TrendingUp className="h-5 w-5 text-white/70" />}
-        metadata={{ lastUpdated: '1h ago', dataSource: 'EHR', refreshPolicy: 'Daily', confidence: '99%', target: '60%' }}
+        metadata={DEMO_METADATA}
         popoverContent={renderMetricPopover(
           `${overview.outpatientLoad.toFixed(1)}%`,
           '60%',
@@ -204,11 +201,10 @@ export function OperationalKpiGrid({ overview }: OperationalKpiGridProps) {
       <KpiCard
         title="Average LOS"
         value={overview.avgLos.toFixed(1)}
-        trend="+0.2d vs target"
-        trendDirection="up"
-        status={overview.avgLos > 5 ? 'Warning' : 'Normal'}
+        trend={{ value: 0.2, direction: 'up', period: 'target' }}
+        status={overview.avgLos > 5 ? 'Watch' : 'Good'}
         icon={<Clock className="h-5 w-5 text-white/70" />}
-        metadata={{ lastUpdated: 'Daily', dataSource: 'EHR', refreshPolicy: 'Nightly', confidence: '99%', target: '4.0d' }}
+        metadata={{ ...DEMO_METADATA, dataSource: 'Derived from bundled encounters' }}
         popoverContent={renderMetricPopover(
           overview.avgLos.toFixed(1),
           '4.0d',
@@ -221,13 +217,12 @@ export function OperationalKpiGrid({ overview }: OperationalKpiGridProps) {
       />
 
       <KpiCard
-        title="Resource Efficiency"
+        title="Synthetic Resource Efficiency"
         value={`${overview.resourceEfficiency}%`}
-        trend="-2% vs last month"
-        trendDirection="down"
-        status="Normal"
+        trend={{ value: 2, direction: 'down', period: 'last month' }}
+        status="Good"
         icon={<FileText className="h-5 w-5 text-white/70" />}
-        metadata={{ lastUpdated: 'Live', dataSource: 'ERP', refreshPolicy: 'Hourly', confidence: '92%', target: '85%' }}
+        metadata={DEMO_METADATA}
         popoverContent={renderMetricPopover(
           `${overview.resourceEfficiency}%`,
           '85%',
@@ -241,3 +236,4 @@ export function OperationalKpiGrid({ overview }: OperationalKpiGridProps) {
     </div>
   );
 }
+const DEMO_METADATA = { lastUpdated: 'Bundled dataset', dataSource: 'Synthetic demo model', refreshPolicy: 'On page load', confidence: 'Not validated', target: 'Demo only' };

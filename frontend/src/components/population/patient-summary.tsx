@@ -1,9 +1,12 @@
 import React from 'react';
 import { ShieldCheck, TrendingUp, AlertTriangle, Pill } from 'lucide-react';
+import type { fetchPatientDetail } from '@/lib/populationLogic';
+
+type PatientDetail = NonNullable<Awaited<ReturnType<typeof fetchPatientDetail>>>;
 
 interface PatientSummaryProps {
-  profile: any;
-  encounters: any[];
+  profile: PatientDetail['profile'];
+  encounters: PatientDetail['encounters'];
 }
 
 export function PatientSummary({ profile, encounters }: PatientSummaryProps) {

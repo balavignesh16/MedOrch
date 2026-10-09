@@ -1,11 +1,11 @@
 import { cache } from 'react';
-import { QueryFactory, normalizeFilters, AnalyticsFilterState, buildWhereClause, generatePredictiveInsights as coreGeneratePredictiveInsights } from './analytics';
+import { AnalyticsFilterState, generatePredictiveInsights as coreGeneratePredictiveInsights } from './analytics';
 import { mlService } from './ml/mlService';
 
 export type PredictiveFilterState = AnalyticsFilterState;
 
 export const fetchPredictionOverview = cache(async (filters: PredictiveFilterState) => {
-  const normalized = normalizeFilters(filters);
+  void filters;
   // Simulate a DB call that would fetch raw data to run through ML
   const hospitalFeatures = { winterSeason: true, recentVolumeSpike: false };
   
@@ -21,7 +21,7 @@ export const fetchPredictionOverview = cache(async (filters: PredictiveFilterSta
 });
 
 export const fetchHighRiskPatients = cache(async (filters: PredictiveFilterState) => {
-  const normalized = normalizeFilters(filters);
+  void filters;
   
   // Generate dummy high risk cohort
   const patients = [
@@ -48,6 +48,7 @@ export const fetchHighRiskPatients = cache(async (filters: PredictiveFilterState
 });
 
 export const fetchPredictionDistribution = cache(async (filters: PredictiveFilterState) => {
+  void filters;
   return [
     { level: 'Critical Risk', count: 420 },
     { level: 'High Risk', count: 1250 },
@@ -57,6 +58,7 @@ export const fetchPredictionDistribution = cache(async (filters: PredictiveFilte
 });
 
 export const fetchDemandForecast = cache(async (filters: PredictiveFilterState) => {
+  void filters;
   return [
     { date: '2026-08-01', bedDemand: 450, erVolume: 120 },
     { date: '2026-08-02', bedDemand: 460, erVolume: 135 },
@@ -67,6 +69,7 @@ export const fetchDemandForecast = cache(async (filters: PredictiveFilterState) 
 });
 
 export const fetchInterventions = cache(async (filters: PredictiveFilterState) => {
+  void filters;
   return [
     { id: 1, priority: 'Critical', action: 'Downgrade 5 ICU patients to Telemetry', impact: '$45k savings', team: 'Capacity Management', timeline: 'Immediate' },
     { id: 2, priority: 'High', action: 'Enroll 42 Heart Failure patients in Remote Monitoring', impact: 'Reduce readmissions by 12%', team: 'Care Coordination', timeline: 'Within 48h' },

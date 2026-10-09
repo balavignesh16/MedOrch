@@ -1,5 +1,5 @@
 import React from 'react';
-import { Activity, ShieldCheck, TrendingUp, DollarSign, Users, AlertTriangle } from 'lucide-react';
+import { Activity, ShieldCheck, TrendingUp, DollarSign, AlertTriangle } from 'lucide-react';
 
 export function EnterpriseCommandCenter() {
   return (

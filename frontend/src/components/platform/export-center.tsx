@@ -1,8 +1,9 @@
 import React from 'react';
+import type { fetchExportHistory } from '@/lib/platformLogic';
 import { DownloadCloud, CheckCircle2, XCircle, Clock } from 'lucide-react';
 
 interface ExportCenterProps {
-  exports: any[];
+  exports: Awaited<ReturnType<typeof fetchExportHistory>>;
 }
 
 export function ExportCenter({ exports }: ExportCenterProps) {

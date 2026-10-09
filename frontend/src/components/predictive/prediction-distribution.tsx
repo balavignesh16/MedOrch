@@ -1,7 +1,8 @@
 import React from 'react';
+import type { fetchPredictionDistribution } from '@/lib/predictiveLogic';
 
 interface PredictionDistributionProps {
-  distribution: any[];
+  distribution: Awaited<ReturnType<typeof fetchPredictionDistribution>>;
 }
 
 export const PredictionDistribution: React.FC<PredictionDistributionProps> = ({ distribution }) => {

@@ -9,16 +9,26 @@ import { CapacityAllocation } from '@/components/administration/capacity-allocat
 import { ComplianceDashboard } from '@/components/administration/compliance-dashboard';
 import { AdministrativeTrends } from '@/components/administration/administrative-trends';
 import { AdministrativeInsights } from '@/components/administration/administrative-insights';
+import type {
+  getAdministrativeGovernance,
+  getAdministrativeInsights,
+  getAdministrativeOverview,
+  getAdministrativeTrends,
+  getCapacityAllocation,
+  getComplianceDashboard,
+  getDepartmentScorecards,
+  getStaffingIntelligence,
+} from '@/app/actions/administrationDb';
 
 interface DashboardClientProps {
-  overview: any;
-  scorecards: any;
-  staffing: any;
-  capacity: any;
-  compliance: any;
-  governance: any;
-  trends: any;
-  insights: any;
+  overview: Awaited<ReturnType<typeof getAdministrativeOverview>>;
+  scorecards: Awaited<ReturnType<typeof getDepartmentScorecards>>;
+  staffing: Awaited<ReturnType<typeof getStaffingIntelligence>>;
+  capacity: Awaited<ReturnType<typeof getCapacityAllocation>>;
+  compliance: Awaited<ReturnType<typeof getComplianceDashboard>>;
+  governance: Awaited<ReturnType<typeof getAdministrativeGovernance>>;
+  trends: Awaited<ReturnType<typeof getAdministrativeTrends>>;
+  insights: Awaited<ReturnType<typeof getAdministrativeInsights>>;
 }
 
 export const DashboardClient: React.FC<DashboardClientProps> = ({

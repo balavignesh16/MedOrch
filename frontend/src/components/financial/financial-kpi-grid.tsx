@@ -1,10 +1,19 @@
 import React from 'react';
 import { KpiCard } from '@/components/dashboard/kpi-card';
-import { DollarSign, Activity, TrendingUp, AlertTriangle, Pill, ShieldCheck, FileText, ActivitySquare, ShieldAlert } from 'lucide-react';
+import { DollarSign, Activity, TrendingUp, AlertTriangle, Pill, ShieldCheck, ActivitySquare, ShieldAlert } from 'lucide-react';
+import type { fetchFinancialOverview } from '@/lib/financialLogic';
 
 interface FinancialKpiGridProps {
-  overview: any;
+  overview: Awaited<ReturnType<typeof fetchFinancialOverview>>;
 }
+
+const ESTIMATE_METADATA = {
+  lastUpdated: 'Bundled dataset',
+  dataSource: 'Synthetic weighted model',
+  refreshPolicy: 'On page load',
+  confidence: 'Not validated',
+  target: 'Demo only',
+};
 
 export function FinancialKpiGrid({ overview }: FinancialKpiGridProps) {
   
@@ -45,7 +54,7 @@ export function FinancialKpiGrid({ overview }: FinancialKpiGridProps) {
         value={Math.round(overview.score)}
         status={overview.score >= 90 ? 'Excellent' : overview.score >= 75 ? 'Good' : overview.score >= 60 ? 'Watch' : 'Critical'}
         icon={<ShieldCheck className="h-5 w-5" />}
-        metadata={{ lastUpdated: 'Live', dataSource: 'Risk Engine', refreshPolicy: 'Real-time', confidence: '99%', target: '100' }}
+        metadata={ESTIMATE_METADATA}
         popoverContent={
           <div className="space-y-2">
             <div className="flex justify-between border-b border-white/10 pb-2 mb-2">
@@ -82,11 +91,11 @@ export function FinancialKpiGrid({ overview }: FinancialKpiGridProps) {
       />
 
       <KpiCard
-        title="Total Cost"
+        title="Estimated Total Cost"
         value={formatCurrency(overview.totalCost)}
         status={'Watch'}
         icon={<DollarSign className="h-5 w-5" />}
-        metadata={{ lastUpdated: 'Live', dataSource: 'Estimated Model', refreshPolicy: 'Real-time', confidence: '99%', target: 'N/A' }}
+        metadata={ESTIMATE_METADATA}
         popoverContent={renderBenchmarkPopover(
           formatCurrency(overview.totalCost),
           'N/A',
@@ -97,56 +106,56 @@ export function FinancialKpiGrid({ overview }: FinancialKpiGridProps) {
       />
 
       <KpiCard
-        title="Avg Cost/Encounter"
+        title="Estimated Avg Cost/Encounter"
         value={formatCurrency(overview.avgCost)}
         status={overview.avgCost > 3000 ? 'Critical' : overview.avgCost > 2000 ? 'Watch' : 'Good'}
         icon={<ActivitySquare className="h-5 w-5" />}
-        metadata={{ lastUpdated: 'Live', dataSource: 'Estimated Model', refreshPolicy: 'Real-time', confidence: '99%', target: '< $2,500' }}
+        metadata={ESTIMATE_METADATA}
         popoverContent={renderBenchmarkPopover(
           formatCurrency(overview.avgCost),
           '< $2,500',
-          '$2,800 (Peer Group)',
+          '$2,800 configured demo reference',
           overview.avgCost > 2500 ? `+$${(overview.avgCost - 2500).toFixed(0)} over target` : `-$${(2500 - overview.avgCost).toFixed(0)} under target`,
           'Average encounter costs dictate profitability under value-based and capitated contracts.'
         )}
       />
 
       <KpiCard
-        title="Cost Index"
+        title="Estimated Cost Index"
         value={overview.costIndex.toString()}
         status={'Good'}
         icon={<TrendingUp className="h-5 w-5" />}
-        metadata={{ lastUpdated: 'Live', dataSource: 'Estimated Model', refreshPolicy: 'Real-time', confidence: '99%', target: '< 250' }}
+        metadata={ESTIMATE_METADATA}
         popoverContent={renderBenchmarkPopover(
           overview.costIndex.toString(),
           '< 250',
-          '280 (National Avg)',
+          '280 configured demo reference',
           'Normalized against baseline',
           'A relative index score indicating overall financial efficiency of the selected population.'
         )}
       />
 
       <KpiCard
-        title="Readmission Cost"
+        title="Estimated Readmission Cost"
         value={formatCurrency(overview.readmissionCost)}
         status={overview.readmissionCost > overview.totalCost * 0.1 ? 'Critical' : 'Good'}
         icon={<ShieldAlert className="h-5 w-5" />}
-        metadata={{ lastUpdated: 'Live', dataSource: 'Estimated Model', refreshPolicy: 'Real-time', confidence: '99%', target: '< 10% of total' }}
+        metadata={ESTIMATE_METADATA}
         popoverContent={renderBenchmarkPopover(
           formatCurrency(overview.readmissionCost),
           `< ${formatCurrency(overview.totalCost * 0.1)}`,
           '15% of total',
-          'Excessive penalty risk',
-          'Readmissions represent direct financial loss under CMS hospital readmission reduction programs.'
+          'Above configured demo reference',
+          'This synthetic weight is not an actual penalty, charge, or reimbursement amount.'
         )}
       />
 
       <KpiCard
-        title="Medication Cost"
+        title="Estimated Medication Cost"
         value={formatCurrency(overview.medicationCost)}
         status={'Watch'}
         icon={<Pill className="h-5 w-5" />}
-        metadata={{ lastUpdated: 'Live', dataSource: 'Estimated Model', refreshPolicy: 'Real-time', confidence: '99%', target: 'N/A' }}
+        metadata={ESTIMATE_METADATA}
         popoverContent={renderBenchmarkPopover(
           formatCurrency(overview.medicationCost),
           'N/A',
@@ -157,11 +166,11 @@ export function FinancialKpiGrid({ overview }: FinancialKpiGridProps) {
       />
 
       <KpiCard
-        title="Emergency Cost"
+        title="Estimated Emergency Cost"
         value={formatCurrency(overview.emergencyCost)}
         status={overview.emergencyCost > overview.totalCost * 0.15 ? 'Critical' : 'Watch'}
         icon={<AlertTriangle className="h-5 w-5" />}
-        metadata={{ lastUpdated: 'Live', dataSource: 'Estimated Model', refreshPolicy: 'Real-time', confidence: '99%', target: '< 15% of total' }}
+        metadata={ESTIMATE_METADATA}
         popoverContent={renderBenchmarkPopover(
           formatCurrency(overview.emergencyCost),
           `< ${formatCurrency(overview.totalCost * 0.15)}`,
@@ -176,13 +185,13 @@ export function FinancialKpiGrid({ overview }: FinancialKpiGridProps) {
         value={`${100 - overview.resourceEfficiency}%`}
         status={'Excellent'}
         icon={<Activity className="h-5 w-5" />}
-        metadata={{ lastUpdated: 'Live', dataSource: 'Estimated Model', refreshPolicy: 'Real-time', confidence: '99%', target: '> 85%' }}
+        metadata={ESTIMATE_METADATA}
         popoverContent={renderBenchmarkPopover(
           `${100 - overview.resourceEfficiency}%`,
           '> 85%',
-          '82% (Peer Group)',
+          '82% configured demo reference',
           'Excellent efficiency',
-          'Measures how optimally clinical resources (labs, procedures, meds) are utilized compared to peers.'
+          'This is a synthetic score produced from configured model weights.'
         )}
       />
     </div>

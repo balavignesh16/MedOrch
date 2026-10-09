@@ -1,20 +1,12 @@
 import React from 'react';
-import { Server, Activity, Database, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
+import type { fetchSystemHealth } from '@/lib/platformLogic';
+import { Server, Database } from 'lucide-react';
 
 interface SystemHealthProps {
-  metrics: any[];
+  metrics: Awaited<ReturnType<typeof fetchSystemHealth>>;
 }
 
 export function SystemHealth({ metrics }: SystemHealthProps) {
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'Operational': return <CheckCircle2 className="w-4 h-4 text-brand-teal" />;
-      case 'Degraded': return <AlertTriangle className="w-4 h-4 text-warning" />;
-      case 'Outage': return <XCircle className="w-4 h-4 text-danger" />;
-      default: return <Activity className="w-4 h-4 text-white/50" />;
-    }
-  };
-
   const getStatusColor = (status: string) => {
      switch (status) {
       case 'Operational': return 'text-brand-teal bg-brand-teal/10 border-brand-teal/20';

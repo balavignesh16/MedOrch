@@ -18,12 +18,12 @@ export function ClinicalTimeline({ data }: { data: QualityTrend[] }) {
     <Card className="p-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
         <h2 className="text-lg font-bold text-white">
-          Clinical Quality Trends
+          Clinical Quality Distribution by Age
         </h2>
         <div className="flex items-center gap-2 px-3 py-1.5 bg-brand-cyan/10 border border-brand-cyan/20 rounded-md">
           <Info className="h-4 w-4 text-brand-cyan" />
           <span className="text-xs text-brand-cyan font-medium">
-            Illustrative Trend View (Demo)
+            Non-temporal source distribution
           </span>
         </div>
       </div>
@@ -63,7 +63,7 @@ export function ClinicalTimeline({ data }: { data: QualityTrend[] }) {
               itemStyle={{ color: '#fff' }}
             />
             <Legend wrapperStyle={{ paddingTop: '20px' }} />
-            <Line yAxisId="left" type="monotone" dataKey="readmissions" name="Readmission %" stroke="#f97316" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+            <Line yAxisId="left" type="monotone" dataKey="readmissions" name="&lt;30-Day Proxy %" stroke="#f97316" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
             <Line yAxisId="right" type="monotone" dataKey="los" name="Avg LOS (days)" stroke="#14b8a6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
             <Line yAxisId="right" type="monotone" dataKey="meds" name="Avg Meds" stroke="#8b5cf6" strokeWidth={2} strokeDasharray="5 5" dot={{ r: 4 }} />
             <Line yAxisId="right" type="monotone" dataKey="erVisits" name="ER Visits" stroke="#ef4444" strokeWidth={2} strokeDasharray="5 5" dot={{ r: 4 }} />

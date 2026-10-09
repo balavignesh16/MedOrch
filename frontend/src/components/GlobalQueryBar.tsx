@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Search, Sparkles, X, ChevronDown, ChevronUp, Code2, Bot } from 'lucide-react';
+import { Sparkles, X, ChevronDown, ChevronUp, Code2, Bot } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -27,13 +27,13 @@ export default function GlobalQueryBar({ injectedContext }: GlobalQueryBarProps 
     setHasSearched(true);
     
     try {
-      const finalPrompt = injectedContext ? `[LIVE HOSPITAL DATA CONTEXT: ${injectedContext}]\n\nUser Query: ${q}` : q;
+      const finalPrompt = injectedContext ? `[HISTORICAL ENCOUNTER CONTEXT: ${injectedContext}]\n\nUser Query: ${q}` : q;
       const response = await fetch('/api/stream', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ prompt: finalPrompt, agent_target: 'global' }),
+        body: JSON.stringify({ prompt: finalPrompt, agent_target: 'general' }),
       });
 
       if (!response.ok) throw new Error("Failed to connect to streaming API");
@@ -77,11 +77,13 @@ export default function GlobalQueryBar({ injectedContext }: GlobalQueryBarProps 
     }
   };
 
+  // Every example here must be answerable from the bundled hospital_readmissions
+  // table; see config/assistant_capabilities.json for the source of truth.
   const exampleQueries = [
-    "What percent of patients drop if the hospital moved to a new location?",
-    "How many patients are currently admitted to the ICU?",
-    "List the 5 most recent abnormal lab results.",
-    "Run a simulation: Financial impact of moving ER to west wing"
+    "How many encounters resulted in a readmission within 30 days?",
+    "What is the average time in hospital across all encounters?",
+    "Show the readmission rate grouped by primary diagnosis code.",
+    "Compare average length of stay by admission type.",
   ];
 
   return (

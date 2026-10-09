@@ -3,6 +3,7 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Activity, Pill, Stethoscope, AlertTriangle, Building, Bed } from 'lucide-react';
+import { FINANCIAL_COST_MULTIPLIERS as COST } from '@/lib/analytics/config';
 
 interface ResourceUtilizationProps {
   data: {
@@ -21,12 +22,12 @@ export function ResourceUtilization({ data, totalCost }: ResourceUtilizationProp
 
   // Calculate estimated costs based on config multipliers
   const costs = {
-    medications: data.medications * 3,
-    laboratories: data.laboratories * 5,
-    procedures: data.procedures * 20,
-    emergency: data.emergency * 30,
-    inpatient: data.inpatient * 40,
-    outpatient: data.outpatient * 5
+    medications: data.medications * COST.MEDICATION,
+    laboratories: data.laboratories * COST.LAB_PROCEDURE,
+    procedures: data.procedures * COST.CLINICAL_PROCEDURE,
+    emergency: data.emergency * COST.EMERGENCY_VISIT,
+    inpatient: data.inpatient * COST.INPATIENT_VISIT,
+    outpatient: data.outpatient * COST.OUTPATIENT_VISIT
   };
 
   const resources = [

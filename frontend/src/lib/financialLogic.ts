@@ -5,15 +5,46 @@ import {
   AnalyticsFilterState,
   buildWhereClause,
   buildCostSqlExpression,
+  FINANCIAL_COST_MULTIPLIERS,
   calculateFinancialScore,
   generateFinancialInsights as coreGenerateFinancialInsights
 } from './analytics';
 
 export type FinancialFilterState = AnalyticsFilterState;
+const COST = FINANCIAL_COST_MULTIPLIERS;
+
+interface FinancialTotalsRow {
+  total_cost: number | null;
+  avg_cost: number | null;
+  readmission_cost: number | null;
+  med_cost: number | null;
+  lab_cost: number | null;
+  proc_cost: number | null;
+  er_cost: number | null;
+  high_risk_cost: number | null;
+}
+
+interface ResourceUtilizationRow {
+  meds: number | null;
+  labs: number | null;
+  procs: number | null;
+  er: number | null;
+  inp: number | null;
+  outp: number | null;
+}
+
+interface FinancialTrendRow {
+  category: string;
+  count: number;
+  avg_cost: number;
+  total_cost: number;
+  med_cost: number;
+  readmission_cost: number;
+}
 
 // --- API Methods ---
 
-export const fetchFinancialOverview = cache(async (filters: any = {}) => {
+export const fetchFinancialOverview = cache(async (filters: AnalyticsFilterState = {}) => {
   const normFilters = normalizeFilters(filters);
   const { whereClause, params } = buildWhereClause(normFilters);
 
@@ -41,17 +72,17 @@ export const fetchFinancialOverview = cache(async (filters: any = {}) => {
     SELECT 
       SUM(${costExpr}) as total_cost,
       AVG(${costExpr}) as avg_cost,
-      SUM(CASE WHEN readmitted = '<30' THEN 50 ELSE 0 END) as readmission_cost,
-      SUM(num_medications * 3) as med_cost,
-      SUM(num_lab_procedures * 5) as lab_cost,
-      SUM(num_procedures * 20) as proc_cost,
-      SUM(number_emergency * 30) as er_cost,
+      SUM(CASE WHEN readmitted = '<30' THEN ${COST.READMISSION_PENALTY} ELSE 0 END) as readmission_cost,
+      SUM(num_medications * ${COST.MEDICATION}) as med_cost,
+      SUM(num_lab_procedures * ${COST.LAB_PROCEDURE}) as lab_cost,
+      SUM(num_procedures * ${COST.CLINICAL_PROCEDURE}) as proc_cost,
+      SUM(number_emergency * ${COST.EMERGENCY_VISIT}) as er_cost,
       SUM(CASE WHEN (readmitted = '<30' OR time_in_hospital >= 8 OR num_medications >= 20) THEN ${costExpr} ELSE 0 END) as high_risk_cost
     FROM hospital_readmissions
     ${whereClause}
   `;
   
-  const res = QueryFactory.executeCustomQuery<any[]>(query, params, [
+  const res = QueryFactory.executeCustomQuery<FinancialTotalsRow[]>(query, params, [
     { total_cost: 0, avg_cost: 0, readmission_cost: 0, med_cost: 0, lab_cost: 0, proc_cost: 0, er_cost: 0, high_risk_cost: 0 }
   ])[0];
 
@@ -61,9 +92,9 @@ export const fetchFinancialOverview = cache(async (filters: any = {}) => {
 
   const scoreResult = calculateFinancialScore({
     avgCost,
-    readmissionCostPercent: totalCost > 0 ? (res.readmission_cost / totalCost) * 100 : 0,
-    highRiskCostPercent: totalCost > 0 ? (res.high_risk_cost / totalCost) * 100 : 0,
-    erCostPercent: totalCost > 0 ? (res.er_cost / totalCost) * 100 : 0
+    readmissionCostPercent: totalCost > 0 ? ((res?.readmission_cost || 0) / totalCost) * 100 : 0,
+    highRiskCostPercent: totalCost > 0 ? ((res?.high_risk_cost || 0) / totalCost) * 100 : 0,
+    erCostPercent: totalCost > 0 ? ((res?.er_cost || 0) / totalCost) * 100 : 0
   });
 
   return {
@@ -83,7 +114,7 @@ export const fetchFinancialOverview = cache(async (filters: any = {}) => {
   };
 });
 
-export const fetchCostIntelligence = cache(async (filters: any = {}) => {
+export const fetchCostIntelligence = cache(async (filters: AnalyticsFilterState = {}) => {
   const normFilters = normalizeFilters(filters);
   const { whereClause, params } = buildWhereClause(normFilters);
   const costExpr = buildCostSqlExpression();
@@ -118,11 +149,11 @@ export const fetchCostIntelligence = cache(async (filters: any = {}) => {
   return { byAge, byGender, byDiagnosis, byRisk };
 });
 
-export const fetchResourceUtilization = cache(async (filters: any = {}) => {
+export const fetchResourceUtilization = cache(async (filters: AnalyticsFilterState = {}) => {
   const normFilters = normalizeFilters(filters);
   const { whereClause, params } = buildWhereClause(normFilters);
 
-  const raw = QueryFactory.executeCustomQuery<any[]>(`
+  const raw = QueryFactory.executeCustomQuery<ResourceUtilizationRow[]>(`
     SELECT 
       SUM(num_medications) as meds,
       SUM(num_lab_procedures) as labs,
@@ -145,7 +176,7 @@ export const fetchResourceUtilization = cache(async (filters: any = {}) => {
   };
 });
 
-export const fetchHighCostCohorts = cache(async (filters: any = {}) => {
+export const fetchHighCostCohorts = cache(async (filters: AnalyticsFilterState = {}) => {
   const normFilters = normalizeFilters(filters);
   const { whereClause, params } = buildWhereClause(normFilters);
   const costExpr = buildCostSqlExpression();
@@ -169,29 +200,27 @@ export const fetchHighCostCohorts = cache(async (filters: any = {}) => {
   return cohorts;
 });
 
-export const fetchFinancialTrends = cache(async (filters: any = {}) => {
+export const fetchFinancialTrends = cache(async (filters: AnalyticsFilterState = {}) => {
   const normFilters = normalizeFilters(filters);
   const { whereClause, params } = buildWhereClause(normFilters);
   const costExpr = buildCostSqlExpression();
   
-  const rawTrends = QueryFactory.executeCustomQuery<any[]>(`
+  const rawTrends = QueryFactory.executeCustomQuery<FinancialTrendRow[]>(`
     SELECT 
-      (encounter_id % 12) + 1 as month_index,
+      age as category,
       COUNT(*) as count,
       AVG(${costExpr}) as avg_cost,
       SUM(${costExpr}) as total_cost,
-      SUM(num_medications * 3) as med_cost,
-      SUM(CASE WHEN readmitted = '<30' THEN 50 ELSE 0 END) as readmission_cost
+      SUM(num_medications * ${COST.MEDICATION}) as med_cost,
+      SUM(CASE WHEN readmitted = '<30' THEN ${COST.READMISSION_PENALTY} ELSE 0 END) as readmission_cost
     FROM hospital_readmissions
     ${whereClause}
-    GROUP BY month_index
-    ORDER BY month_index
+    GROUP BY age
+    ORDER BY age
   `, params, []);
   
-  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  
   return rawTrends.map(t => ({
-    period: monthNames[t.month_index - 1],
+    period: t.category || 'Unknown',
     avgCost: t.avg_cost,
     totalCost: t.total_cost,
     medCost: t.med_cost,
@@ -199,7 +228,7 @@ export const fetchFinancialTrends = cache(async (filters: any = {}) => {
   }));
 });
 
-export const generateFinancialInsights = cache(async (filters: any = {}) => {
+export const generateFinancialInsights = cache(async (filters: AnalyticsFilterState = {}) => {
   const overview = await fetchFinancialOverview(filters);
   return coreGenerateFinancialInsights({
     totalCost: overview.totalCost,

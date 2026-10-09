@@ -58,14 +58,14 @@ export function CostBreakdown({ overview }: CostBreakdownProps) {
               ))}
             </Pie>
             <Tooltip 
-              formatter={(value: number) => formatCurrency(value)}
+              formatter={(value) => formatCurrency(Number(value ?? 0))}
               contentStyle={{ backgroundColor: '#111', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '8px' }}
               itemStyle={{ color: '#fff' }}
             />
             <Legend 
               verticalAlign="bottom" 
               height={36}
-              formatter={(value, entry: any) => (
+              formatter={(value) => (
                 <span className="text-white/70 ml-1">
                   {value}
                 </span>

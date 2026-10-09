@@ -1,20 +1,9 @@
 import React from 'react';
 import { AlertCircle, CheckCircle, Info, Flame, Clock, Link as LinkIcon, Activity } from 'lucide-react';
-import Link from 'next/link';
-
-interface InsightData {
-  title: string;
-  severity: 'Positive' | 'Warning' | 'Critical' | 'Info' | string;
-  confidence: number;
-  supportingMetric: string;
-  affectedPopulation: string;
-  recommendedAction: string;
-  relatedDashboard: string;
-  timestamp: string;
-}
+import type { Insight } from '@/lib/analytics';
 
 interface PopulationInsightsProps {
-  insights: InsightData[];
+  insights: Insight[];
 }
 
 export function PopulationInsights({ insights }: PopulationInsightsProps) {
@@ -47,7 +36,8 @@ export function PopulationInsights({ insights }: PopulationInsightsProps) {
 
       <div className="flex flex-col gap-3">
         {insights.map((insight, idx) => {
-          const styles = getSeverityStyles(insight.severity);
+          const severity = insight.severity || insight.type || 'Info';
+          const styles = getSeverityStyles(severity);
           return (
             <div key={idx} className={`relative p-4 rounded-lg border ${styles.border} ${styles.bg} transition-all hover:bg-white/5 focus-within:bg-white/5`}>
               <div className="flex items-start gap-3">
@@ -55,38 +45,38 @@ export function PopulationInsights({ insights }: PopulationInsightsProps) {
                 <div className="flex-1">
                   <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-2 mb-2">
                     <div>
-                      <h4 className="text-sm font-semibold text-white/90">{insight.title}</h4>
+                      <h4 className="text-sm font-semibold text-white/90">{insight.title || 'Population insight'}</h4>
                       <span className="inline-flex items-center gap-1 text-[10px] text-white/50 mt-1 uppercase tracking-wider font-medium">
-                        <span className={`w-1.5 h-1.5 rounded-full ${insight.severity === 'Critical' ? 'bg-danger' : insight.severity === 'Warning' ? 'bg-warning' : insight.severity === 'Positive' ? 'bg-success' : 'bg-brand-cyan'}`}></span>
-                        {insight.severity} Severity
+                        <span className={`w-1.5 h-1.5 rounded-full ${severity === 'Critical' ? 'bg-danger' : severity === 'Warning' ? 'bg-warning' : severity === 'Positive' ? 'bg-success' : 'bg-brand-cyan'}`}></span>
+                        {severity} Severity
                         <span className="mx-1">•</span>
-                        {insight.confidence}% Confidence
+                        Rule-based demo insight
                       </span>
                     </div>
                     <span className="text-xs font-bold text-white/90 bg-surface-black border border-white/10 px-2 py-1 rounded">
-                      {insight.supportingMetric}
+                      {insight.supportingMetric || 'See cohort metrics'}
                     </span>
                   </div>
                   
                   <div className="grid grid-cols-1 gap-2 text-xs mb-3">
                     <div className="text-white/60">
                       <span className="text-white/40 font-medium uppercase tracking-wide text-[10px]">Affected Pop: </span>
-                      {insight.affectedPopulation}
+                      {insight.affectedPopulation || 'Selected cohort'}
                     </div>
                     <div className="text-brand-cyan/90 bg-brand-cyan/5 p-2 rounded border border-brand-cyan/10">
                       <span className="text-brand-cyan/50 font-medium uppercase tracking-wide text-[10px]">Action: </span>
-                      {insight.recommendedAction}
+                      {insight.recommendedAction || 'Review the related cohort metrics.'}
                     </div>
                   </div>
 
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-2 border-t border-white/5 gap-2 text-[10px]">
                     <div className="flex items-center gap-1 text-white/40">
                       <Clock className="h-3 w-3" />
-                      <span>{insight.timestamp}</span>
+                      <span>{insight.timestamp || 'Current analysis'}</span>
                     </div>
                     <div className="flex items-center gap-1 text-white/50">
                       <LinkIcon className="h-3 w-3" />
-                      <span className="font-medium">Module:</span> {insight.relatedDashboard}
+                      <span className="font-medium">Module:</span> {insight.relatedDashboard || 'Population Health'}
                     </div>
                   </div>
                 </div>

@@ -1,0 +1,90 @@
+{
+  "model_version": "readmission-risk-random_forest-20260922T103140Z",
+  "selected_model": "random_forest",
+  "trained_at_utc": "2026-09-22T10:31:41.124735+00:00",
+  "training_source": "database/medorch.db:hospital_readmissions (bundled UCI Diabetes 130-US hospitals dataset)",
+  "target_definition": "readmitted == '<30' (readmission within 30 days) vs. all other outcomes",
+  "split_method": "GroupShuffleSplit by patient_nbr, test_size=0.2, random_state=42 (prevents the same patient's encounters appearing in both train and test)",
+  "candidate_results": {
+    "logistic_regression": {
+      "accuracy": 0.8935,
+      "precision": 0.7,
+      "recall": 0.0033,
+      "f1": 0.0065,
+      "roc_auc": 0.6594,
+      "brier_score": 0.0917,
+      "confusion_matrix": [
+        [
+          17999,
+          3
+        ],
+        [
+          2144,
+          7
+        ]
+      ],
+      "test_row_count": 20153,
+      "test_positive_rate": 0.1067
+    },
+    "random_forest": {
+      "accuracy": 0.8934,
+      "precision": 0.6667,
+      "recall": 0.0028,
+      "f1": 0.0056,
+      "roc_auc": 0.66,
+      "brier_score": 0.0918,
+      "confusion_matrix": [
+        [
+          17999,
+          3
+        ],
+        [
+          2145,
+          6
+        ]
+      ],
+      "test_row_count": 20153,
+      "test_positive_rate": 0.1067
+    }
+  },
+  "selected_metrics": {
+    "accuracy": 0.8934,
+    "precision": 0.6667,
+    "recall": 0.0028,
+    "f1": 0.0056,
+    "roc_auc": 0.66,
+    "brier_score": 0.0918,
+    "confusion_matrix": [
+      [
+        17999,
+        3
+      ],
+      [
+        2145,
+        6
+      ]
+    ],
+    "test_row_count": 20153,
+    "test_positive_rate": 0.1067
+  },
+  "subgroup_roc_auc": {
+    "race": {
+      "Caucasian": 0.6602,
+      "AfricanAmerican": 0.6474,
+      "Other": 0.7112,
+      "Hispanic": 0.7599,
+      "Asian": 0.606
+    },
+    "gender": {
+      "Male": 0.6659,
+      "Female": 0.655
+    }
+  },
+  "known_limitations": [
+    "Not clinically validated; do not use for clinical decisions.",
+    "No drift monitoring, formal approval, or rollback process (see ROADMAP.md Phase 5 model-governance gate).",
+    "Probabilities are calibrated via cross-validated CalibratedClassifierCV (see brier_score above for calibration quality), but this has not been externally validated against a held-out calibration cohort separate from the training data.",
+    "Subgroup ROC-AUC is reported for visibility, not fairness certification.",
+    "Predictions applied to the full bundled dataset include rows the model was trained on; scores for those rows may be optimistic relative to true held-out performance."
+  ]
+}

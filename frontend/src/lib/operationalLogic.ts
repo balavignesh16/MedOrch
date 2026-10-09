@@ -5,12 +5,39 @@ import {
   AnalyticsFilterState,
   buildWhereClause,
   calculateOperationalScore,
+  OPERATIONAL_DEMO_ASSUMPTIONS as DEMO,
   generateOperationalInsights as coreGenerateOperationalInsights
 } from './analytics';
 
 export type OperationalFilterState = AnalyticsFilterState;
 
-export const fetchOperationalOverview = cache(async (filters: any = {}) => {
+interface OperationalTotalsRow {
+  avg_los: number | null;
+  total_er: number | null;
+  total_inp: number | null;
+  total_outp: number | null;
+  total_meds: number | null;
+  total_labs: number | null;
+  total_procs: number | null;
+}
+
+interface ResourceTotalsRow {
+  meds: number | null;
+  labs: number | null;
+  procs: number | null;
+  er: number | null;
+  inp: number | null;
+  outp: number | null;
+}
+
+interface OperationalTrendRow {
+  category: string;
+  count: number;
+  avg_los: number;
+  total_er: number;
+}
+
+export const fetchOperationalOverview = cache(async (filters: AnalyticsFilterState = {}) => {
   const normFilters = normalizeFilters(filters);
   const { whereClause, params } = buildWhereClause(normFilters);
 
@@ -19,7 +46,14 @@ export const fetchOperationalOverview = cache(async (filters: any = {}) => {
   if (totalPatients === 0) {
     return {
       score: 0,
-      scoreBreakdown: {},
+      scoreBreakdown: {
+        throughput: 0,
+        bedUtilization: 0,
+        erLoad: 0,
+        losEfficiency: 0,
+        resourceEfficiency: 0,
+        workflowEfficiency: 0,
+      },
       throughput: 0,
       bedOccupancy: 0,
       erLoad: 0,
@@ -44,18 +78,18 @@ export const fetchOperationalOverview = cache(async (filters: any = {}) => {
     ${whereClause}
   `;
 
-  const res = QueryFactory.executeCustomQuery<any[]>(query, params, [
+  const res = QueryFactory.executeCustomQuery<OperationalTotalsRow[]>(query, params, [
     { avg_los: 0, total_er: 0, total_inp: 0, total_outp: 0, total_meds: 0, total_labs: 0, total_procs: 0 }
   ])[0];
 
   // Synthetic aggregations for demo purposes to simulate operational metrics
-  const throughput = Math.round(totalPatients / 30); // Monthly avg daily throughput
-  const bedOccupancy = Math.min(100, Math.round(70 + (res?.avg_los || 0) * 2));
+  const throughput = Math.round(totalPatients / DEMO.THROUGHPUT_PERIOD_DAYS);
+  const bedOccupancy = Math.min(100, Math.round(DEMO.BED_OCCUPANCY_BASE_PERCENT + (res?.avg_los || 0) * DEMO.BED_OCCUPANCY_LOS_WEIGHT));
   const erLoad = totalPatients > 0 ? ((res?.total_er || 0) / totalPatients) * 100 : 0;
   const inpatientLoad = totalPatients > 0 ? ((res?.total_inp || 0) / totalPatients) * 100 : 0;
   const outpatientLoad = totalPatients > 0 ? ((res?.total_outp || 0) / totalPatients) * 100 : 0;
-  const resourceEfficiency = 85; // Synthetic
-  const workflowEfficiency = 88; // Synthetic
+  const resourceEfficiency = DEMO.RESOURCE_EFFICIENCY_PERCENT;
+  const workflowEfficiency = DEMO.WORKFLOW_EFFICIENCY_PERCENT;
 
   const scoreResult = calculateOperationalScore({
     throughput,
@@ -83,21 +117,21 @@ export const fetchOperationalOverview = cache(async (filters: any = {}) => {
   };
 });
 
-export const fetchPatientFlow = cache(async (filters: any = {}) => {
+export const fetchPatientFlow = cache(async (filters: AnalyticsFilterState = {}) => {
   // Synthetic flow data matching request
   const total = QueryFactory.executeCount('hospital_readmissions', normalizeFilters(filters));
   if (total === 0) return [];
 
   return [
     { stage: 'Admission', count: total, avgTime: '45m', queue: Math.round(total * 0.05), dropoff: 2, capacity: 85, bottleneck: false },
-    { stage: 'Emergency', count: Math.round(total * 0.4), avgTime: '2.5h', queue: Math.round(total * 0.08), dropoff: 18, capacity: 95, bottleneck: true },
-    { stage: 'Ward', count: Math.round(total * 0.55), avgTime: '4.2d', queue: Math.round(total * 0.02), dropoff: 0, capacity: 88, bottleneck: false },
-    { stage: 'Procedure', count: Math.round(total * 0.3), avgTime: '1.5h', queue: Math.round(total * 0.04), dropoff: 5, capacity: 62, bottleneck: false },
-    { stage: 'Discharge', count: Math.round(total * 0.95), avgTime: '3.1h', queue: Math.round(total * 0.06), dropoff: 0, capacity: 75, bottleneck: true }
+    { stage: 'Emergency', count: Math.round(total * DEMO.FLOW.emergency.volume), avgTime: '2.5h', queue: Math.round(total * DEMO.FLOW.emergency.queue), dropoff: 18, capacity: 95, bottleneck: true },
+    { stage: 'Ward', count: Math.round(total * DEMO.FLOW.ward.volume), avgTime: '4.2d', queue: Math.round(total * DEMO.FLOW.ward.queue), dropoff: 0, capacity: 88, bottleneck: false },
+    { stage: 'Procedure', count: Math.round(total * DEMO.FLOW.procedure.volume), avgTime: '1.5h', queue: Math.round(total * DEMO.FLOW.procedure.queue), dropoff: 5, capacity: 62, bottleneck: false },
+    { stage: 'Discharge', count: Math.round(total * DEMO.FLOW.discharge.volume), avgTime: '3.1h', queue: Math.round(total * DEMO.FLOW.discharge.queue), dropoff: 0, capacity: 75, bottleneck: true }
   ];
 });
 
-export const fetchOperationalResources = cache(async (filters: any = {}) => {
+export const fetchOperationalResources = cache(async (filters: AnalyticsFilterState = {}) => {
   const normFilters = normalizeFilters(filters);
   const { whereClause, params } = buildWhereClause(normFilters);
 
@@ -112,7 +146,7 @@ export const fetchOperationalResources = cache(async (filters: any = {}) => {
     FROM hospital_readmissions
     ${whereClause}
   `;
-  const raw = QueryFactory.executeCustomQuery<any[]>(query, params, [{ meds: 0, labs: 0, procs: 0, er: 0, inp: 0, outp: 0 }])[0];
+  const raw = QueryFactory.executeCustomQuery<ResourceTotalsRow[]>(query, params, [{ meds: 0, labs: 0, procs: 0, er: 0, inp: 0, outp: 0 }])[0];
   const total = (raw?.meds || 0) + (raw?.labs || 0) + (raw?.procs || 0) + (raw?.er || 0) + (raw?.inp || 0) + (raw?.outp || 0);
 
   return [
@@ -126,7 +160,8 @@ export const fetchOperationalResources = cache(async (filters: any = {}) => {
   ];
 });
 
-export const fetchCapacityMetrics = cache(async (filters: any = {}) => {
+export const fetchCapacityMetrics = cache(async (filters: AnalyticsFilterState = {}) => {
+  void filters;
   return {
     current: 450,
     available: 50,
@@ -140,7 +175,8 @@ export const fetchCapacityMetrics = cache(async (filters: any = {}) => {
   };
 });
 
-export const fetchBottlenecks = cache(async (filters: any = {}) => {
+export const fetchBottlenecks = cache(async (filters: AnalyticsFilterState = {}) => {
+  void filters;
   return [
     {
       title: 'ER Wait Time to Admit',
@@ -169,34 +205,32 @@ export const fetchBottlenecks = cache(async (filters: any = {}) => {
   ];
 });
 
-export const fetchOperationalTrends = cache(async (filters: any = {}) => {
+export const fetchOperationalTrends = cache(async (filters: AnalyticsFilterState = {}) => {
   const normFilters = normalizeFilters(filters);
   const { whereClause, params } = buildWhereClause(normFilters);
 
   const query = `
     SELECT 
-      (encounter_id % 12) + 1 as month_index,
+      CAST(admission_type_id AS TEXT) as category,
       COUNT(*) as count,
       AVG(time_in_hospital) as avg_los,
       SUM(number_emergency) as total_er
     FROM hospital_readmissions
     ${whereClause}
-    GROUP BY (encounter_id % 12) + 1
-    ORDER BY month_index ASC
+    GROUP BY admission_type_id
+    ORDER BY admission_type_id ASC
   `;
   
-  const rawTrends = QueryFactory.executeCustomQuery<any[]>(query, params);
-  
-  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const rawTrends = QueryFactory.executeCustomQuery<OperationalTrendRow[]>(query, params, []);
   
   return rawTrends.map(t => ({
-    period: monthNames[t.month_index - 1],
-    throughput: Math.round(t.count / 30),
+    period: `Admission Type ${t.category || 'Unknown'}`,
+    encounters: t.count,
     los: t.avg_los,
     erVisits: t.total_er
   }));
 });
 
-export const fetchOperationalInsights = cache(async (filters: any = {}) => {
+export const fetchOperationalInsights = cache(async (filters: AnalyticsFilterState = {}) => {
   return coreGenerateOperationalInsights(filters);
 });

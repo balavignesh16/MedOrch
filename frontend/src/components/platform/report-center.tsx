@@ -1,8 +1,9 @@
 import React from 'react';
+import type { fetchReports } from '@/lib/platformLogic';
 import { FileText, Download, FileSpreadsheet, FileIcon } from 'lucide-react';
 
 interface ReportCenterProps {
-  reports: any[];
+  reports: Awaited<ReturnType<typeof fetchReports>>;
 }
 
 export function ReportCenter({ reports }: ReportCenterProps) {

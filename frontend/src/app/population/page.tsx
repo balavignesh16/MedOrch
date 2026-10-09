@@ -1,10 +1,9 @@
-import React, { Suspense } from 'react';
+import React from 'react';
 import { CommandPalette } from '@/components/ui/command-palette';
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 import { DashboardFooter } from '@/components/dashboard/dashboard-footer';
 import { FilterChips } from '@/components/dashboard/filter-chips';
 import { KpiCard } from '@/components/dashboard/kpi-card';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Users, AlertTriangle, Clock, Pill, Activity } from 'lucide-react';
 
 import { 
@@ -21,12 +20,16 @@ import { RiskCharts } from '@/components/population/risk-charts';
 import { PopulationTrends } from '@/components/population/population-trends';
 import { PopulationInsights } from '@/components/population/population-insights';
 import { PopulationEmptyState } from '@/components/population/population-empty-state';
+import { flattenSearchParams, RawSearchParams } from '@/lib/searchParams';
 
 export const dynamic = 'force-dynamic';
 
-export default async function PopulationDashboardPage(props: { searchParams: Promise<any> }) {
+const HEURISTIC_METADATA = { lastUpdated: 'Bundled dataset', dataSource: 'Rule-based demo model', refreshPolicy: 'On page load', confidence: 'Not validated', target: 'Demo only' };
+const DERIVED_METADATA = { lastUpdated: 'Bundled dataset', dataSource: 'De-identified demo data', refreshPolicy: 'On page load', confidence: 'Derived', target: 'Demo only' };
+
+export default async function PopulationDashboardPage(props: { searchParams: Promise<RawSearchParams> }) {
   const searchParams = await props.searchParams;
-  const safeParams = searchParams ? Object.fromEntries(Object.entries(searchParams)) : {};
+  const safeParams = flattenSearchParams(searchParams);
 
   // Fetch all parallel data streams
   const [
@@ -54,7 +57,7 @@ export default async function PopulationDashboardPage(props: { searchParams: Pro
             showDatePicker={false}
           />
           <FilterChips  />
-          <CohortExplorer totalPatients={0} absoluteTotal={overview.absoluteTotal} />
+          <CohortExplorer key={new URLSearchParams(safeParams).toString()} totalPatients={0} absoluteTotal={overview.absoluteTotal} />
           <PopulationEmptyState />
         </div>
       </div>
@@ -74,7 +77,7 @@ export default async function PopulationDashboardPage(props: { searchParams: Pro
         
         <FilterChips  />
         
-        <CohortExplorer totalPatients={overview.totalPatients} absoluteTotal={overview.absoluteTotal} />
+        <CohortExplorer key={new URLSearchParams(safeParams).toString()} totalPatients={overview.totalPatients} absoluteTotal={overview.absoluteTotal} />
 
         {/* Top KPIs */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
@@ -84,24 +87,18 @@ export default async function PopulationDashboardPage(props: { searchParams: Pro
             status={overview.healthIndex > 70 ? 'Good' : overview.healthIndex > 50 ? 'Watch' : 'Critical'}
             icon={<Activity className="h-4 w-4" />}
             widgetSize="sm"
-            metadata={{
-              lastUpdated: 'Live',
-              dataSource: 'MedOrch Clinical Engine',
-              refreshPolicy: 'Real-time',
-              confidence: '95%',
-              target: '> 80',
-            }}
+            metadata={HEURISTIC_METADATA}
           />
           <KpiCard
-            title="Total Patients"
+            title="Total Encounters"
             value={overview.totalPatients.toLocaleString()}
             icon={<Users className="h-4 w-4" />}
             widgetSize="sm"
             metadata={{
-              lastUpdated: 'Live',
-              dataSource: 'EMR / HL7',
-              refreshPolicy: 'Real-time',
-              confidence: '99%',
+              lastUpdated: 'Bundled dataset',
+              dataSource: 'De-identified demo data',
+              refreshPolicy: 'On page load',
+              confidence: 'Observed',
               target: 'N/A',
             }}
           />
@@ -111,13 +108,7 @@ export default async function PopulationDashboardPage(props: { searchParams: Pro
             status={overview.highRiskPercent > 30 ? 'Critical' : 'Good'}
             icon={<AlertTriangle className="h-4 w-4" />}
             widgetSize="sm"
-            metadata={{
-              lastUpdated: 'Live',
-              dataSource: 'Risk Engine',
-              refreshPolicy: 'Real-time',
-              confidence: '85%',
-              target: '< 20%',
-            }}
+            metadata={HEURISTIC_METADATA}
           />
           <KpiCard
             title="Avg Length of Stay"
@@ -125,27 +116,15 @@ export default async function PopulationDashboardPage(props: { searchParams: Pro
             status={overview.avgLengthOfStay > 5 ? 'Watch' : 'Good'}
             icon={<Clock className="h-4 w-4" />}
             widgetSize="sm"
-            metadata={{
-              lastUpdated: 'Live',
-              dataSource: 'Admissions',
-              refreshPolicy: 'Real-time',
-              confidence: '99%',
-              target: '< 4d',
-            }}
+            metadata={DERIVED_METADATA}
           />
           <KpiCard
-            title="Avg Meds / Patient"
+            title="Avg Medications / Encounter"
             value={overview.avgMedications.toFixed(1)}
             status={overview.avgMedications > 15 ? 'Watch' : 'Good'}
             icon={<Pill className="h-4 w-4" />}
             widgetSize="sm"
-            metadata={{
-              lastUpdated: 'Live',
-              dataSource: 'Pharmacy System',
-              refreshPolicy: 'Real-time',
-              confidence: '99%',
-              target: '< 10',
-            }}
+            metadata={DERIVED_METADATA}
           />
         </div>
 
@@ -164,7 +143,7 @@ export default async function PopulationDashboardPage(props: { searchParams: Pro
 
         {/* Disease Intelligence */}
         <div className="mb-6">
-          <DiseaseTable data={disease} />
+          <DiseaseTable data={disease} cohortTotal={overview.totalPatients} />
         </div>
 
       </main>

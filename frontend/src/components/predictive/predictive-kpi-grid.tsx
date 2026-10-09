@@ -1,8 +1,9 @@
 import React from 'react';
+import type { fetchPredictionOverview } from '@/lib/predictiveLogic';
 import { KpiCard } from '@/components/dashboard/kpi-card';
 
 interface PredictiveKpiGridProps {
-  overview: any;
+  overview: Awaited<ReturnType<typeof fetchPredictionOverview>>;
 }
 
 export const PredictiveKpiGrid: React.FC<PredictiveKpiGridProps> = ({ overview }) => {

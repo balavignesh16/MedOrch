@@ -1,14 +1,26 @@
 import { NextResponse } from 'next/server';
 import Database from 'better-sqlite3';
-import path from 'path';
+import { getDatabasePath } from '@/lib/databaseConfig';
+import { parsePatientId } from '@/lib/patientId';
+import type { LabResultRow, MedicationRow, PatientDetailRow } from '@/lib/patientTypes';
+import { apiError } from '@/lib/apiResponse';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const { id } = await params;
+  const patientId = parsePatientId(id);
+  if (patientId === null) {
+    return apiError('invalid_patient_id', 'Patient ID must be a positive integer', 400);
+  }
+
+  let db: Database.Database | null = null;
   try {
-    const patientId = params.id;
-    const dbPath = path.resolve(process.cwd(), '../database/medorch.db');
-    const db = new Database(dbPath, { readonly: true });
+    db = new Database(getDatabasePath(), { readonly: true });
+    db.pragma('query_only = ON');
     
     // Get patient details
     const patientQuery = `
@@ -19,11 +31,10 @@ export async function GET(request: Request, { params }: { params: { id: string }
       ORDER BY a.admission_date DESC
       LIMIT 1
     `;
-    const patient = db.prepare(patientQuery).get(patientId);
+    const patient = db.prepare(patientQuery).get(patientId) as PatientDetailRow | undefined;
     
     if (!patient) {
-      db.close();
-      return NextResponse.json({ error: 'Patient not found' }, { status: 404 });
+      return apiError('patient_not_found', 'Patient not found', 404);
     }
 
     // Get labs
@@ -32,17 +43,19 @@ export async function GET(request: Request, { params }: { params: { id: string }
       WHERE patient_id = ? 
       ORDER BY test_date DESC
     `;
-    const labs = db.prepare(labsQuery).all(patientId);
+    const labs = db.prepare(labsQuery).all(patientId) as LabResultRow[];
 
     // Get medications
+    const medicationColumns = db.prepare('PRAGMA table_info(medications)').all() as Array<{ name: string }>;
+    const medicationDateColumn = medicationColumns.some((column) => column.name === 'start_date')
+      ? 'start_date'
+      : 'prescribed_date';
     const medsQuery = `
       SELECT * FROM medications 
       WHERE patient_id = ? 
-      ORDER BY start_date DESC
+      ORDER BY ${medicationDateColumn} DESC
     `;
-    const meds = db.prepare(medsQuery).all(patientId);
-
-    db.close();
+    const meds = db.prepare(medsQuery).all(patientId) as MedicationRow[];
 
     return NextResponse.json({ 
       patient,
@@ -51,6 +64,8 @@ export async function GET(request: Request, { params }: { params: { id: string }
     });
   } catch (error) {
     console.error("Error fetching patient details:", error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return apiError('internal_error', 'Internal Server Error', 500);
+  } finally {
+    db?.close();
   }
 }

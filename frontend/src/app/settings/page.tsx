@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, User, Bell, Shield, Database, Layout } from 'lucide-react';
+import { User, Bell, Shield, Database, Layout } from 'lucide-react';
 
 export default function SettingsPage() {
   return (

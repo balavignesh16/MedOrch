@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useCallback } from 'react';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import React from 'react';
 import { FilterChips } from '@/components/dashboard/filter-chips';
 import { StrategyKpiGrid } from '@/components/strategy/strategy-kpi-grid';
 import { EnterpriseBenchmarkProfiles } from '@/components/strategy/enterprise-benchmark-profiles';
@@ -10,19 +9,25 @@ import { ScenarioSimulator } from '@/components/strategy/scenario-simulator';
 import { DecisionPrioritizationMatrix } from '@/components/strategy/decision-prioritization-matrix';
 import { StrategicRoadmap } from '@/components/strategy/strategic-roadmap';
 import { ExecutiveBrief } from '@/components/strategy/executive-brief';
+import type {
+  getDecisionPrioritizationMatrix,
+  getEnterpriseBenchmarkProfiles,
+  getStrategicExecutiveBrief,
+  getStrategicKpiMatrix,
+  getStrategicOverview,
+  getStrategicRoadmap,
+} from '@/app/actions/strategyDb';
 
 interface DashboardClientProps {
-  filters: any;
-  overviewData: any;
-  benchmarkData: any[];
-  kpiMatrixData: any[];
-  decisionMatrixData: any[];
-  roadmapData: any[];
-  executiveBriefData: any[];
+  overviewData: Awaited<ReturnType<typeof getStrategicOverview>>;
+  benchmarkData: Awaited<ReturnType<typeof getEnterpriseBenchmarkProfiles>>;
+  kpiMatrixData: Awaited<ReturnType<typeof getStrategicKpiMatrix>>;
+  decisionMatrixData: Awaited<ReturnType<typeof getDecisionPrioritizationMatrix>>;
+  roadmapData: Awaited<ReturnType<typeof getStrategicRoadmap>>;
+  executiveBriefData: Awaited<ReturnType<typeof getStrategicExecutiveBrief>>;
 }
 
 export function DashboardClient({
-  filters,
   overviewData,
   benchmarkData,
   kpiMatrixData,
@@ -30,16 +35,6 @@ export function DashboardClient({
   roadmapData,
   executiveBriefData
 }: DashboardClientProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
-  const updateQueryParams = useCallback((key: string, value: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set(key, value);
-    router.push(`${pathname}?${params.toString()}`);
-  }, [pathname, router, searchParams]);
-
   return (
     <div className="p-6 max-w-[1600px] mx-auto space-y-6">
       <FilterChips  />

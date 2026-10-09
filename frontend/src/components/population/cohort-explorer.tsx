@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Users, X, Filter, Save, RotateCcw } from 'lucide-react';
+import { Users, Filter, Save, RotateCcw } from 'lucide-react';
 
 interface CohortExplorerProps {
   totalPatients: number;
@@ -16,12 +16,6 @@ export function CohortExplorer({ totalPatients, absoluteTotal }: CohortExplorerP
   const [gender, setGender] = useState(searchParams.get('gender') || '');
   const [age, setAge] = useState(searchParams.get('age') || '');
   const [race, setRace] = useState(searchParams.get('race') || '');
-
-  useEffect(() => {
-    setGender(searchParams.get('gender') || '');
-    setAge(searchParams.get('age') || '');
-    setRace(searchParams.get('race') || '');
-  }, [searchParams]);
 
   const handleApply = () => {
     const params = new URLSearchParams(searchParams.toString());
@@ -54,10 +48,10 @@ export function CohortExplorer({ totalPatients, absoluteTotal }: CohortExplorerP
           <h2 className="text-sm font-semibold text-white">Cohort Explorer</h2>
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:gap-4">
-          <div className="flex items-center gap-2 bg-surface-black border border-white/5 px-3 py-1.5 rounded-full" aria-label={`${totalPatients} matching patients out of ${absoluteTotal} total population. ${percentage}%`}>
+          <div className="flex items-center gap-2 bg-surface-black border border-white/5 px-3 py-1.5 rounded-full" aria-label={`${totalPatients} matching encounters out of ${absoluteTotal} total encounters. ${percentage}%`}>
             <Users className="h-3.5 w-3.5 text-brand-cyan" aria-hidden="true" />
             <span className="text-xs font-medium text-white/90">
-              {totalPatients.toLocaleString()} / {absoluteTotal.toLocaleString()} patients
+              {totalPatients.toLocaleString()} / {absoluteTotal.toLocaleString()} encounters
             </span>
             <span className="text-xs font-bold text-brand-cyan/80 px-1.5 py-0.5 bg-brand-cyan/10 rounded ml-1">
               {percentage}%

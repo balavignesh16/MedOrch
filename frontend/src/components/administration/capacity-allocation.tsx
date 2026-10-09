@@ -1,8 +1,9 @@
 import React from 'react';
+import type { fetchCapacityAllocation } from '@/lib/administrationLogic';
 import { BedDouble, AlertCircle } from 'lucide-react';
 
 interface CapacityAllocationProps {
-  capacity: any;
+  capacity: Awaited<ReturnType<typeof fetchCapacityAllocation>>;
 }
 
 export const CapacityAllocation: React.FC<CapacityAllocationProps> = ({ capacity }) => {
@@ -41,7 +42,7 @@ export const CapacityAllocation: React.FC<CapacityAllocationProps> = ({ capacity
 
       <div className="space-y-4">
         <h4 className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-2">Department Allocation</h4>
-        {capacity.departments.map((dept: any, i: number) => (
+        {capacity.departments.map((dept, i) => (
           <div key={i} className="flex flex-col text-xs">
             <div className="flex justify-between mb-1">
               <span className="text-white/80 font-medium">{dept.name}</span>

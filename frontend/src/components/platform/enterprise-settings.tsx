@@ -1,8 +1,9 @@
 import React from 'react';
-import { Settings, Sliders, Shield, Monitor } from 'lucide-react';
+import type { fetchEnterpriseSettings } from '@/lib/platformLogic';
+import { Settings, Sliders, Monitor } from 'lucide-react';
 
 interface EnterpriseSettingsProps {
-  settings: any;
+  settings: Awaited<ReturnType<typeof fetchEnterpriseSettings>>;
 }
 
 export function EnterpriseSettings({ settings }: EnterpriseSettingsProps) {

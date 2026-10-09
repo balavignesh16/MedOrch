@@ -2,6 +2,8 @@ import { SCORING_CONFIG } from './config';
 import { Score } from './types';
 import { clampScore } from './validators';
 
+export type ScoreResult = Score;
+
 export function calculatePopulationHealthIndex(metrics: {
   highRiskPercent: number;
   readmissionPercent: number;
@@ -170,7 +172,29 @@ export function calculateOperationalScore(metrics: OperationalMetrics): ScoreRes
 
 // --- Predictive Scoring Models ---
 
-export function calculateReadmissionRisk(patientFeatures: any): ScoreResult {
+export interface ReadmissionRiskFeatures {
+  previousReadmissions: number;
+  comorbidities: number;
+  medications: number;
+  recentErVisits: number;
+}
+
+export interface LengthOfStayRiskFeatures {
+  age: number;
+  procedureCount: number;
+  highSeverityDiagnosis: boolean;
+}
+
+export type HighRiskFeatures = ReadmissionRiskFeatures & LengthOfStayRiskFeatures & {
+  socialDeterminantsRisk?: number;
+};
+
+export interface DemandForecastFeatures {
+  winterSeason: boolean;
+  recentVolumeSpike: boolean;
+}
+
+export function calculateReadmissionRisk(patientFeatures: ReadmissionRiskFeatures): ScoreResult {
   // Synthetic model based on features
   let score = 20;
   const breakdown = { prevReadmissions: 0, comorbidities: 0, medications: 0, recentEr: 0 };
@@ -195,7 +219,7 @@ export function calculateReadmissionRisk(patientFeatures: any): ScoreResult {
   return { value: clampScore(score), breakdown };
 }
 
-export function calculateLengthOfStayRisk(patientFeatures: any): ScoreResult {
+export function calculateLengthOfStayRisk(patientFeatures: LengthOfStayRiskFeatures): ScoreResult {
   let score = 10;
   const breakdown = { ageRisk: 0, procedureComplexity: 0, diagnosisSeverity: 0 };
 
@@ -215,12 +239,12 @@ export function calculateLengthOfStayRisk(patientFeatures: any): ScoreResult {
   return { value: clampScore(score), breakdown };
 }
 
-export function calculateHighRiskScore(patientFeatures: any): ScoreResult {
+export function calculateHighRiskScore(patientFeatures: HighRiskFeatures): ScoreResult {
   const readmission = calculateReadmissionRisk(patientFeatures).value;
   const los = calculateLengthOfStayRisk(patientFeatures).value;
   
   // Composite risk score favoring the higher of the two, plus intrinsic risk
-  let score = Math.max(readmission, los) * 0.7 + (patientFeatures.socialDeterminantsRisk || 10);
+  const score = Math.max(readmission, los) * 0.7 + (patientFeatures.socialDeterminantsRisk || 10);
   
   return { 
     value: clampScore(score),
@@ -228,7 +252,7 @@ export function calculateHighRiskScore(patientFeatures: any): ScoreResult {
   };
 }
 
-export function calculateDemandForecastScore(hospitalFeatures: any): ScoreResult {
+export function calculateDemandForecastScore(hospitalFeatures: DemandForecastFeatures): ScoreResult {
   let score = 50;
   const breakdown = { seasonalTrend: 0, historicalVolume: 0, localEvents: 0 };
 

@@ -1,9 +1,10 @@
 import React from 'react';
+import type { fetchHighRiskPatients } from '@/lib/predictiveLogic';
 import Link from 'next/link';
 import { AlertTriangle, ArrowRight } from 'lucide-react';
 
 interface HighRiskPatientsProps {
-  patients: any[];
+  patients: Awaited<ReturnType<typeof fetchHighRiskPatients>>;
 }
 
 export const HighRiskPatients: React.FC<HighRiskPatientsProps> = ({ patients }) => {

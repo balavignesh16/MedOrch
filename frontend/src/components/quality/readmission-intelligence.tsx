@@ -25,8 +25,11 @@ interface ReadmissionIntelligenceProps {
   totalPatients: number;
 }
 
+const READMISSION_TABS = ['Diagnosis', 'Age', 'Gender', 'Race', 'Admission', 'Discharge'] as const;
+type ReadmissionTab = typeof READMISSION_TABS[number];
+
 export function ReadmissionIntelligence({ data, totalPatients }: ReadmissionIntelligenceProps) {
-  const [activeTab, setActiveTab] = useState<'Age' | 'Gender' | 'Race' | 'Diagnosis' | 'Admission' | 'Discharge'>('Diagnosis');
+  const [activeTab, setActiveTab] = useState<ReadmissionTab>('Diagnosis');
   const { getCrossFilterUrl } = useCrossFilter();
 
   const getTabDataset = () => {
@@ -43,8 +46,8 @@ export function ReadmissionIntelligence({ data, totalPatients }: ReadmissionInte
 
   const { dataset, filterParam } = getTabDataset();
 
-  const targetRate = 10.0; // CMS target
-  const benchmarkRate = 15.2; // National Avg
+  const targetRate = 10.0; // Configured demonstration reference
+  const benchmarkRate = 15.2; // Configured comparison reference
 
   return (
     <Card className="p-6 mb-6">
@@ -52,16 +55,16 @@ export function ReadmissionIntelligence({ data, totalPatients }: ReadmissionInte
         <div>
           <h2 className="text-lg font-bold text-white flex items-center gap-2">
             <Activity className="h-5 w-5 text-brand-orange" />
-            Readmission Intelligence
+            Readmission Proxy Intelligence
           </h2>
-          <p className="text-sm text-white/50">Analyze 30-day readmissions across clinical and demographic dimensions.</p>
+          <p className="text-sm text-white/50">Analyze the source dataset&apos;s &lt;30-day proxy category across encounter dimensions.</p>
         </div>
 
         <div className="flex bg-surface-black p-1 rounded-lg border border-border-glass overflow-x-auto">
-          {['Diagnosis', 'Age', 'Gender', 'Race', 'Admission', 'Discharge'].map((tab) => (
+          {READMISSION_TABS.map((tab) => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab as any)}
+              onClick={() => setActiveTab(tab)}
               className={`px-4 py-1.5 text-xs font-medium rounded-md whitespace-nowrap transition-colors ${
                 activeTab === tab
                   ? 'bg-brand-orange text-white shadow-sm'
@@ -79,10 +82,10 @@ export function ReadmissionIntelligence({ data, totalPatients }: ReadmissionInte
           <thead className="text-xs text-white/50 uppercase bg-surface-black border-y border-white/5">
             <tr>
               <th className="px-4 py-3 font-semibold">Category</th>
-              <th className="px-4 py-3 font-semibold text-right">Total Patients</th>
-              <th className="px-4 py-3 font-semibold text-right">Readmission %</th>
-              <th className="px-4 py-3 font-semibold text-center">Target</th>
-              <th className="px-4 py-3 font-semibold text-center">Benchmark</th>
+              <th className="px-4 py-3 font-semibold text-right">Total Encounters</th>
+              <th className="px-4 py-3 font-semibold text-right">&lt;30-Day Proxy %</th>
+              <th className="px-4 py-3 font-semibold text-center">Demo Reference</th>
+              <th className="px-4 py-3 font-semibold text-center">Comparison Reference</th>
               <th className="px-4 py-3 font-semibold text-right">Variance</th>
               <th className="px-4 py-3 font-semibold text-center">Actions</th>
             </tr>

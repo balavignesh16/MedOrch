@@ -23,10 +23,10 @@ export function PopulationTrends({ data }: PopulationTrendsProps) {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <TrendingUp className="h-4 w-4 text-brand-cyan" />
-          <h3 className="text-sm font-semibold text-white">Population Trends</h3>
+          <h3 className="text-sm font-semibold text-white">Encounter Distribution by Age</h3>
         </div>
         <span className="text-[10px] uppercase tracking-wider font-bold text-white/50 bg-white/5 border border-white/10 px-2 py-1 rounded">
-          Illustrative Trend View (Demo)
+          Non-temporal source distribution
         </span>
       </div>
 
@@ -56,7 +56,7 @@ export function PopulationTrends({ data }: PopulationTrendsProps) {
             <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
             <Line 
               type="monotone" 
-              name="Total Admissions"
+              name="Encounters"
               dataKey="admissions" 
               stroke="#00d4ff" 
               strokeWidth={3} 
@@ -65,7 +65,7 @@ export function PopulationTrends({ data }: PopulationTrendsProps) {
             />
             <Line 
               type="monotone" 
-              name="Readmissions"
+              name="&lt;30-Day Proxy Encounters"
               dataKey="readmissions" 
               stroke="#ff4d4f" 
               strokeWidth={3} 

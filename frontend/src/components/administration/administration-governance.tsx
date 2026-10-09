@@ -1,8 +1,9 @@
 import React from 'react';
+import type { fetchAdministrativeGovernance } from '@/lib/administrationLogic';
 import { ShieldCheck, FileCheck, CheckCircle2, AlertTriangle, Layers, Clock } from 'lucide-react';
 
 interface AdministrationGovernanceProps {
-  governance: any;
+  governance: Awaited<ReturnType<typeof fetchAdministrativeGovernance>>;
 }
 
 export const AdministrationGovernance: React.FC<AdministrationGovernanceProps> = ({ governance }) => {

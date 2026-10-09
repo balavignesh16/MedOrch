@@ -1,9 +1,10 @@
 import React from 'react';
+import type { fetchAdministrativeTrends } from '@/lib/administrationLogic';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { TrendingUp } from 'lucide-react';
 
 interface AdministrativeTrendsProps {
-  trends: any[];
+  trends: Awaited<ReturnType<typeof fetchAdministrativeTrends>>;
 }
 
 export const AdministrativeTrends: React.FC<AdministrativeTrendsProps> = ({ trends }) => {

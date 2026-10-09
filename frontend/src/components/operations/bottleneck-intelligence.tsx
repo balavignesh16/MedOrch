@@ -52,7 +52,7 @@ export function BottleneckIntelligence({ bottlenecks }: BottleneckIntelligencePr
                       <span className={item.severity === 'Critical' ? 'text-danger' : 'text-warning'}>
                         {item.severity}
                       </span>
-                      <span className="text-brand-cyan">{item.confidence}% AI Confidence</span>
+                      <span className="text-brand-cyan">Synthetic demo scenario</span>
                       <span className="text-white/50">{item.supportingMetric}</span>
                     </div>
                   </div>

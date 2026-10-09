@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, Search, Activity, Pill, User, AlertCircle } from 'lucide-react';
+import type { CohortPatientRow } from '@/lib/populationLogic';
 
 interface CohortTableProps {
   data: {
-    patients: any[];
+    patients: CohortPatientRow[];
     total: number;
     page: number;
     pageSize: number;
@@ -27,13 +28,17 @@ export function CohortTable({ data }: CohortTableProps) {
     const timeoutId = setTimeout(() => {
       const currentSearch = searchParams.get('searchQuery') || '';
       if (search !== currentSearch) {
-        updateQueryParams({ searchQuery: search, page: '1' });
+        const params = new URLSearchParams(searchParams.toString());
+        if (search) params.set('searchQuery', search);
+        else params.delete('searchQuery');
+        params.set('page', '1');
+        router.push(`${pathname}?${params.toString()}`);
       }
     }, 500);
     return () => clearTimeout(timeoutId);
-  }, [search, searchParams]);
+  }, [pathname, router, search, searchParams]);
 
-  const updateQueryParams = useCallback((updates: Record<string, string | null>) => {
+  const updateQueryParams = (updates: Record<string, string | null>) => {
     const params = new URLSearchParams(searchParams.toString());
     Object.entries(updates).forEach(([key, value]) => {
       if (value === null || value === '') {
@@ -43,7 +48,7 @@ export function CohortTable({ data }: CohortTableProps) {
       }
     });
     router.push(`${pathname}?${params.toString()}`);
-  }, [pathname, router, searchParams]);
+  };
 
   const handleSort = (column: string) => {
     const currentSortBy = searchParams.get('sortBy');

@@ -1,9 +1,7 @@
 "use server";
 
-import { cache } from 'react';
 import { 
   fetchRawKpiMetrics, 
-  calculateReadmissionRate, 
   getReadmissionStatus, 
   getHospitalHealthStatus,
   FilterState
@@ -11,12 +9,11 @@ import {
 
 export async function getKpiMetrics(filters?: FilterState) {
   const raw = await fetchRawKpiMetrics(filters);
-  
-  const readmissionRate = calculateReadmissionRate(raw.totalEncounters, raw.readmissionBreakdown);
+  const readmissionRate = raw.readmissionProxyRate;
 
   return {
     totalEncounters: raw.totalEncounters,
-    avgTimeInHospital: raw.avgTimeInHospital ? raw.avgTimeInHospital.toFixed(1) : "0.0",
+    avgTimeInHospital: raw.avgTimeInHospital === null ? "N/A" : raw.avgTimeInHospital.toFixed(1),
     readmissionRate: readmissionRate.toFixed(1),
     readmissionStatus: getReadmissionStatus(readmissionRate),
     readmissionBreakdown: raw.readmissionBreakdown,
@@ -27,7 +24,7 @@ export async function getKpiMetrics(filters?: FilterState) {
 
 export async function getHospitalHealthScore(filters?: FilterState) {
   const raw = await fetchRawKpiMetrics(filters);
-  const rate = calculateReadmissionRate(raw.totalEncounters, raw.readmissionBreakdown);
+  const rate = raw.readmissionProxyRate;
   
   let score = 100 - rate;
   score = Math.max(40, Math.min(98, score + 30));

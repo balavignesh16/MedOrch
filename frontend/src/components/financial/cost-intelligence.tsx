@@ -4,31 +4,31 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Info } from 'lucide-react';
+import type { fetchCostIntelligence } from '@/lib/financialLogic';
 
 interface CostIntelligenceProps {
-  data: {
-    byAge: any[];
-    byGender: any[];
-    byDiagnosis: any[];
-    byRisk: any[];
-  };
+  data: Awaited<ReturnType<typeof fetchCostIntelligence>>;
   onFilterChange: (key: string, value: string) => void;
 }
 
-export function CostIntelligence({ data, onFilterChange }: CostIntelligenceProps) {
-  
-  const formatCurrency = (val: number) => `$${val.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+const formatCurrency = (val: number) => `$${val.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+interface CostTooltipProps {
+  active?: boolean;
+  payload?: ReadonlyArray<{ name?: string; value?: number | string }>;
+  label?: React.ReactNode;
+}
+
+function CostTooltip({ active, payload, label }: CostTooltipProps) {
     if (active && payload && payload.length) {
       return (
         <div className="bg-surface-obsidian border border-border-glass rounded-lg p-3 shadow-xl">
           <p className="text-white font-semibold mb-2">{label}</p>
-          {payload.map((entry: any, index: number) => (
+          {payload.map((entry, index) => (
             <div key={index} className="flex justify-between gap-4 text-sm">
               <span className="text-white/70">{entry.name}</span>
               <span className="text-brand-cyan font-bold">
-                {entry.name.includes('Cost') ? formatCurrency(entry.value) : entry.value.toLocaleString()}
+                {entry.name?.includes('Cost') ? formatCurrency(Number(entry.value ?? 0)) : Number(entry.value ?? 0).toLocaleString()}
               </span>
             </div>
           ))}
@@ -36,7 +36,9 @@ export function CostIntelligence({ data, onFilterChange }: CostIntelligenceProps
       );
     }
     return null;
-  };
+}
+
+export function CostIntelligence({ data, onFilterChange }: CostIntelligenceProps) {
 
   return (
     <div className="space-y-6 mb-6">
@@ -60,8 +62,8 @@ export function CostIntelligence({ data, onFilterChange }: CostIntelligenceProps
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" horizontal={false} />
                 <XAxis type="number" tickFormatter={(val) => `$${val/1000}k`} stroke="rgba(255,255,255,0.5)" tick={{ fontSize: 11 }} />
                 <YAxis type="category" dataKey="category" width={90} stroke="rgba(255,255,255,0.5)" tick={{ fontSize: 11 }} />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="total_cost" name="Total Est. Cost" radius={[0, 4, 4, 0]} onClick={(data) => onFilterChange('diag_1', data.category)} className="cursor-pointer">
+                <Tooltip content={<CostTooltip />} />
+                <Bar dataKey="total_cost" name="Total Est. Cost" radius={[0, 4, 4, 0]} onClick={(data) => onFilterChange('diag_1', String(data.payload?.category ?? ''))} className="cursor-pointer">
                   {data.byDiagnosis.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill="#00e5ff" className="hover:opacity-80" />
                   ))}
@@ -80,8 +82,8 @@ export function CostIntelligence({ data, onFilterChange }: CostIntelligenceProps
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
                 <XAxis dataKey="category" stroke="rgba(255,255,255,0.5)" tick={{ fontSize: 11 }} />
                 <YAxis tickFormatter={(val) => `$${val/1000}k`} stroke="rgba(255,255,255,0.5)" tick={{ fontSize: 11 }} />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="avg_cost" name="Avg Est. Cost" radius={[4, 4, 0, 0]} onClick={(data) => onFilterChange('age', data.category)} className="cursor-pointer">
+                <Tooltip content={<CostTooltip />} />
+                <Bar dataKey="avg_cost" name="Avg Est. Cost" radius={[4, 4, 0, 0]} onClick={(data) => onFilterChange('age', String(data.payload?.category ?? ''))} className="cursor-pointer">
                   {data.byAge.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill="#b14bf4" className="hover:opacity-80" />
                   ))}
@@ -100,8 +102,8 @@ export function CostIntelligence({ data, onFilterChange }: CostIntelligenceProps
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
                 <XAxis dataKey="category" stroke="rgba(255,255,255,0.5)" tick={{ fontSize: 11 }} />
                 <YAxis tickFormatter={(val) => `$${val/1000}k`} stroke="rgba(255,255,255,0.5)" tick={{ fontSize: 11 }} />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="total_cost" name="Total Est. Cost" radius={[4, 4, 0, 0]} onClick={(data) => onFilterChange('riskLevel', data.category)} className="cursor-pointer">
+                <Tooltip content={<CostTooltip />} />
+                <Bar dataKey="total_cost" name="Total Est. Cost" radius={[4, 4, 0, 0]} onClick={(data) => onFilterChange('riskLevel', String(data.payload?.category ?? ''))} className="cursor-pointer">
                   {data.byRisk.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.category === 'Critical' ? '#ff4d4f' : entry.category === 'High' ? '#faad14' : entry.category === 'Medium' ? '#13c2c2' : '#52c41a'} className="hover:opacity-80" />
                   ))}
@@ -120,8 +122,8 @@ export function CostIntelligence({ data, onFilterChange }: CostIntelligenceProps
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" horizontal={false} />
                 <XAxis type="number" tickFormatter={(val) => `$${val/1000}k`} stroke="rgba(255,255,255,0.5)" tick={{ fontSize: 11 }} />
                 <YAxis type="category" dataKey="category" width={60} stroke="rgba(255,255,255,0.5)" tick={{ fontSize: 11 }} />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="avg_cost" name="Avg Est. Cost" radius={[0, 4, 4, 0]} onClick={(data) => onFilterChange('gender', data.category)} className="cursor-pointer">
+                <Tooltip content={<CostTooltip />} />
+                <Bar dataKey="avg_cost" name="Avg Est. Cost" radius={[0, 4, 4, 0]} onClick={(data) => onFilterChange('gender', String(data.payload?.category ?? ''))} className="cursor-pointer">
                   {data.byGender.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill="#1e88e5" className="hover:opacity-80" />
                   ))}

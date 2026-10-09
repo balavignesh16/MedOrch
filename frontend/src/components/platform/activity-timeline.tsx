@@ -1,8 +1,9 @@
 import React from 'react';
+import type { fetchTimeline } from '@/lib/platformLogic';
 import { Activity, Clock, Shield } from 'lucide-react';
 
 interface ActivityTimelineProps {
-  events: any[];
+  events: Awaited<ReturnType<typeof fetchTimeline>>;
 }
 
 export function ActivityTimeline({ events }: ActivityTimelineProps) {
@@ -15,7 +16,7 @@ export function ActivityTimeline({ events }: ActivityTimelineProps) {
       </div>
       <div className="flex-1 overflow-y-auto p-4">
         <div className="relative space-y-4 before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-white/10 before:to-transparent">
-          {events.map((event, index) => (
+        {events.map((event) => (
             <div key={event.id} className={`relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active`}>
               <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white/10 bg-black text-slate-500 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
                  <Activity className="w-4 h-4 text-brand-cyan" />

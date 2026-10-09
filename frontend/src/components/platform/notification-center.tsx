@@ -1,8 +1,9 @@
 import React from 'react';
+import type { fetchNotifications } from '@/lib/platformLogic';
 import { Bell, AlertTriangle, Info, CheckCircle2 } from 'lucide-react';
 
 interface NotificationCenterProps {
-  notifications: any[];
+  notifications: Awaited<ReturnType<typeof fetchNotifications>>;
 }
 
 export function NotificationCenter({ notifications }: NotificationCenterProps) {

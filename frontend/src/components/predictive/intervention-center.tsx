@@ -1,8 +1,9 @@
 import React from 'react';
+import type { fetchInterventions } from '@/lib/predictiveLogic';
 import { ListChecks, TrendingDown, Users, Clock } from 'lucide-react';
 
 interface InterventionCenterProps {
-  interventions: any[];
+  interventions: Awaited<ReturnType<typeof fetchInterventions>>;
 }
 
 export const InterventionCenter: React.FC<InterventionCenterProps> = ({ interventions }) => {

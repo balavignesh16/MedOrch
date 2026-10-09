@@ -9,10 +9,11 @@ import {
   getPredictiveInsights
 } from '@/app/actions/predictiveDb';
 import { getModelMetadata } from '@/lib/ml/modelRegistry';
+import type { PredictiveFilterState } from '@/lib/predictiveLogic';
 
 export const dynamic = 'force-dynamic';
 
-export default async function PredictivePage(props: { searchParams: Promise<any> }) {
+export default async function PredictivePage(props: { searchParams: Promise<PredictiveFilterState> }) {
   const searchParams = await props.searchParams;
   const filters = {
     timeframe: searchParams.timeframe || '30D',
@@ -43,7 +44,6 @@ export default async function PredictivePage(props: { searchParams: Promise<any>
 
   return (
     <DashboardClient
-      filters={filters}
       overview={overview}
       highRiskPatients={highRiskPatients}
       predictionDistribution={predictionDistribution}

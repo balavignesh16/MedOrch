@@ -1,8 +1,9 @@
 import React from 'react';
+import type { fetchStrategicRoadmap } from '@/lib/strategyLogic';
 import { Map } from 'lucide-react';
 
 interface StrategicRoadmapProps {
-  data: any[];
+  data: Awaited<ReturnType<typeof fetchStrategicRoadmap>>;
 }
 
 export function StrategicRoadmap({ data }: StrategicRoadmapProps) {

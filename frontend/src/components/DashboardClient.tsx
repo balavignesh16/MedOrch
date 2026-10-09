@@ -69,7 +69,7 @@ export default function DashboardClient({ initialData, currentFilter }: Dashboar
         <div className="bg-[#0c121e] border border-slate-800/60 rounded-2xl p-6 shadow-2xl relative overflow-hidden backdrop-blur-xl">
            <div className="absolute -right-4 -top-4 w-24 h-24 bg-brand-orange/10 rounded-full blur-2xl"></div>
           <div className="flex justify-between items-start mb-4">
-            <div className="text-slate-400 text-xs uppercase tracking-[0.15em] font-bold">Avg Readmission Rate</div>
+            <div className="text-slate-400 text-xs uppercase tracking-[0.15em] font-bold">&lt;30-Day Readmission Proxy</div>
             <div className="p-2 bg-slate-800/50 rounded-lg"><AlertTriangle className="w-4 h-4 text-brand-orange" /></div>
           </div>
           <div className="text-4xl font-light text-white tracking-tight">{initialData.readmissionRate}%</div>

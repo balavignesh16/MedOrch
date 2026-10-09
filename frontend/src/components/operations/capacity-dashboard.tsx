@@ -26,10 +26,11 @@ export function CapacityDashboard({ metrics }: CapacityDashboardProps) {
       <CardHeader className="border-b border-white/5">
         <CardTitle className="text-lg flex items-center gap-2">
           <LayoutTemplate className="h-5 w-5 text-brand-cyan" />
-          Hospital Capacity Overview
+          Synthetic Capacity Scenario
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6">
+        <p className="text-xs text-warning mb-4">Demonstration values only; no bed-management or scheduling source is connected.</p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-surface-obsidian border border-white/10 p-4 rounded-xl">
             <span className="text-[10px] uppercase text-white/50 block mb-1">Current Load</span>

@@ -5,9 +5,13 @@ import { Send, Sparkles, Loader2 } from 'lucide-react';
 type CommandBarProps = {
   onQuery: (query: string) => void;
   isLoading: boolean;
+  placeholder?: string;
 };
 
-const CommandBar = ({ onQuery, isLoading }: CommandBarProps) => {
+const DEFAULT_PLACEHOLDER =
+  "Ask about historical encounters... e.g., 'How many encounters were readmitted within 30 days?'";
+
+const CommandBar = ({ onQuery, isLoading, placeholder }: CommandBarProps) => {
   const [query, setQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
 
@@ -38,7 +42,7 @@ const CommandBar = ({ onQuery, isLoading }: CommandBarProps) => {
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           disabled={isLoading}
-          placeholder="Ask MedOrch AI... e.g., 'What is the readmission risk if ICU capacity reaches 90%?'"
+          placeholder={placeholder || DEFAULT_PLACEHOLDER}
           className="w-full bg-white border border-slate-200 rounded-2xl py-5 pl-14 pr-16 text-slate-900 placeholder-slate-400 outline-none transition-all shadow-sm focus:shadow-md disabled:opacity-50"
         />
         

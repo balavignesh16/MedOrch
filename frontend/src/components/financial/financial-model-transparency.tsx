@@ -1,18 +1,19 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Info, Database, Clock, Calculator } from 'lucide-react';
+import { FINANCIAL_COST_MULTIPLIERS as COST, FINANCIAL_MODEL_METADATA as MODEL } from '@/lib/analytics/config';
 
 export function FinancialModelTransparency() {
   const weights = [
-    { label: 'Base Encounter Index', value: '100' },
-    { label: 'Length of Stay Weight', value: '25 / day' },
-    { label: 'Medication Weight', value: '3 / unit' },
-    { label: 'Laboratory Weight', value: '5 / test' },
-    { label: 'Procedure Weight', value: '20 / proc' },
-    { label: 'Emergency Weight', value: '30 / visit' },
-    { label: 'Inpatient Weight', value: '40 / visit' },
-    { label: 'Outpatient Weight', value: '5 / visit' },
-    { label: 'Readmission Weight', value: '50 / event' },
+    { label: 'Base Encounter Index', value: String(COST.BASE_ENCOUNTER) },
+    { label: 'Length of Stay Weight', value: `${COST.LOS_PER_DAY} / day` },
+    { label: 'Medication Weight', value: `${COST.MEDICATION} / unit` },
+    { label: 'Laboratory Weight', value: `${COST.LAB_PROCEDURE} / test` },
+    { label: 'Procedure Weight', value: `${COST.CLINICAL_PROCEDURE} / proc` },
+    { label: 'Emergency Weight', value: `${COST.EMERGENCY_VISIT} / visit` },
+    { label: 'Inpatient Weight', value: `${COST.INPATIENT_VISIT} / visit` },
+    { label: 'Outpatient Weight', value: `${COST.OUTPATIENT_VISIT} / visit` },
+    { label: 'Readmission Weight', value: `${COST.READMISSION_PENALTY} / proxy event` },
   ];
 
   return (
@@ -29,16 +30,16 @@ export function FinancialModelTransparency() {
                 <Database className="h-3 w-3" /> Clinical Utilization
               </span>
               <span className="flex items-center gap-1 text-brand-cyan">
-                <Info className="h-3 w-3" /> 99% Confidence
+                <Info className="h-3 w-3" /> {MODEL.VERSION}
               </span>
               <span className="flex items-center gap-1 text-white/50">
-                <Clock className="h-3 w-3" /> Live
+                <Clock className="h-3 w-3" /> Bundled data
               </span>
             </div>
           </div>
           <p className="text-xs text-white/60 mb-4">
             Financial analytics in this dashboard are derived from clinical utilization volumes and algorithmic weighting. 
-            They represent an <strong className="text-white">Estimated Relative Cost Model</strong> and are <strong>NOT</strong> actual hospital billing amounts.
+            They represent an <strong className="text-white">Estimated Relative Cost Model</strong> in {MODEL.UNIT} and are <strong>NOT</strong> actual hospital billing amounts.
           </p>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">

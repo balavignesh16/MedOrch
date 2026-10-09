@@ -5,7 +5,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 interface TrendData {
   period: string;
-  throughput: number;
+  encounters: number;
   los: number;
   erVisits: number;
 }
@@ -23,10 +23,10 @@ export function OperationalTrends({ trends }: OperationalTrendsProps) {
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-brand-cyan" />
-            Operational Volume Trends
+            Operational Distribution by Admission Type
           </CardTitle>
           <span className="text-[10px] text-white/40 uppercase bg-white/5 px-2 py-1 rounded">
-            Synthetic Data Note: Month Index % 12
+            Non-temporal source distribution
           </span>
         </div>
       </CardHeader>
@@ -64,8 +64,8 @@ export function OperationalTrends({ trends }: OperationalTrendsProps) {
               />
               <Area 
                 type="monotone" 
-                dataKey="throughput" 
-                name="Avg Daily Throughput"
+                dataKey="encounters" 
+                name="Encounters"
                 stroke="#14b8a6" 
                 fillOpacity={1} 
                 fill="url(#colorThroughput)" 

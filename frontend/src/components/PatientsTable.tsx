@@ -1,22 +1,15 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Download, Search, Filter, X, Activity, Pill, User, FileText, ChevronRight, AlertTriangle } from 'lucide-react';
+import { Download, Search, Filter, X, Activity, Pill, User, FileText, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { isPatientDetailsResponse, PatientDetailsResponse, PatientListRow } from '@/lib/patientTypes';
 
-interface Patient {
-  patient_id: number;
-  name: string;
-  dept: string;
-  status: string;
-  risk_score: number;
-}
-
-export default function PatientsTable({ initialPatients }: { initialPatients: Patient[] }) {
+export default function PatientsTable({ initialPatients }: { initialPatients: PatientListRow[] }) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [selectedPatient, setSelectedPatient] = useState<number | null>(null);
-  const [patientDetails, setPatientDetails] = useState<any>(null);
+  const [patientDetails, setPatientDetails] = useState<PatientDetailsResponse | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -33,7 +26,10 @@ export default function PatientsTable({ initialPatients }: { initialPatients: Pa
     setIsLoadingDetails(true);
     try {
       const res = await fetch(`/api/patients/${patientId}`);
-      const data = await res.json();
+      const data: unknown = await res.json();
+      if (!res.ok || !isPatientDetailsResponse(data)) {
+        throw new Error('Unable to load patient details');
+      }
       setPatientDetails(data);
     } catch (err) {
       console.error(err);
@@ -247,7 +243,7 @@ export default function PatientsTable({ initialPatients }: { initialPatients: Pa
                       </h3>
                       {patientDetails.labs.length > 0 ? (
                         <div className="space-y-3">
-                          {patientDetails.labs.map((lab: any) => (
+                          {patientDetails.labs.map((lab) => (
                             <div key={lab.lab_id} className="p-5 rounded-2xl border border-slate-100 bg-slate-50 flex items-center justify-between hover:bg-slate-100 transition-all">
                               <div>
                                 <p className="text-sm font-bold text-slate-900 tracking-wide">{lab.test_name}</p>
@@ -277,7 +273,7 @@ export default function PatientsTable({ initialPatients }: { initialPatients: Pa
                       </h3>
                       {patientDetails.medications.length > 0 ? (
                         <div className="space-y-3">
-                          {patientDetails.medications.map((med: any) => (
+                          {patientDetails.medications.map((med) => (
                             <div key={med.medication_id} className="p-5 rounded-2xl border border-slate-100 bg-slate-50 flex items-center justify-between hover:bg-slate-100 transition-all">
                               <div>
                                 <p className="text-sm font-bold text-slate-900 tracking-wide">{med.drug_name} <span className="text-brand-teal font-mono ml-3 text-[11px] px-2 py-0.5 rounded border border-brand-teal/30 bg-brand-teal/10">{med.dosage}</span></p>

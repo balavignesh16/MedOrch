@@ -57,7 +57,6 @@ export default async function StrategyDashboardPage(props: { searchParams: Promi
 
       <Suspense fallback={<div className="h-96 flex items-center justify-center text-brand-teal">Loading Strategic Intelligence Engine...</div>}>
         <DashboardClient 
-          filters={filters}
           overviewData={overviewData}
           benchmarkData={benchmarkData}
           kpiMatrixData={kpiMatrixData}

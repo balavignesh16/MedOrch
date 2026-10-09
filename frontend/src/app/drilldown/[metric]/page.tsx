@@ -1,11 +1,12 @@
 import React from 'react';
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
+import { flattenSearchParams, RawSearchParams } from '@/lib/searchParams';
 
-export default async function DrilldownPage(props: { params: Promise<{ metric: string }>, searchParams: Promise<any> }) {
+export default async function DrilldownPage(props: { params: Promise<{ metric: string }>, searchParams: Promise<RawSearchParams> }) {
   const params = await props.params;
   const searchParams = await props.searchParams;
-  const queryString = new URLSearchParams(searchParams).toString();
+  const queryString = new URLSearchParams(flattenSearchParams(searchParams)).toString();
   const backUrl = queryString ? `/?${queryString}` : '/';
 
   return (

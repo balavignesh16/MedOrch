@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
-import { Search, User, LayoutDashboard, Activity, FileText, Settings, Database, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, User, LayoutDashboard, Activity, FileText, Database, ArrowRight } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import type { fetchGlobalSearch } from '@/lib/platformLogic';
 
 interface GlobalSearchProps {
-  results: any[];
+  results: Awaited<ReturnType<typeof fetchGlobalSearch>>;
 }
 
 export function GlobalSearch({ results }: GlobalSearchProps) {
@@ -74,7 +75,7 @@ export function GlobalSearch({ results }: GlobalSearchProps) {
         <h4 className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] mb-3 ml-2">Global Search Results</h4>
         {results.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-             {results.map((result, i) => (
+          {results.map((result) => (
                <Link href={result.url} key={result.id}>
                  <div 
                    className="group flex flex-col p-4 rounded-2xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 hover:border-white/20 transition-all duration-300 cursor-pointer relative overflow-hidden h-full"
@@ -107,7 +108,7 @@ export function GlobalSearch({ results }: GlobalSearchProps) {
           <div className="text-center py-12 px-4 rounded-2xl border border-dashed border-white/10 bg-white/[0.02]">
             <Search className="w-8 h-8 text-white/20 mx-auto mb-3" />
             <p className="text-sm text-white/50 font-medium">Type anything to explore the enterprise graph.</p>
-            <p className="text-xs text-white/30 mt-1">Try searching for "Cardiology", "Readmission", or "John Doe".</p>
+            <p className="text-xs text-white/30 mt-1">Try searching for &quot;Cardiology&quot;, &quot;Readmission&quot;, or &quot;John Doe&quot;.</p>
           </div>
         )}
       </div>

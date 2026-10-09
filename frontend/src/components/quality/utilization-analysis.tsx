@@ -7,10 +7,10 @@ interface UtilizationProps {
     totals: { er: number; inpatient: number; outpatient: number };
     visitFrequency: { total_visits: number; count: number }[];
   };
-  totalPatients: number;
+  totalEncounters: number;
 }
 
-export function UtilizationAnalysis({ data, totalPatients }: UtilizationProps) {
+export function UtilizationAnalysis({ data, totalEncounters }: UtilizationProps) {
   const maxCount = Math.max(...data.visitFrequency.map(d => d.count), 1);
 
   return (
@@ -66,9 +66,9 @@ export function UtilizationAnalysis({ data, totalPatients }: UtilizationProps) {
                 </div>
               </div>
               <span className="text-sm font-medium text-white text-right w-24">
-                {row.count.toLocaleString()} pts
+                {row.count.toLocaleString()} encounters
                 <span className="text-[10px] text-white/40 block">
-                  {((row.count / totalPatients) * 100).toFixed(1)}%
+                  {((row.count / totalEncounters) * 100).toFixed(1)}%
                 </span>
               </span>
             </div>

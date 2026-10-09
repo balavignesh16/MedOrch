@@ -1,4 +1,5 @@
 import React from 'react';
+import type { fetchEnterpriseBenchmarkProfiles } from '@/lib/strategyLogic';
 import {
   BarChart,
   Bar,
@@ -7,13 +8,12 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer,
-  ReferenceLine
+  ResponsiveContainer
 } from 'recharts';
 import { Target } from 'lucide-react';
 
 interface EnterpriseBenchmarkProfilesProps {
-  data: any[];
+  data: Awaited<ReturnType<typeof fetchEnterpriseBenchmarkProfiles>>;
 }
 
 export function EnterpriseBenchmarkProfiles({ data }: EnterpriseBenchmarkProfilesProps) {

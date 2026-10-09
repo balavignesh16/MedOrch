@@ -3,6 +3,7 @@
 import React from 'react';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from 'recharts';
+import type { BarRectangleItem } from 'recharts';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 interface TrendChartProps {
@@ -14,12 +15,15 @@ export function TrendChart({ data }: TrendChartProps) {
   const searchParams = useSearchParams();
   const currentAgeFilter = searchParams.get('age');
 
-  const handleBarClick = (entry: any) => {
+  const handleBarClick = (entry: BarRectangleItem) => {
+    const payload: unknown = entry.payload;
+    if (typeof payload !== 'object' || payload === null || !('age_group' in payload)) return;
+    const ageGroup = String(payload.age_group);
     const params = new URLSearchParams(searchParams.toString());
-    if (currentAgeFilter === entry.age_group) {
+    if (currentAgeFilter === ageGroup) {
       params.delete('age');
     } else {
-      params.set('age', entry.age_group);
+      params.set('age', ageGroup);
     }
     router.push(`/?${params.toString()}`, { scroll: false });
   };
