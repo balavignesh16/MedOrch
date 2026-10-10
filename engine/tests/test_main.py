@@ -522,3 +522,85 @@ def test_schema_prompt_lists_exactly_the_functions_the_guard_allows() -> None:
     for function in sorted(_ALLOWED_FUNCTIONS - {"DISTINCT"}):
         assert function in FULL_SCHEMA_PROMPT, f"{function} is allowed by the guard but not offered to the model"
     assert "SUBSTR" in FULL_SCHEMA_PROMPT and "NOT available" in FULL_SCHEMA_PROMPT
+
+
+class _SequencePlanner:
+    """Returns (or raises) each queued item in order and records the prompts it was given."""
+
+    def __init__(self, *items: object) -> None:
+        self._items = list(items)
+        self.prompts: list[str] = []
+
+    def plan(self, prompt: str, context_id: str, schema_prompt: str) -> QueryPlan:
+        self.prompts.append(prompt)
+        item = self._items.pop(0)
+        if isinstance(item, Exception):
+            raise item
+        return item  # type: ignore[return-value]
+
+
+_WINDOW_SQL = "SELECT race, MAX(SUM(num_lab_procedures)) OVER (PARTITION BY race) FROM hospital_readmissions GROUP BY race"
+_SAFE_SQL = "SELECT COUNT(*) AS n FROM hospital_readmissions"
+
+
+def _plan(sql: str, supported: bool = True) -> QueryPlan:
+    return QueryPlan(supported=supported, reason_code="supported" if supported else "missing_data", sql=sql, user_message="ok")
+
+
+def test_rejected_sql_is_repaired_once_with_the_guard_reason(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    config = _config(tmp_path, monkeypatch)
+    planner = _SequencePlanner(_plan(_WINDOW_SQL), _plan(_SAFE_SQL))
+    servicer = AnalyticsEngineServicer(config, llm=object(), planner=planner)
+    events = _drain(servicer.ProcessQuery(_FakeRequest("which race has the most lab procedures"), _FakeContext()))
+
+    final = events[-1]
+    assert final.error_code == ""
+    assert final.executed_sql.startswith("SELECT COUNT(*)")
+    assert len(planner.prompts) == 2
+    assert "[Correction]" in planner.prompts[1] and "OVER" in planner.prompts[1]
+    assert "[Correction]" not in planner.prompts[0]
+    rows = _audit_rows(config)
+    assert len(rows) == 1 and rows[0][0] == "EXECUTION_STATUS_OK"
+
+
+def test_a_repair_that_is_also_unsafe_is_rejected_and_never_retried_again(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    config = _config(tmp_path, monkeypatch)
+    planner = _SequencePlanner(_plan(_WINDOW_SQL), _plan("SELECT patient_nbr FROM hospital_readmissions"), _plan(_SAFE_SQL))
+    servicer = AnalyticsEngineServicer(config, llm=object(), planner=planner)
+    events = _drain(servicer.ProcessQuery(_FakeRequest("count encounters"), _FakeContext()))
+
+    assert events[-1].error_code == "UNSAFE_SQL"
+    assert events[-1].executed_sql == ""
+    assert len(planner.prompts) == 2
+
+
+@pytest.mark.parametrize(
+    "repair_outcome",
+    [PlannerError("bad json"), _plan("", supported=False)],
+)
+def test_a_failed_or_empty_repair_falls_back_to_the_original_rejection(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, repair_outcome: object
+) -> None:
+    config = _config(tmp_path, monkeypatch)
+    planner = _SequencePlanner(_plan(_WINDOW_SQL), repair_outcome)
+    servicer = AnalyticsEngineServicer(config, llm=object(), planner=planner)
+    events = _drain(servicer.ProcessQuery(_FakeRequest("count encounters"), _FakeContext()))
+
+    assert events[-1].error_code == "UNSAFE_SQL"
+    assert len(planner.prompts) == 2
+
+
+def test_safe_queries_never_trigger_a_repair(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    config = _config(tmp_path, monkeypatch)
+    planner = _SequencePlanner(_plan(_SAFE_SQL))
+    servicer = AnalyticsEngineServicer(config, llm=object(), planner=planner)
+    _drain(servicer.ProcessQuery(_FakeRequest("count by outcome"), _FakeContext()))
+    assert len(planner.prompts) == 1
+
+
+def test_schema_prompt_forbids_window_functions_and_explains_the_alternative() -> None:
+    from engine.main import FULL_SCHEMA_PROMPT
+
+    assert "Window functions (OVER, PARTITION BY) are NOT available" in FULL_SCHEMA_PROMPT
+    assert "ORDER BY that aggregate DESC" in FULL_SCHEMA_PROMPT
+    assert "Always SELECT the aggregate value next to the group" in FULL_SCHEMA_PROMPT

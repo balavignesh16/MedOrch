@@ -64,6 +64,8 @@ except ImportError:
 
 LOGGER = logging.getLogger("medorch.engine")
 
+MAX_SQL_REPAIR_ATTEMPTS = 1
+
 Status = healthcare_analytics_pb2.ExecutionStatus
 
 FULL_SCHEMA_PROMPT = """Table: hospital_readmissions
@@ -133,7 +135,13 @@ COUNT(encounter_id), 1) AS readmission_rate_percent. For predicted_readmission_r
 avg_risk_percent. Round other averages to 2 decimals with ROUND(AVG(x), 2).
 Only these SQL functions are available: COUNT, AVG, SUM, MIN, MAX, ROUND, CAST,
 COALESCE, IFNULL, LENGTH, LOWER, UPPER, ABS. String functions such as SUBSTR or
-INSTR are NOT available. Age brackets like '[0-10)' and '[90-100)' already sort in
+INSTR are NOT available. Window functions (OVER, PARTITION BY) are NOT available.
+To find which group has the most or highest value, GROUP BY it, aggregate with
+SUM, AVG or COUNT, ORDER BY that aggregate DESC, and add LIMIT 1 - never nest
+aggregates such as MAX(SUM(x)). Always SELECT the aggregate value next to the group
+name so the answer shows the figure, and for 'most' questions about a count of
+events (lab procedures, visits) prefer SELECT group, SUM(x) AS total, ROUND(AVG(x), 2)
+AS average_per_encounter so totals are not mistaken for per-encounter rates. Age brackets like '[0-10)' and '[90-100)' already sort in
 the correct order as plain text, so use ORDER BY age (never a computed sort key).
 Do not use PRAGMA, ATTACH, comments, common table expressions, or multiple statements.
 Add an appropriate LIMIT for detail-row queries.
@@ -470,28 +478,36 @@ class AnalyticsEngineServicer(healthcare_analytics_pb2_grpc.AnalyticsEngineServi
                 outcome.execution_status = "EXECUTION_STATUS_CANCELLED"
                 return
 
-            try:
-                result: StructuredQueryResult = execute_readonly_query(
-                    self.config.database_path,
-                    plan.sql or "",
-                    row_limit=self.config.query_row_limit,
-                    timeout_seconds=self.config.query_timeout_seconds,
-                    column_limit=self.config.query_column_limit,
-                    max_sql_length=self.config.sql_max_length,
-                )
-            except QueryTimeoutError:
-                yield self._terminal(
-                    request, outcome, "The query took too long to run against the historical dataset.",
-                    status=Status.EXECUTION_STATUS_TIMEOUT, error_code="QUERY_TIMEOUT",
-                )
-                return
-            except UnsafeQueryError:
-                LOGGER.warning("Rejected generated SQL for %s", request.query_id, exc_info=True)
-                yield self._terminal(
-                    request, outcome, UNSUPPORTED_MESSAGE,
-                    status=Status.EXECUTION_STATUS_REJECTED, error_code="UNSAFE_SQL",
-                )
-                return
+            result: StructuredQueryResult | None = None
+            for attempt in range(MAX_SQL_REPAIR_ATTEMPTS + 1):
+                try:
+                    result = execute_readonly_query(
+                        self.config.database_path,
+                        plan.sql or "",
+                        row_limit=self.config.query_row_limit,
+                        timeout_seconds=self.config.query_timeout_seconds,
+                        column_limit=self.config.query_column_limit,
+                        max_sql_length=self.config.sql_max_length,
+                    )
+                    break
+                except QueryTimeoutError:
+                    yield self._terminal(
+                        request, outcome, "The query took too long to run against the historical dataset.",
+                        status=Status.EXECUTION_STATUS_TIMEOUT, error_code="QUERY_TIMEOUT",
+                    )
+                    return
+                except UnsafeQueryError as exc:
+                    LOGGER.warning("Rejected generated SQL for %s (attempt %d)", request.query_id, attempt + 1, exc_info=True)
+                    repaired = self._repair_plan(active_planner, prompt, context_id, capability, exc) if attempt < MAX_SQL_REPAIR_ATTEMPTS else None
+                    if repaired is None:
+                        yield self._terminal(
+                            request, outcome, UNSUPPORTED_MESSAGE,
+                            status=Status.EXECUTION_STATUS_REJECTED, error_code="UNSAFE_SQL",
+                        )
+                        return
+                    plan = repaired
+
+            assert result is not None
 
             outcome.executed_sql = result.executed_sql
             outcome.row_count = result.row_count
@@ -561,6 +577,25 @@ class AnalyticsEngineServicer(healthcare_analytics_pb2_grpc.AnalyticsEngineServi
                 )
             except AuditWriteError:
                 LOGGER.error("Audit write failed for %s", outcome.query_id)
+
+    def _repair_plan(
+        self, planner: QueryPlanner, prompt: str, context_id: str, capability: CapabilityContext, error: Exception
+    ) -> QueryPlan | None:
+        """Give the planner one chance to rewrite SQL the guard rejected, telling it
+        why. The rewrite still goes through the full guard; any failure here just
+        falls back to the original rejection."""
+        correction = (
+            f"{prompt}\n\n[Correction] Your previous SQL was rejected by the safety checker: {error}. "
+            "Write a different single SELECT that answers the question using only the allowed functions. "
+            "Window functions (OVER, PARTITION BY) do not exist here: to find the group with the most or "
+            "highest value, GROUP BY it, aggregate, ORDER BY the aggregate DESC, and LIMIT 1."
+        )
+        try:
+            repaired = planner.plan(correction, context_id, FULL_SCHEMA_PROMPT + _context_guidance(capability))
+        except Exception:
+            LOGGER.warning("SQL repair attempt failed", exc_info=True)
+            return None
+        return repaired if repaired.supported and repaired.sql else None
 
     def _synthesize_grounded_answer(
         self, llm: LanguageModel, prompt: str, capability: CapabilityContext, result: StructuredQueryResult
