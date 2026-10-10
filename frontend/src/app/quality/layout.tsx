@@ -19,9 +19,6 @@ export default function QualityLayout({ children }: { children: React.ReactNode 
             <div>
               <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
                 Clinical Quality Dashboard
-                <span className="px-2 py-0.5 rounded-full bg-brand-cyan/10 border border-brand-cyan/20 text-brand-cyan text-[10px] uppercase font-bold tracking-widest">
-                  Sprint 4
-                </span>
               </h1>
               <p className="text-sm text-white/50 font-medium">
                 Monitor readmissions, safety metrics, and clinical risks

@@ -149,9 +149,9 @@ export default async function PopulationDashboardPage(props: { searchParams: Pro
       </main>
 
       <DashboardFooter 
-        datasetVersion="v3.0.0-POP"
+        datasetVersion="UCI Diabetes 130-US (1999–2008)"
         recordsLoaded={overview.totalPatients}
-        environment="Development (Sprint 3)"
+        environment="Development demo"
       />
     </div>
   );

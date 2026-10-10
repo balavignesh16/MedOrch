@@ -57,9 +57,9 @@ export default async function PatientDetail(props: { params: Promise<{ id: strin
       </main>
 
       <DashboardFooter 
-        datasetVersion="v3.0.0-POP"
+        datasetVersion="UCI Diabetes 130-US (1999–2008)"
         recordsLoaded={1}
-        environment="Development (Sprint 3)"
+        environment="Development demo"
       />
     </div>
   );

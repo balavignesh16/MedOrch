@@ -1,6 +1,6 @@
 import React from 'react';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
-import { Bell, User, Search, Settings } from 'lucide-react';
+import { User, Search, Settings } from 'lucide-react';
 
 interface DashboardHeaderProps {
   title: string;
@@ -28,21 +28,13 @@ export function DashboardHeader({ title, description }: DashboardHeaderProps) {
             
             <div className="w-px h-6 bg-white/10"></div>
             
-            <div className="hidden md:flex items-center space-x-2 px-3 py-1.5">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-              <span className="text-xs font-semibold text-white/70">Seattle General</span>
+            <div className="hidden md:flex items-center px-3 py-1.5">
+              <span className="text-xs font-semibold text-white/70">UCI Diabetes 130-US · de-identified</span>
             </div>
             
             <div className="w-px h-6 bg-white/10 hidden md:block"></div>
             
             <div className="flex items-center space-x-1 px-1">
-              <button className="p-2 hover:bg-white/10 rounded-xl transition-colors text-white/50 hover:text-white relative group">
-                <Bell className="h-4 w-4" />
-                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-brand-orange rounded-full border border-surface-black"></span>
-              </button>
               <button className="p-2 hover:bg-white/10 rounded-xl transition-colors text-white/50 hover:text-white hidden sm:block">
                 <Settings className="h-4 w-4" />
               </button>

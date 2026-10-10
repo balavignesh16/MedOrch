@@ -4,10 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { Search, User, LayoutDashboard, Activity, FileText, Database, ArrowRight } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import type { fetchGlobalSearch } from '@/lib/platformLogic';
+import type { PlatformSearchResult } from '@/lib/platform/platformTypes';
 
 interface GlobalSearchProps {
-  results: Awaited<ReturnType<typeof fetchGlobalSearch>>;
+  results: PlatformSearchResult[];
 }
 
 export function GlobalSearch({ results }: GlobalSearchProps) {

@@ -85,7 +85,7 @@ export function ReadmissionIntelligence({ data, totalPatients }: ReadmissionInte
               <th className="px-4 py-3 font-semibold text-right">Total Encounters</th>
               <th className="px-4 py-3 font-semibold text-right">&lt;30-Day Proxy %</th>
               <th className="px-4 py-3 font-semibold text-center">Demo Reference</th>
-              <th className="px-4 py-3 font-semibold text-center">Comparison Reference</th>
+              <th className="px-4 py-3 font-semibold text-center" title="Illustrative value with no cited source; not an official benchmark">Comparison Reference (illustrative)</th>
               <th className="px-4 py-3 font-semibold text-right">Variance</th>
               <th className="px-4 py-3 font-semibold text-center">Actions</th>
             </tr>

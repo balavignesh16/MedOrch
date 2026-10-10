@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Bot, TrendingUp, Activity, ActivitySquare, Users, Map, LogOut, Bell, FlaskConical, DatabaseZap, FileText } from 'lucide-react';
+import { LayoutDashboard, Bot, TrendingUp, Activity, ActivitySquare, Users, Map, LogOut, FlaskConical, DatabaseZap, FileText } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { visibleNavLinks, type NavIcon } from '@/lib/navigation';
@@ -30,10 +30,6 @@ const Sidebar = () => {
             <Activity className="w-5 h-5 text-white relative z-10" />
           </div>
           <span className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-white/70 tracking-tight">MedOrch</span>
-          <div className="ml-auto relative">
-            <Bell className="w-5 h-5 text-white/40 hover:text-white transition-colors cursor-pointer" />
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-brand-orange border-2 border-surface-black rounded-full animate-pulse shadow-[0_0_10px_rgba(249,115,22,0.8)]"></span>
-          </div>
         </div>
 
         {user && (
