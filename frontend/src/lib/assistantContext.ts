@@ -52,6 +52,8 @@ export function friendlyErrorMessage(errorCode: string, fallback: string): strin
       return fallback;
     case 'MODEL_SERVICE_ERROR':
       return fallback;
+    case 'MODEL_RATE_LIMITED':
+      return fallback;
     case 'GROUNDING_FAILED':
       return 'The assistant could not verify its answer against the actual query results, so nothing was shown. Try again.';
     case 'IDENTIFIER_EXPOSURE':
@@ -61,4 +63,22 @@ export function friendlyErrorMessage(errorCode: string, fallback: string): strin
     default:
       return fallback;
   }
+}
+
+export const MAX_PREFILL_PROMPT_LENGTH = 300;
+
+/** Validates a ?prompt= URL parameter. The result only pre-fills the input
+ * box; it is never sent automatically, and carries no hidden instructions. */
+export function sanitizePromptParam(raw: string | null | undefined): string {
+  if (!raw) return '';
+  const cleaned = Array.from(raw, (char) => (char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127 ? ' ' : char))
+    .join('')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return cleaned.slice(0, MAX_PREFILL_PROMPT_LENGTH);
+}
+
+export function buildAssistantLink(prompt: string, contextId = 'general'): string {
+  const params = new URLSearchParams({ context: contextId, prompt: sanitizePromptParam(prompt) });
+  return `/assistant?${params.toString()}`;
 }

@@ -93,8 +93,13 @@ type QueryRequest struct {
 	NaturalLanguagePrompt string                 `protobuf:"bytes,2,opt,name=natural_language_prompt,json=naturalLanguagePrompt,proto3" json:"natural_language_prompt,omitempty"`
 	UserRole              string                 `protobuf:"bytes,3,opt,name=user_role,json=userRole,proto3" json:"user_role,omitempty"`          // e.g., "admin", "physician" for GRC checks
 	AgentTarget           string                 `protobuf:"bytes,4,opt,name=agent_target,json=agentTarget,proto3" json:"agent_target,omitempty"` // Which agent to route to
-	unknownFields         protoimpl.UnknownFields
-	sizeCache             protoimpl.SizeCache
+	// Which configured LLM to use for this request (e.g. "qwen2.5-14b",
+	// "llama3.1-8b", "gemini-flash"). Empty/unknown falls back to the
+	// engine's default profile; the response's model_version field always
+	// reports which model actually answered.
+	ModelProfileId string `protobuf:"bytes,5,opt,name=model_profile_id,json=modelProfileId,proto3" json:"model_profile_id,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *QueryRequest) Reset() {
@@ -151,6 +156,13 @@ func (x *QueryRequest) GetUserRole() string {
 func (x *QueryRequest) GetAgentTarget() string {
 	if x != nil {
 		return x.AgentTarget
+	}
+	return ""
+}
+
+func (x *QueryRequest) GetModelProfileId() string {
+	if x != nil {
+		return x.ModelProfileId
 	}
 	return ""
 }
@@ -378,12 +390,13 @@ var File_healthcare_analytics_proto protoreflect.FileDescriptor
 const file_healthcare_analytics_proto_rawDesc = "" +
 	"\n" +
 	"\x1ahealthcare_analytics.proto\x12\n" +
-	"healthcare\"\xa1\x01\n" +
+	"healthcare\"\xcb\x01\n" +
 	"\fQueryRequest\x12\x19\n" +
 	"\bquery_id\x18\x01 \x01(\tR\aqueryId\x126\n" +
 	"\x17natural_language_prompt\x18\x02 \x01(\tR\x15naturalLanguagePrompt\x12\x1b\n" +
 	"\tuser_role\x18\x03 \x01(\tR\buserRole\x12!\n" +
-	"\fagent_target\x18\x04 \x01(\tR\vagentTarget\"L\n" +
+	"\fagent_target\x18\x04 \x01(\tR\vagentTarget\x12(\n" +
+	"\x10model_profile_id\x18\x05 \x01(\tR\x0emodelProfileId\"L\n" +
 	"\bCitation\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12\x10\n" +
 	"\x03url\x18\x02 \x01(\tR\x03url\x12\x18\n" +

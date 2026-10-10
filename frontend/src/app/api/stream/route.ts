@@ -16,6 +16,7 @@ export interface QueryRequest {
   natural_language_prompt: string;
   user_role: string;
   agent_target: string;
+  model_profile_id: string;
 }
 
 export interface InsightResponse {
@@ -28,6 +29,7 @@ export interface InsightResponse {
   pii_redacted?: boolean;
   executed_sql?: string;
   audit_id?: string;
+  model_version?: string;
 }
 
 // Development-only: exposes provenance fields (generated SQL, audit id) in
@@ -77,7 +79,7 @@ export function createAnalyticsPostHandler(dependencies: AnalyticsRouteDependenc
 
   const validation = validateAnalyticsRequest(body);
   if (!validation.ok) return apiError('invalid_request', validation.error, 400);
-  const { prompt, agentTarget } = validation.value;
+  const { prompt, agentTarget, modelProfileId } = validation.value;
 
   const client = dependencies.createClient();
   const encoder = new TextEncoder();
@@ -87,6 +89,7 @@ export function createAnalyticsPostHandler(dependencies: AnalyticsRouteDependenc
     // Authentication is implemented in a later roadmap phase. Never claim admin here.
     user_role: 'unauthenticated-demo',
     agent_target: agentTarget,
+    model_profile_id: modelProfileId,
   };
 
   const stream = new ReadableStream<Uint8Array>({
@@ -124,6 +127,7 @@ export function createAnalyticsPostHandler(dependencies: AnalyticsRouteDependenc
           errorCode: response.error_code ?? '',
           piiDetected: response.pii_detected ?? false,
           piiRedacted: response.pii_redacted ?? false,
+          modelVersion: response.model_version ?? '',
           ...(DEV_PROVENANCE_ENABLED
             ? { executedSql: response.executed_sql, auditId: response.audit_id }
             : {}),

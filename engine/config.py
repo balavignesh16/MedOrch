@@ -61,6 +61,11 @@ class EngineConfig:
     query_column_limit: int
     sql_max_length: int
     llm_timeout_seconds: float
+    # Optional: powers the selectable "Gemini Flash" model profile
+    # (engine/model_profiles.py). Separate from api_key/base_url/model
+    # above so switching the UI's model selector never disturbs the
+    # primary NVIDIA_*-configured client used when no profile is selected.
+    gemini_api_key: str | None = None
 
     @classmethod
     def from_env(cls, *, require_api_key: bool = True) -> "EngineConfig":
@@ -93,5 +98,6 @@ class EngineConfig:
             query_column_limit=_positive_int("AI_QUERY_COLUMN_LIMIT", 12),
             sql_max_length=_positive_int("AI_SQL_MAX_LENGTH", 2000),
             llm_timeout_seconds=float(_positive_int("AI_LLM_TIMEOUT_SECONDS", 30)),
+            gemini_api_key=os.getenv("GEMINI_API_KEY", "").strip() or None,
         )
 

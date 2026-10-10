@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  MAX_PREFILL_PROMPT_LENGTH,
+  buildAssistantLink,
   friendlyErrorMessage,
   isContextSelectable,
   resolveInitialContext,
+  sanitizePromptParam,
   suggestedPromptsFor,
   unavailabilityReason,
 } from './assistantContext';
@@ -87,11 +90,33 @@ describe('friendlyErrorMessage', () => {
     const codes = [
       'UNKNOWN_CONTEXT', 'CONTEXT_UNAVAILABLE', 'UNSUPPORTED_REQUEST', 'INVALID_MODEL_OUTPUT',
       'UNSAFE_SQL', 'QUERY_TIMEOUT', 'MODEL_TIMEOUT', 'MODEL_UNAVAILABLE', 'MODEL_SERVICE_ERROR',
-      'GROUNDING_FAILED', 'IDENTIFIER_EXPOSURE', 'AUDIT_FAILURE',
+      'MODEL_RATE_LIMITED', 'GROUNDING_FAILED', 'IDENTIFIER_EXPOSURE', 'AUDIT_FAILURE',
     ];
     for (const code of codes) {
       const message = friendlyErrorMessage(code, 'fallback');
       expect(message).not.toMatch(/Traceback|Exception|at engine\.|File "/);
     }
+  });
+});
+
+
+describe('prefill prompt parameter', () => {
+  it('trims, collapses whitespace, and strips control characters', () => {
+    expect(sanitizePromptParam('  Compare   rates\n\tby race \u0000 ')).toBe('Compare rates by race');
+    expect(sanitizePromptParam(null)).toBe('');
+    expect(sanitizePromptParam(undefined)).toBe('');
+  });
+
+  it('caps the length', () => {
+    expect(sanitizePromptParam('x'.repeat(5000))).toHaveLength(MAX_PREFILL_PROMPT_LENGTH);
+  });
+
+  it('builds a link that round-trips through URL parsing and never carries extra parameters', () => {
+    const link = buildAssistantLink('Compare rates & totals? "by" race');
+    const url = new URL(link, 'http://localhost');
+    expect(url.pathname).toBe('/assistant');
+    expect(url.searchParams.get('prompt')).toBe('Compare rates & totals? "by" race');
+    expect(url.searchParams.get('context')).toBe('general');
+    expect([...url.searchParams.keys()].sort()).toEqual(['context', 'prompt']);
   });
 });

@@ -3,10 +3,30 @@
 Defense-in-depth: a textual validator rejects unsafe queries before
 execution, and a SQLite authorizer callback denies unauthorized operations
 at execution time even if the text validator was bypassed or fooled.
-Identifier columns (patient_nbr, encounter_id) are blocked outright rather
-than allowed in a narrow "safe aggregate" exception — that exception cannot
-be verified reliably from SQL text alone, so this module takes the
-conservative position and rejects any reference to them.
+
+Identifier columns (patient_nbr, encounter_id) may appear ONLY as a
+COUNT(...) argument — including nested inside a CASE expression for
+conditional counting, e.g. COUNT(CASE WHEN x THEN encounter_id END). This
+is verified with balanced-paren matching, not a loose regex: every
+occurrence of the identifier token in the select list must fall strictly
+inside some COUNT(...) call's argument span, or the query is rejected.
+COUNT() of any expression only ever returns a cardinality, never the
+argument's actual value, so this cannot leak an identifier's value
+regardless of what's being counted. This exception exists because blocking
+identifiers outright turned out to block extremely common, genuinely safe
+SQL — "what fraction of X were readmitted" naturally wants
+COUNT(encounter_id) or COUNT(CASE WHEN readmitted THEN encounter_id END)
+as a non-null counter, and real models reliably produce exactly that
+pattern for rate questions.
+
+This means the SQLite authorizer (below) must allow reading these two
+columns — it cannot see which function wraps a column read, so once a
+column is readable at all, the authorizer can no longer independently
+catch a text-validator bug that let, say, MAX(encounter_id) slip through.
+The text validator's balanced-paren check is therefore the sole guarantee
+against that — covered by adversarial tests for MAX/MIN of an identifier,
+bare SELECT, and GROUP BY+SELECT combinations, all of which must still be
+rejected at the text layer alone.
 """
 
 from __future__ import annotations
@@ -60,6 +80,35 @@ def _select_list(query: str) -> str:
     return match.group(1) if match else ""
 
 
+def _count_argument_spans(text: str) -> list[tuple[int, int]]:
+    """Character spans of each COUNT(...) call's argument region (between
+    the parens, exclusive), found via balanced-paren matching so a nested
+    CASE expression's own parens don't truncate the span early."""
+    spans = []
+    for call in re.finditer(r"\bCOUNT\s*\(", text, re.IGNORECASE):
+        start = call.end()
+        depth = 1
+        i = start
+        while i < len(text) and depth > 0:
+            if text[i] == "(":
+                depth += 1
+            elif text[i] == ")":
+                depth -= 1
+            i += 1
+        spans.append((start, i - 1))
+    return spans
+
+
+def _identifier_only_inside_count(select_list: str, identifier: str) -> bool:
+    """True only if every occurrence of `identifier` in the select list
+    falls strictly inside some COUNT(...) argument span."""
+    spans = _count_argument_spans(select_list)
+    occurrences = list(re.finditer(rf"\b{identifier}\b", select_list, re.IGNORECASE))
+    if not occurrences:
+        return True
+    return all(any(start <= m.start() < end for start, end in spans) for m in occurrences)
+
+
 def validate_readonly_query(
     sql: str,
     allowed_tables: set[str],
@@ -87,10 +136,13 @@ def validate_readonly_query(
     if re.search(r"(?is)^SELECT\s+\*", without_trailing_semicolon):
         raise UnsafeQueryError("Wildcard column selection is not permitted")
 
-    select_list = _select_list(without_trailing_semicolon).lower()
+    select_list = _select_list(without_trailing_semicolon)
     for identifier in FORBIDDEN_IDENTIFIER_COLUMNS:
-        if re.search(rf"\b{identifier}\b", select_list):
-            raise UnsafeQueryError(f"The query must not select the identifier column {identifier}")
+        if not _identifier_only_inside_count(select_list, identifier):
+            raise UnsafeQueryError(
+                f"The query must not select the identifier column {identifier} directly; "
+                f"it may only appear as a COUNT() argument"
+            )
 
     for function_name in _FUNCTION_CALL.findall(without_trailing_semicolon):
         upper_name = function_name.upper()
@@ -117,11 +169,16 @@ def _authorizer(action: int, arg1: str | None, arg2: str | None, _dbname: str | 
     if action == sqlite3.SQLITE_SELECT:
         return sqlite3.SQLITE_OK
     if action == sqlite3.SQLITE_READ:
-        table, column = arg1, arg2
+        table, _column = arg1, arg2
         if table != ALLOWED_TABLE:
             return sqlite3.SQLITE_DENY
-        if column and column.lower() in FORBIDDEN_IDENTIFIER_COLUMNS:
-            return sqlite3.SQLITE_DENY
+        # Identifier columns are readable here (SQLite must read a column's
+        # value to COUNT it, even though COUNT never outputs that value) —
+        # the authorizer cannot see which function wraps this read, so it
+        # cannot enforce "only inside COUNT()" itself. That enforcement is
+        # the text validator's job (_identifier_only_inside_count above);
+        # see this module's docstring for the resulting defense-in-depth
+        # trade-off.
         return sqlite3.SQLITE_OK
     if action == sqlite3.SQLITE_FUNCTION:
         function_name = (arg2 or "").upper()

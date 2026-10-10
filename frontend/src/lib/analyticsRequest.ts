@@ -30,9 +30,31 @@ function loadAllowedAgentTargets(): Set<string> {
 
 export const ALLOWED_AGENT_TARGETS = loadAllowedAgentTargets();
 
+// Same pattern as above, for config/model_profiles.json. Empty string is
+// also valid — it means "use the engine's default model" (unchanged
+// pre-model-switcher behavior).
+function loadAllowedModelProfileIds(): Set<string> {
+  try {
+    const registryPath = path.resolve(process.cwd(), '../config/model_profiles.json');
+    const raw = readFileSync(registryPath, 'utf-8');
+    const parsed = JSON.parse(raw) as { profiles?: Array<{ id?: string }> };
+    const ids = (parsed.profiles ?? [])
+      .map((profile) => profile.id)
+      .filter((id): id is string => typeof id === 'string');
+    if (ids.length > 0) return new Set(ids);
+  } catch {
+    // fall through to the safe default below
+  }
+  console.error('model_profiles.json could not be read; model switching will be unavailable');
+  return new Set();
+}
+
+export const ALLOWED_MODEL_PROFILE_IDS = loadAllowedModelProfileIds();
+
 export interface ValidAnalyticsRequest {
   prompt: string;
   agentTarget: string;
+  modelProfileId: string;
 }
 
 export type AnalyticsRequestValidation =
@@ -49,6 +71,9 @@ export function validateAnalyticsRequest(body: unknown): AnalyticsRequestValidat
   const agentTarget = typeof candidate.agent_target === 'string'
     ? candidate.agent_target
     : 'general';
+  const modelProfileId = typeof candidate.model_profile_id === 'string'
+    ? candidate.model_profile_id
+    : '';
 
   if (!prompt) return { ok: false, error: 'Prompt must not be empty' };
   if (prompt.length > MAX_PROMPT_LENGTH) {
@@ -60,5 +85,12 @@ export function validateAnalyticsRequest(body: unknown): AnalyticsRequestValidat
   if (!ALLOWED_AGENT_TARGETS.has(agentTarget)) {
     return { ok: false, error: 'Unknown agent target' };
   }
-  return { ok: true, value: { prompt, agentTarget } };
+  // Empty string is always valid: it means "use the engine's default
+  // model" (unchanged pre-model-switcher behavior). A non-empty value
+  // must be a real profile id — an unrecognized one is rejected here
+  // rather than silently forwarded, same reasoning as agent targets.
+  if (modelProfileId && !ALLOWED_MODEL_PROFILE_IDS.has(modelProfileId)) {
+    return { ok: false, error: 'Unknown model profile' };
+  }
+  return { ok: true, value: { prompt, agentTarget, modelProfileId } };
 }

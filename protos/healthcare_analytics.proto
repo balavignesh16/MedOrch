@@ -13,6 +13,11 @@ message QueryRequest {
   string natural_language_prompt = 2;
   string user_role = 3; // e.g., "admin", "physician" for GRC checks
   string agent_target = 4; // Which agent to route to
+  // Which configured LLM to use for this request (e.g. "qwen2.5-14b",
+  // "llama3.1-8b", "gemini-flash"). Empty/unknown falls back to the
+  // engine's default profile; the response's model_version field always
+  // reports which model actually answered.
+  string model_profile_id = 5;
 }
 
 message Citation {

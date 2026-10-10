@@ -1,3 +1,5 @@
+import time
+
 import httpx
 import openai
 import pytest
@@ -6,6 +8,7 @@ from engine.query_planner import (
     NvidiaQueryPlanner,
     PlannerConnectionError,
     PlannerError,
+    PlannerRateLimitedError,
     PlannerServiceError,
     PlannerTimeoutError,
     QueryPlan,
@@ -174,7 +177,14 @@ class _OutOfMemoryLLM:
     request succeeded; the server rejected it), so it was previously falling
     through to the generic retry-then-PlannerError path and surfacing as
     the same misleading INVALID_MODEL_OUTPUT as a malformed JSON response,
-    even though the fix (free up memory) is completely different."""
+    even though the fix (free up memory) is completely different.
+
+    A second real incident (Gemini's hosted endpoint returning 503 'high
+    demand', which cleared on a later unrelated call) showed that a 5xx is
+    not always a steady-state failure like local memory exhaustion — a
+    hosted provider's transient overload is often worth retrying. The
+    planner now retries 5xx like any other recoverable failure and only
+    raises PlannerServiceError once every attempt has failed."""
 
     def __init__(self) -> None:
         self.invoke_calls = 0
@@ -186,12 +196,68 @@ class _OutOfMemoryLLM:
         raise openai.InternalServerError("server error", response=response, body=None)
 
 
-def test_adapter_maps_server_error_to_service_error_without_retry() -> None:
+def test_adapter_maps_persistent_server_error_to_service_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(time, "sleep", lambda _seconds: None)  # keep the test fast
     llm = _OutOfMemoryLLM()
     planner = NvidiaQueryPlanner(llm, model_version="test-model", max_retries=2)
     with pytest.raises(PlannerServiceError):
         planner.plan("count encounters", "general", "schema")
-    assert llm.invoke_calls == 1  # a memory shortage won't self-heal mid-retry-loop
+    assert llm.invoke_calls == 3  # every attempt failed, so all were used
+
+
+def test_adapter_recovers_from_transient_server_error_on_retry(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A hosted provider's 5xx can be transient (observed: Gemini 503 'high
+    demand' that cleared moments later) — unlike local memory exhaustion,
+    retrying is often the right move, and a success on a later attempt
+    must be returned normally rather than treated as a failure."""
+    monkeypatch.setattr(time, "sleep", lambda _seconds: None)
+    responses_left = {"count": 0}
+
+    class _FlakyThenOkLLM:
+        def invoke(self, prompt: str) -> _FakeMessage:
+            responses_left["count"] += 1
+            if responses_left["count"] == 1:
+                request = httpx.Request("POST", "https://example.com")
+                response = httpx.Response(503, request=request, json={"error": {"message": "overloaded"}})
+                raise openai.InternalServerError("overloaded", response=response, body=None)
+            return _FakeMessage(
+                '{"supported": true, "reason_code": "supported", '
+                '"sql": "SELECT COUNT(*) FROM hospital_readmissions", "user_message": ""}'
+            )
+
+    planner = NvidiaQueryPlanner(_FlakyThenOkLLM(), model_version="test-model", max_retries=1)
+    plan = planner.plan("count encounters", "general", "schema")
+    assert plan.supported is True
+    assert responses_left["count"] == 2
+
+
+class _QuotaExhaustedLLM:
+    """Reproduces a real incident: Gemini's free tier (20 requests/day for
+    a model) was exhausted by normal benchmarking use, and the provider
+    returned HTTP 429 naming a retry-after of ~18 hours. openai.RateLimitError
+    is a subclass of APIStatusError, so without a specific check it would
+    fall into the >=500 retry-with-backoff path (wrong — a 1.5s backoff is
+    pointless against an hours-long quota window) or the generic retry path
+    (also wrong — retrying doesn't help and just wastes the attempt budget),
+    surfacing as the same misleading INVALID_MODEL_OUTPUT as a malformed
+    response. It needs to fail immediately with its own clear message."""
+
+    def __init__(self) -> None:
+        self.invoke_calls = 0
+
+    def invoke(self, prompt: str) -> _FakeMessage:
+        self.invoke_calls += 1
+        request = httpx.Request("POST", "https://generativelanguage.googleapis.com/v1beta/openai/")
+        response = httpx.Response(429, request=request, json={"error": {"message": "quota exceeded"}})
+        raise openai.RateLimitError("quota exceeded", response=response, body=None)
+
+
+def test_adapter_maps_rate_limit_to_rate_limited_error_without_retry() -> None:
+    llm = _QuotaExhaustedLLM()
+    planner = NvidiaQueryPlanner(llm, model_version="test-model", max_retries=2)
+    with pytest.raises(PlannerRateLimitedError):
+        planner.plan("count encounters", "general", "schema")
+    assert llm.invoke_calls == 1  # an hours-long quota window won't clear mid-retry-loop
 
 
 class _OpenAITimeoutLLM:

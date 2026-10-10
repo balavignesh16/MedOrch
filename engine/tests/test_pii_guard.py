@@ -20,6 +20,15 @@ def test_encounter_id_pattern_is_detected_and_redacted() -> None:
     assert "55555" not in result.redacted_text
 
 
+def test_encounter_id_inside_a_count_expression_is_not_a_false_positive() -> None:
+    # "COUNT(encounter_id)" is the column name of an aggregate, not a leaked
+    # row-level identifier value — the digit that follows is an unrelated
+    # row count, and must not be mistaken for the identifier's value.
+    result = inspect_and_redact("COUNT(encounter_id) (from 1 row of historical encounter data).")
+    assert result.detected is False
+    assert result.redacted_text == "COUNT(encounter_id) (from 1 row of historical encounter data)."
+
+
 def test_inspect_outbound_payload_covers_summary_and_visualization() -> None:
     payload = inspect_outbound_payload(
         "Clean summary text.", '{"patient_nbr": 12345}'

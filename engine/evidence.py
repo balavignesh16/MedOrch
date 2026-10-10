@@ -15,6 +15,7 @@ is compared against that cell after normalizing formatting.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from decimal import ROUND_HALF_UP, Decimal
 import re
 
 from pydantic import BaseModel
@@ -50,18 +51,42 @@ def _normalize(value: str) -> str:
     return value.strip().replace(",", "").rstrip("%")
 
 
+def _rounds_to_claim(normalized_claim: str, normalized_cell: str) -> bool:
+    """True when the claim is the cell value correctly rounded to the number of
+    decimals the claim itself shows (e.g. '10.0' for 10.037). Rounding is not
+    arithmetic: it cannot turn one number into a different one."""
+    try:
+        claim = Decimal(normalized_claim)
+        cell = Decimal(normalized_cell)
+        if not (claim.is_finite() and cell.is_finite()):
+            return False
+        places = max(0, -int(claim.as_tuple().exponent))
+        return cell.quantize(Decimal(1).scaleb(-places), rounding=ROUND_HALF_UP) == claim
+    except ArithmeticError:
+        return False
+
+
 def _cell_matches(rendered_value: str, cell_value: object) -> bool:
     normalized_claim = _normalize(rendered_value)
     normalized_cell = _normalize(str(cell_value))
     if normalized_claim == normalized_cell:
         return True
     try:
-        return abs(float(normalized_claim) - float(normalized_cell)) < 1e-6
+        if abs(float(normalized_claim) - float(normalized_cell)) < 1e-6:
+            return True
     except (TypeError, ValueError):
         return False
+    return _rounds_to_claim(normalized_claim, normalized_cell)
 
 
-def validate_grounded_answer(answer: GroundedAnswer, result: StructuredQueryResult) -> str:
+def _free_tokens(texts: list[str]) -> set[str]:
+    """Numbers that legitimately appear without a data claim: ones the user typed
+    in their own question ('30-day') and ones inside the result's own text labels
+    (age bracket '[80-90)'). Sign is dropped so '80-90' does not read as -90."""
+    return {_normalize(token).lstrip("-") for text in texts for token in _NUMERIC_TOKEN.findall(text)}
+
+
+def validate_grounded_answer(answer: GroundedAnswer, result: StructuredQueryResult, prompt: str = "") -> str:
     """Return the validated summary text, or raise GroundingError."""
     for claim in answer.numeric_claims:
         if claim.evidence.column_name in FORBIDDEN_IDENTIFIER_COLUMNS:
@@ -76,9 +101,14 @@ def validate_grounded_answer(answer: GroundedAnswer, result: StructuredQueryResu
             raise GroundingError("A claim's value does not match the referenced result cell")
 
     claimed_values = {_normalize(claim.rendered_value) for claim in answer.numeric_claims}
+    free = _free_tokens(
+        [prompt, *result.columns, *(cell for row in result.rows for cell in row if isinstance(cell, str))]
+    )
     for token in _NUMERIC_TOKEN.findall(answer.summary_text):
-        if _normalize(token) not in claimed_values:
-            raise GroundingError("The summary contains a number with no supporting evidence claim")
+        normalized = _normalize(token)
+        if normalized in claimed_values or normalized.lstrip("-") in free:
+            continue
+        raise GroundingError("The summary contains a number with no supporting evidence claim")
 
     return answer.summary_text
 

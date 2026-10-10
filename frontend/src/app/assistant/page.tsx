@@ -7,10 +7,18 @@ import { Bot, Code2, ChevronDown, ChevronUp, Lock, User } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import CommandBar from '@/components/CommandBar';
-import type { AssistantCapabilitiesFile, AssistantCapabilityContext } from '@/lib/assistantTypes';
+import { AssistantChart } from '@/components/AssistantChart';
+import { chooseChart } from '@/lib/assistantChart';
+import type {
+  AssistantCapabilitiesFile,
+  AssistantCapabilityContext,
+  ModelProfileEntry,
+  ModelProfilesFile,
+} from '@/lib/assistantTypes';
 import {
   friendlyErrorMessage,
   resolveInitialContext,
+  sanitizePromptParam,
   suggestedPromptsFor,
   unavailabilityReason,
 } from '@/lib/assistantContext';
@@ -23,7 +31,15 @@ interface StreamEvent {
   errorCode: string;
   piiDetected: boolean;
   piiRedacted: boolean;
+  modelVersion: string;
   executedSql?: string;
+}
+
+interface ModelUsageResponse {
+  date_utc: string;
+  counts: Array<{ model_version: string; request_count: number }>;
+  gemini_daily_limit_observed: number;
+  note: string;
 }
 
 interface VisualizationTable {
@@ -42,6 +58,7 @@ interface ChatMessage {
   executionStatus?: string;
   errorCode?: string;
   executedSql?: string;
+  modelVersion?: string;
   visualization?: VisualizationTable | null;
 }
 
@@ -54,15 +71,28 @@ function nextId(): string {
 function AssistantContent() {
   const searchParams = useSearchParams();
   const requestedContext = searchParams.get('context');
+  const prefilledPrompt = sanitizePromptParam(searchParams.get('prompt'));
 
   const [registry, setRegistry] = useState<AssistantCapabilitiesFile | null>(null);
   const [registryError, setRegistryError] = useState(false);
   const [manualContextId, setManualContextId] = useState<string | null>(null);
+  const [modelProfiles, setModelProfiles] = useState<ModelProfileEntry[]>([]);
+  const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
+  const [usage, setUsage] = useState<ModelUsageResponse | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [expandedSqlId, setExpandedSqlId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+
+  const refreshUsage = () => {
+    fetch('/api/assistant/usage')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: ModelUsageResponse | null) => {
+        if (data) setUsage(data);
+      })
+      .catch(() => undefined);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -78,6 +108,16 @@ function AssistantContent() {
       .catch(() => {
         if (!cancelled) setRegistryError(true);
       });
+
+    fetch('/api/assistant/models')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: ModelProfilesFile | null) => {
+        if (cancelled || !data) return;
+        setModelProfiles(data.profiles);
+      })
+      .catch(() => undefined);
+
+    refreshUsage();
     return () => {
       cancelled = true;
     };
@@ -118,7 +158,11 @@ function AssistantContent() {
       const response = await fetch('/api/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, agent_target: selectedContext.id }),
+        body: JSON.stringify({
+          prompt,
+          agent_target: selectedContext.id,
+          model_profile_id: selectedModelId ?? '',
+        }),
         signal: controller.signal,
       });
       if (!response.ok) throw new Error('Failed to connect to the analytics service');
@@ -150,6 +194,7 @@ function AssistantContent() {
             errorCode: event.errorCode || '',
             isStreaming: !event.isFinal,
           };
+          if (event.modelVersion) patch.modelVersion = event.modelVersion;
           if (event.executedSql) patch.executedSql = event.executedSql;
           if (event.visualizationDataJson) {
             try {
@@ -160,6 +205,7 @@ function AssistantContent() {
             }
           }
           updateAssistantMessage(patch);
+          if (event.isFinal) refreshUsage();
         }
       }
     } catch (error) {
@@ -214,6 +260,46 @@ function AssistantContent() {
         })}
       </div>
 
+      {modelProfiles.length > 0 && (
+        <div className="flex gap-3 mb-6 flex-wrap items-center">
+          <span className="text-xs uppercase tracking-widest text-white/40 mr-1">Model</span>
+          <button
+            onClick={() => setSelectedModelId(null)}
+            title="Use the server's default configured model"
+            className={`px-3 py-1.5 rounded-xl border text-xs font-medium transition-colors ${
+              selectedModelId === null
+                ? 'bg-brand-teal/20 border-brand-teal text-brand-teal'
+                : 'bg-surface-obsidian border-white/10 text-white/70 hover:border-brand-teal/40'
+            }`}
+          >
+            Default
+          </button>
+          {modelProfiles.map((profile) => {
+            const isSelected = selectedModelId === profile.id;
+            return (
+              <button
+                key={profile.id}
+                onClick={() => setSelectedModelId(profile.id)}
+                className={`px-3 py-1.5 rounded-xl border text-xs font-medium transition-colors ${
+                  isSelected
+                    ? 'bg-brand-teal/20 border-brand-teal text-brand-teal'
+                    : 'bg-surface-obsidian border-white/10 text-white/70 hover:border-brand-teal/40'
+                }`}
+              >
+                {profile.display_name}
+              </button>
+            );
+          })}
+          {usage && (
+            <span className="text-[11px] text-white/40 ml-2" title={usage.note}>
+              {usage.counts.find((c) => c.model_version.startsWith('gemini'))?.request_count ?? 0}
+              {' / '}
+              {usage.gemini_daily_limit_observed} Gemini calls today (local estimate, not a live quota)
+            </span>
+          )}
+        </div>
+      )}
+
       {selectedContext && !selectedContext.available && (
         <div className="mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-sm">
           {unavailabilityReason(selectedContext)}
@@ -260,6 +346,7 @@ function AssistantContent() {
             onQuery={handleQuery}
             isLoading={isLoading}
             placeholder={selectedContext?.suggested_prompts?.[0]}
+            initialQuery={prefilledPrompt}
           />
         </div>
       </div>
@@ -297,6 +384,7 @@ function ChatBubble({
   const displayText = message.errorCode
     ? friendlyErrorMessage(message.errorCode, message.text)
     : message.text;
+  const chartSpec = chooseChart(message.visualization?.columns, message.visualization?.rows);
 
   return (
     <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="flex gap-4">
@@ -339,7 +427,12 @@ function ChatBubble({
           {message.errorCode && (
             <p className="mt-3 text-[11px] uppercase tracking-widest opacity-60">Code: {message.errorCode}</p>
           )}
+          {message.modelVersion && (
+            <p className="mt-2 text-[11px] uppercase tracking-widest opacity-40">Model: {message.modelVersion}</p>
+          )}
         </div>
+
+        {chartSpec && <AssistantChart spec={chartSpec} />}
 
         {message.visualization?.rows && message.visualization.columns && (
           <div className="overflow-x-auto rounded-2xl border border-white/10">

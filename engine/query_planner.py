@@ -11,6 +11,7 @@ every plan's SQL still passes through engine.sql_guard before execution.
 from __future__ import annotations
 
 import json
+import time
 from typing import Literal, Protocol
 
 import openai
@@ -81,6 +82,15 @@ class PlannerServiceError(PlannerError):
     within the retry loop's timescale."""
 
 
+class PlannerRateLimitedError(PlannerError):
+    """Raised when the LLM endpoint rejects the request with HTTP 429 —
+    observed in practice as Gemini's free tier (20 requests/day/model)
+    being exhausted by normal use. Distinct from a transient 5xx: a quota
+    reset is typically hours away, so retrying within this call is pointless
+    (the provider's own error includes a retry-after time, often many
+    hours), unlike an overloaded server that may recover in seconds."""
+
+
 class QueryPlanner(Protocol):
     def plan(self, prompt: str, context_id: str, schema_prompt: str) -> QueryPlan: ...
 
@@ -125,7 +135,8 @@ class NvidiaQueryPlanner:
             f"Context: {context_id}\nUser request: {prompt}\nJSON:"
         )
         last_error: Exception | None = None
-        for _ in range(self._max_retries + 1):
+        last_was_server_error = False
+        for attempt in range(self._max_retries + 1):
             try:
                 response = self._llm.invoke(planning_prompt)  # type: ignore[attr-defined]
             except (openai.APITimeoutError, TimeoutError) as exc:
@@ -134,15 +145,34 @@ class NvidiaQueryPlanner:
                 raise PlannerConnectionError(
                     "Could not reach the configured LLM endpoint"
                 ) from exc
+            except openai.RateLimitError as exc:
+                # A 429 quota/rate-limit rejection (observed in practice:
+                # Gemini's free tier, 20 requests/day/model) is not worth
+                # retrying inside this call — the provider's own error
+                # typically names a retry-after measured in hours, not
+                # seconds, unlike a transient 5xx overload.
+                raise PlannerRateLimitedError(
+                    f"LLM endpoint rejected the request as rate-limited: {exc}"
+                ) from exc
             except openai.APIStatusError as exc:
                 if exc.status_code >= 500:
-                    raise PlannerServiceError(
-                        f"LLM endpoint returned a server error (status {exc.status_code})"
-                    ) from exc
+                    # Unlike a local model's memory exhaustion, a hosted
+                    # provider's 5xx is often a transient overload (observed
+                    # in practice: Gemini's "high demand" 503, which cleared
+                    # on a later, unrelated call) — worth a brief, polite
+                    # retry rather than failing immediately. A short backoff
+                    # avoids hammering an already-overloaded endpoint.
+                    last_error = exc
+                    last_was_server_error = True
+                    if attempt < self._max_retries:
+                        time.sleep(1.5)
+                    continue
                 last_error = exc
+                last_was_server_error = False
                 continue
             except openai.OpenAIError as exc:
                 last_error = exc
+                last_was_server_error = False
                 continue
 
             try:
@@ -151,5 +181,9 @@ class NvidiaQueryPlanner:
                 return parse_plan_json(raw_text)
             except PlannerError as exc:
                 last_error = exc
+                last_was_server_error = False
                 continue
+
+        if last_was_server_error:
+            raise PlannerServiceError(f"LLM endpoint returned a server error: {last_error}") from last_error
         raise PlannerError(f"Planner failed after retries: {last_error}")

@@ -29,6 +29,8 @@ def create_database(path: Path) -> None:
         "PRAGMA table_info(hospital_readmissions)",
         "SELECT * FROM hospital_readmissions; DROP TABLE hospital_readmissions",
         "SELECT * FROM patients",
+        "SELECT * FROM readmission_risk_explanations",
+        "SELECT feature FROM hospital_readmissions JOIN readmission_risk_explanations USING (encounter_id)",
         "SELECT 1",
     ],
 )
@@ -67,19 +69,70 @@ def test_rejects_direct_identifier_column_selection(tmp_path: Path) -> None:
         )
 
 
-def test_rejects_identifier_column_even_inside_aggregate(tmp_path: Path) -> None:
-    """The 'safe aggregate' exception cannot be verified reliably from SQL
-    text alone, so identifier columns are blocked outright, including
-    inside aggregate expressions like COUNT()."""
+def test_permits_identifier_column_as_sole_count_argument(tmp_path: Path) -> None:
+    """Regression: a real model (qwen2.5:14b) reliably produced
+    COUNT(encounter_id) for rate questions ('what fraction of X were
+    readmitted') — an extremely common, genuinely safe SQL idiom, since
+    COUNT() only ever returns a cardinality, never the argument's actual
+    value. Blocking this outright made ordinary rate questions fail with
+    UNSAFE_SQL in production."""
     database_path = tmp_path / "test.db"
     create_database(database_path)
 
+    result = execute_readonly_query(
+        database_path,
+        "SELECT COUNT(encounter_id) FROM hospital_readmissions",
+        row_limit=10,
+        timeout_seconds=1,
+    )
+    assert result.rows == [(4,)]
+
+
+def test_permits_identifier_column_inside_count_case_when(tmp_path: Path) -> None:
+    """The specific pattern observed in production: conditional counting
+    via COUNT(CASE WHEN ... THEN encounter_id END), used to compute a rate
+    alongside a total. Still never outputs an actual encounter_id value."""
+    database_path = tmp_path / "test.db"
+    create_database(database_path)
+
+    result = execute_readonly_query(
+        database_path,
+        "SELECT COUNT(CASE WHEN readmitted = '>30' THEN encounter_id END) AS readmitted_count, "
+        "COUNT(encounter_id) AS total FROM hospital_readmissions",
+        row_limit=10,
+        timeout_seconds=1,
+    )
+    assert result.rows == [(2, 4)]
+
+
+def test_rejects_identifier_column_as_max_argument() -> None:
+    """MAX()/MIN() of an identifier WOULD leak its actual value, unlike
+    COUNT() — must still be rejected even though MAX is an allowed
+    function and the column is now readable at the authorizer layer. This
+    is the test that guarantees the balanced-paren COUNT-only check is
+    doing real work, not just rubber-stamping any identifier occurrence."""
     with pytest.raises(UnsafeQueryError, match="identifier column"):
-        execute_readonly_query(
-            database_path,
-            "SELECT COUNT(encounter_id) FROM hospital_readmissions",
-            row_limit=10,
-            timeout_seconds=1,
+        validate_readonly_query(
+            "SELECT MAX(encounter_id) FROM hospital_readmissions",
+            {"hospital_readmissions"},
+        )
+
+
+def test_rejects_identifier_column_mixed_with_unsafe_use_in_same_query() -> None:
+    """A safe COUNT(encounter_id) elsewhere in the select list must not
+    whitelist an unsafe bare reference to the same identifier."""
+    with pytest.raises(UnsafeQueryError, match="identifier column"):
+        validate_readonly_query(
+            "SELECT COUNT(encounter_id), encounter_id FROM hospital_readmissions",
+            {"hospital_readmissions"},
+        )
+
+
+def test_rejects_identifier_column_selected_alongside_group_by() -> None:
+    with pytest.raises(UnsafeQueryError, match="identifier column"):
+        validate_readonly_query(
+            "SELECT encounter_id, COUNT(*) FROM hospital_readmissions GROUP BY encounter_id",
+            {"hospital_readmissions"},
         )
 
 

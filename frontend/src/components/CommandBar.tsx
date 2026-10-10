@@ -6,13 +6,15 @@ type CommandBarProps = {
   onQuery: (query: string) => void;
   isLoading: boolean;
   placeholder?: string;
+  /** Pre-fills the input only; never auto-submitted. */
+  initialQuery?: string;
 };
 
 const DEFAULT_PLACEHOLDER =
   "Ask about historical encounters... e.g., 'How many encounters were readmitted within 30 days?'";
 
-const CommandBar = ({ onQuery, isLoading, placeholder }: CommandBarProps) => {
-  const [query, setQuery] = useState('');
+const CommandBar = ({ onQuery, isLoading, placeholder, initialQuery = '' }: CommandBarProps) => {
+  const [query, setQuery] = useState(initialQuery);
   const [isFocused, setIsFocused] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {

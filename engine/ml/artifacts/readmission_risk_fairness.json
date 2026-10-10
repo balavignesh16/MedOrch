@@ -1,0 +1,389 @@
+{
+  "model_version": "readmission-risk-lightgbm-20261010T044120Z",
+  "generated_at_utc": "2026-10-10T04:50:26.635586+00:00",
+  "evaluated_on": "held-out test split, in-scope encounters (n=19802)",
+  "operating_threshold": 0.1422,
+  "gap_review_threshold": 0.1,
+  "suppression_rule": ">= 100 rows and >= 10 cases of each outcome",
+  "caveat": "Subgroup metrics describe how this demonstration model behaves on historical data. Differences may reflect different base rates or access to care, not only model bias. This is a visibility tool, not a fairness certification.",
+  "attributes": {
+    "race": {
+      "groups": {
+        "AfricanAmerican": {
+          "n": 3707,
+          "readmissions": 396,
+          "prevalence": 0.1068,
+          "mean_predicted_risk": 0.1119,
+          "calibration_gap": 0.005,
+          "sufficient_data": true,
+          "roc_auc": 0.6621,
+          "roc_auc_ci95": [
+            0.6346,
+            0.6905
+          ],
+          "recall": 0.4066,
+          "recall_ci95": [
+            0.3593,
+            0.4556
+          ],
+          "false_positive_rate": 0.2093,
+          "false_positive_rate_ci95": [
+            0.1958,
+            0.2235
+          ],
+          "precision": 0.1885,
+          "flagged_fraction": 0.2304
+        },
+        "Asian": {
+          "n": 122,
+          "readmissions": 10,
+          "prevalence": 0.082,
+          "mean_predicted_risk": 0.1059,
+          "calibration_gap": 0.024,
+          "sufficient_data": true,
+          "roc_auc": 0.7107,
+          "roc_auc_ci95": [
+            0.4769,
+            0.9075
+          ],
+          "recall": 0.6,
+          "recall_ci95": [
+            0.3127,
+            0.8318
+          ],
+          "false_positive_rate": 0.1518,
+          "false_positive_rate_ci95": [
+            0.097,
+            0.2297
+          ],
+          "precision": 0.2609,
+          "flagged_fraction": 0.1885
+        },
+        "Caucasian": {
+          "n": 14886,
+          "readmissions": 1707,
+          "prevalence": 0.1147,
+          "mean_predicted_risk": 0.1152,
+          "calibration_gap": 0.0005,
+          "sufficient_data": true,
+          "roc_auc": 0.668,
+          "roc_auc_ci95": [
+            0.6525,
+            0.6811
+          ],
+          "recall": 0.4487,
+          "recall_ci95": [
+            0.4253,
+            0.4724
+          ],
+          "false_positive_rate": 0.2121,
+          "false_positive_rate_ci95": [
+            0.2052,
+            0.2191
+          ],
+          "precision": 0.2151,
+          "flagged_fraction": 0.2392
+        },
+        "Hispanic": {
+          "n": 371,
+          "readmissions": 39,
+          "prevalence": 0.1051,
+          "mean_predicted_risk": 0.104,
+          "calibration_gap": -0.0011,
+          "sufficient_data": true,
+          "roc_auc": 0.7643,
+          "roc_auc_ci95": [
+            0.6976,
+            0.8389
+          ],
+          "recall": 0.4615,
+          "recall_ci95": [
+            0.3157,
+            0.6143
+          ],
+          "false_positive_rate": 0.1898,
+          "false_positive_rate_ci95": [
+            0.1512,
+            0.2354
+          ],
+          "precision": 0.2222,
+          "flagged_fraction": 0.2183
+        },
+        "Other": {
+          "n": 298,
+          "readmissions": 26,
+          "prevalence": 0.0872,
+          "mean_predicted_risk": 0.096,
+          "calibration_gap": 0.0087,
+          "sufficient_data": true,
+          "roc_auc": 0.7156,
+          "roc_auc_ci95": [
+            0.5972,
+            0.8299
+          ],
+          "recall": 0.4231,
+          "recall_ci95": [
+            0.2554,
+            0.6105
+          ],
+          "false_positive_rate": 0.114,
+          "false_positive_rate_ci95": [
+            0.0815,
+            0.1572
+          ],
+          "precision": 0.2619,
+          "flagged_fraction": 0.1409
+        },
+        "Unknown": {
+          "n": 418,
+          "readmissions": 38,
+          "prevalence": 0.0909,
+          "mean_predicted_risk": 0.0919,
+          "calibration_gap": 0.0009,
+          "sufficient_data": true,
+          "roc_auc": 0.6123,
+          "roc_auc_ci95": [
+            0.5002,
+            0.6983
+          ],
+          "recall": 0.2105,
+          "recall_ci95": [
+            0.1107,
+            0.3635
+          ],
+          "false_positive_rate": 0.1053,
+          "false_positive_rate_ci95": [
+            0.0783,
+            0.1402
+          ],
+          "precision": 0.1667,
+          "flagged_fraction": 0.1148
+        }
+      },
+      "gaps": {
+        "recall": {
+          "intervals_overlap": true,
+          "lowest_group": "Unknown",
+          "lowest_value": 0.2105,
+          "highest_group": "Asian",
+          "highest_value": 0.6,
+          "gap": 0.3895,
+          "flagged": true
+        },
+        "false_positive_rate": {
+          "intervals_overlap": false,
+          "lowest_group": "Unknown",
+          "lowest_value": 0.1053,
+          "highest_group": "Caucasian",
+          "highest_value": 0.2121,
+          "gap": 0.1068,
+          "flagged": true
+        }
+      },
+      "interpretation": "Recall (share of actual readmissions flagged) ranges from 0.210 (Unknown) to 0.600 (Asian); the gap of 0.390 exceeds the 0.10 review threshold. The two groups' 95% intervals overlap, so this difference may be sampling noise. False-positive rate ranges from 0.105 (Unknown) to 0.212 (Caucasian); the gap of 0.107 exceeds the 0.10 review threshold. The 95% intervals do not overlap.",
+      "notes": []
+    },
+    "gender": {
+      "groups": {
+        "Female": {
+          "n": 10645,
+          "readmissions": 1188,
+          "prevalence": 0.1116,
+          "mean_predicted_risk": 0.1162,
+          "calibration_gap": 0.0046,
+          "sufficient_data": true,
+          "roc_auc": 0.6737,
+          "roc_auc_ci95": [
+            0.6547,
+            0.6892
+          ],
+          "recall": 0.452,
+          "recall_ci95": [
+            0.4239,
+            0.4804
+          ],
+          "false_positive_rate": 0.2155,
+          "false_positive_rate_ci95": [
+            0.2073,
+            0.2239
+          ],
+          "precision": 0.2085,
+          "flagged_fraction": 0.2419
+        },
+        "Male": {
+          "n": 9157,
+          "readmissions": 1028,
+          "prevalence": 0.1123,
+          "mean_predicted_risk": 0.1105,
+          "calibration_gap": -0.0018,
+          "sufficient_data": true,
+          "roc_auc": 0.6648,
+          "roc_auc_ci95": [
+            0.646,
+            0.6816
+          ],
+          "recall": 0.4212,
+          "recall_ci95": [
+            0.3914,
+            0.4516
+          ],
+          "false_positive_rate": 0.1969,
+          "false_positive_rate_ci95": [
+            0.1884,
+            0.2057
+          ],
+          "precision": 0.2129,
+          "flagged_fraction": 0.2221
+        }
+      },
+      "gaps": {
+        "recall": {
+          "intervals_overlap": true,
+          "lowest_group": "Male",
+          "lowest_value": 0.4212,
+          "highest_group": "Female",
+          "highest_value": 0.452,
+          "gap": 0.0308,
+          "flagged": false
+        },
+        "false_positive_rate": {
+          "intervals_overlap": false,
+          "lowest_group": "Male",
+          "lowest_value": 0.1969,
+          "highest_group": "Female",
+          "highest_value": 0.2155,
+          "gap": 0.0186,
+          "flagged": false
+        }
+      },
+      "interpretation": "Recall (share of actual readmissions flagged) ranges from 0.421 (Male) to 0.452 (Female); the gap of 0.031 is within the 0.10 review threshold. False-positive rate ranges from 0.197 (Male) to 0.215 (Female); the gap of 0.019 is within the 0.10 review threshold.",
+      "notes": []
+    },
+    "age_band": {
+      "groups": {
+        "40-59": {
+          "n": 5378,
+          "readmissions": 558,
+          "prevalence": 0.1038,
+          "mean_predicted_risk": 0.0994,
+          "calibration_gap": -0.0044,
+          "sufficient_data": true,
+          "roc_auc": 0.6869,
+          "roc_auc_ci95": [
+            0.6602,
+            0.7077
+          ],
+          "recall": 0.4032,
+          "recall_ci95": [
+            0.3633,
+            0.4445
+          ],
+          "false_positive_rate": 0.1481,
+          "false_positive_rate_ci95": [
+            0.1384,
+            0.1584
+          ],
+          "precision": 0.2396,
+          "flagged_fraction": 0.1746
+        },
+        "60-79": {
+          "n": 9306,
+          "readmissions": 1051,
+          "prevalence": 0.1129,
+          "mean_predicted_risk": 0.117,
+          "calibration_gap": 0.0041,
+          "sufficient_data": true,
+          "roc_auc": 0.6551,
+          "roc_auc_ci95": [
+            0.6368,
+            0.6723
+          ],
+          "recall": 0.4358,
+          "recall_ci95": [
+            0.4061,
+            0.4659
+          ],
+          "false_positive_rate": 0.2213,
+          "false_positive_rate_ci95": [
+            0.2125,
+            0.2304
+          ],
+          "precision": 0.2004,
+          "flagged_fraction": 0.2455
+        },
+        "80+": {
+          "n": 3834,
+          "readmissions": 460,
+          "prevalence": 0.12,
+          "mean_predicted_risk": 0.1255,
+          "calibration_gap": 0.0055,
+          "sufficient_data": true,
+          "roc_auc": 0.6279,
+          "roc_auc_ci95": [
+            0.5996,
+            0.6551
+          ],
+          "recall": 0.437,
+          "recall_ci95": [
+            0.3923,
+            0.4826
+          ],
+          "false_positive_rate": 0.2694,
+          "false_positive_rate_ci95": [
+            0.2547,
+            0.2846
+          ],
+          "precision": 0.1811,
+          "flagged_fraction": 0.2895
+        },
+        "<40": {
+          "n": 1284,
+          "readmissions": 147,
+          "prevalence": 0.1145,
+          "mean_predicted_risk": 0.1119,
+          "calibration_gap": -0.0026,
+          "sufficient_data": true,
+          "roc_auc": 0.7676,
+          "roc_auc_ci95": [
+            0.7219,
+            0.8085
+          ],
+          "recall": 0.585,
+          "recall_ci95": [
+            0.5042,
+            0.6615
+          ],
+          "false_positive_rate": 0.1662,
+          "false_positive_rate_ci95": [
+            0.1457,
+            0.189
+          ],
+          "precision": 0.3127,
+          "flagged_fraction": 0.2142
+        }
+      },
+      "gaps": {
+        "recall": {
+          "intervals_overlap": false,
+          "lowest_group": "40-59",
+          "lowest_value": 0.4032,
+          "highest_group": "<40",
+          "highest_value": 0.585,
+          "gap": 0.1818,
+          "flagged": true
+        },
+        "false_positive_rate": {
+          "intervals_overlap": false,
+          "lowest_group": "40-59",
+          "lowest_value": 0.1481,
+          "highest_group": "80+",
+          "highest_value": 0.2694,
+          "gap": 0.1213,
+          "flagged": true
+        }
+      },
+      "interpretation": "Recall (share of actual readmissions flagged) ranges from 0.403 (40-59) to 0.585 (<40); the gap of 0.182 exceeds the 0.10 review threshold. The 95% intervals do not overlap. False-positive rate ranges from 0.148 (40-59) to 0.269 (80+); the gap of 0.121 exceeds the 0.10 review threshold. The 95% intervals do not overlap.",
+      "notes": []
+    }
+  }
+}

@@ -26,3 +26,50 @@
     -webkit-font-smoothing: antialiased;
   }
 }
+
+@media print {
+  @page {
+    margin: 14mm;
+  }
+
+  aside,
+  .no-print {
+    display: none !important;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  .h-screen {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  main {
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+
+  main > div[class*="fixed"] {
+    display: none !important;
+  }
+
+  main > div {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    border-radius: 0 !important;
+  }
+
+  main > div > div {
+    padding: 0 !important;
+  }
+
+  main > div > div > div:first-child:not(.max-w-5xl) {
+    display: none !important;
+  }
+}

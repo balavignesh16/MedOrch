@@ -48,6 +48,7 @@ def _config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> EngineConfig:
     monkeypatch.setenv("MEDORCH_DB_PATH", str(db_path))
     monkeypatch.setenv("AI_AUDIT_DB_PATH", str(audit_path))
     monkeypatch.setenv("ENGINE_PORT", "50199")
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
     from engine import config as config_module
 
     monkeypatch.setattr(config_module, "_load_local_environment", lambda: None)
@@ -66,11 +67,18 @@ class _FakeContext:
 
 
 class _FakeRequest:
-    def __init__(self, prompt: str, agent_target: str = "general", user_role: str = "unauthenticated-demo") -> None:
+    def __init__(
+        self,
+        prompt: str,
+        agent_target: str = "general",
+        user_role: str = "unauthenticated-demo",
+        model_profile_id: str = "",
+    ) -> None:
         self.query_id = "q-test"
         self.natural_language_prompt = prompt
         self.agent_target = agent_target
         self.user_role = user_role
+        self.model_profile_id = model_profile_id
 
 
 class _FakePlanner:
@@ -416,3 +424,101 @@ def test_single_row_result_with_zero_based_row_index_is_accepted(
     final = events[-1]
     assert "**Diagnosis 250** is the most common" in final.summary_text
     assert "count=" not in final.summary_text  # not the deterministic fallback
+
+
+def test_requesting_an_unavailable_named_profile_fails_cleanly_with_no_sql(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """gemini-flash is a real profile id but has no GEMINI_API_KEY in this
+    test env, so it must be rejected with a clear, actionable reason —
+    never silently substituted for the default, and never attempted (which
+    would otherwise surface as a confusing auth error from the provider)."""
+    config = _config(tmp_path, monkeypatch)
+    servicer = AnalyticsEngineServicer(config, llm=object(), planner=_FakePlanner())
+    events = _drain(servicer.ProcessQuery(
+        _FakeRequest("count encounters", model_profile_id="gemini-flash"), _FakeContext()
+    ))
+
+    final = events[-1]
+    assert final.error_code == "MODEL_UNAVAILABLE"
+    assert "GEMINI_API_KEY" in final.summary_text
+    assert final.executed_sql == ""
+
+
+def test_requesting_an_unrecognized_profile_id_is_rejected_not_silently_substituted(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A named-but-unrecognized profile id (stale dropdown option, typo,
+    client/server version skew) must fail clearly rather than silently
+    answering with a different model than the one actually selected —
+    that substitution would be a more deceptive failure than an error, and
+    this project's whole premise is never silently substituting something
+    the user didn't ask for."""
+    config = _config(tmp_path, monkeypatch)
+    servicer = AnalyticsEngineServicer(config, llm=object(), planner=_FakePlanner())
+    events = _drain(servicer.ProcessQuery(
+        _FakeRequest("count encounters", model_profile_id="not-a-real-profile-id"), _FakeContext()
+    ))
+
+    final = events[-1]
+    assert final.error_code == "MODEL_UNAVAILABLE"
+    assert final.executed_sql == ""
+
+
+def test_no_profile_requested_uses_the_existing_default_client_unchanged(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Confirms the model-profile feature is purely additive: a request
+    naming no profile at all must behave exactly as before profiles
+    existed, via the engine's single default client."""
+    config = _config(tmp_path, monkeypatch)
+    plan = QueryPlan(
+        supported=True, reason_code="supported",
+        sql="SELECT COUNT(*) FROM hospital_readmissions", user_message="",
+    )
+    servicer = AnalyticsEngineServicer(config, llm=object(), planner=_FakePlanner(plan=plan))
+    events = _drain(servicer.ProcessQuery(_FakeRequest("count encounters"), _FakeContext()))
+
+    final = events[-1]
+    assert final.execution_status == 2  # EXECUTION_STATUS_OK, via the default fake planner
+    assert final.model_version == config.model
+
+
+def test_requesting_an_available_named_profile_uses_its_own_planner_and_reports_it(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The response's model_version must reflect whichever model actually
+    answered, not the engine's default — this is what the frontend shows
+    the user as 'answered via <model>'."""
+    config = _config(tmp_path, monkeypatch)
+    default_plan = QueryPlan(
+        supported=True, reason_code="supported",
+        sql="SELECT COUNT(*) FROM hospital_readmissions", user_message="",
+    )
+    profile_plan = QueryPlan(
+        supported=True, reason_code="supported",
+        sql="SELECT COUNT(*) FROM hospital_readmissions WHERE readmitted = '<30'", user_message="",
+    )
+    profile_clients = {
+        "qwen2.5-14b": (object(), _FakePlanner(plan=profile_plan), "qwen2.5:14b-instruct"),
+    }
+    servicer = AnalyticsEngineServicer(
+        config, llm=object(), planner=_FakePlanner(plan=default_plan), profile_clients=profile_clients
+    )
+    events = _drain(servicer.ProcessQuery(
+        _FakeRequest("count early readmissions", model_profile_id="qwen2.5-14b"), _FakeContext()
+    ))
+
+    final = events[-1]
+    assert final.execution_status == 2
+    assert final.model_version == "qwen2.5:14b-instruct"
+    assert "<30" in final.executed_sql  # came from the profile's planner, not the default's
+
+
+def test_schema_prompt_lists_exactly_the_functions_the_guard_allows() -> None:
+    from engine.main import FULL_SCHEMA_PROMPT
+    from engine.sql_guard import _ALLOWED_FUNCTIONS
+
+    for function in sorted(_ALLOWED_FUNCTIONS - {"DISTINCT"}):
+        assert function in FULL_SCHEMA_PROMPT, f"{function} is allowed by the guard but not offered to the model"
+    assert "SUBSTR" in FULL_SCHEMA_PROMPT and "NOT available" in FULL_SCHEMA_PROMPT

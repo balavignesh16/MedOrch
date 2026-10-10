@@ -14,7 +14,8 @@ export type ExecutionStatus =
   | 'EXECUTION_STATUS_UNSUPPORTED'
   | 'EXECUTION_STATUS_REJECTED'
   | 'EXECUTION_STATUS_ERROR'
-  | 'EXECUTION_STATUS_TIMEOUT';
+  | 'EXECUTION_STATUS_TIMEOUT'
+  | 'EXECUTION_STATUS_CANCELLED';
 
 /** Raw gRPC message shape as decoded by @grpc/proto-loader (snake_case, keepCase: true). */
 export interface InsightResponseMessage {
@@ -47,6 +48,7 @@ export interface AssistantStreamEvent {
   errorCode: string;
   piiDetected: boolean;
   piiRedacted: boolean;
+  modelVersion: string;
   executedSql?: string;
   auditId?: string;
 }
@@ -69,4 +71,15 @@ export interface AssistantCapabilitiesFile {
   version: number;
   source_table: string;
   contexts: AssistantCapabilityContext[];
+}
+
+/** Mirrors config/model_profiles.json. Kept in sync by hand. */
+export interface ModelProfileEntry {
+  id: string;
+  display_name: string;
+  provider: 'ollama' | 'gemini';
+}
+
+export interface ModelProfilesFile {
+  profiles: ModelProfileEntry[];
 }

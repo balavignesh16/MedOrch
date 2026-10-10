@@ -129,10 +129,16 @@ prompt guidance only; it never changes authorization.
 The Predictive context surfaces a real, offline-trained early-readmission-risk
 classifier (`engine/ml/` — see `engine/ml/README.md`), not an LLM guess: every
 encounter has a precomputed `predicted_readmission_risk` score the assistant
-can query like any other column. It is a demonstration model (held-out
-ROC-AUC ≈ 0.66) — not clinically validated, not a live prediction service, and
-not the full model-governance process Phase 5 requires for production
-predictive claims.
+can query like any other column. It is a demonstration model (see the model
+card on `/predictive` for its held-out metrics with confidence intervals) —
+not clinically validated, not a live prediction service, and not the full
+model-governance process required for production predictive claims.
+
+Assistant answers include an automatic chart when the verified result has one
+categorical and one numeric column (bar) or two numeric columns (scatter); the
+chart type is chosen from the result's shape, never by the model. Charts and
+research pages carry an "Ask the assistant" button that opens `/assistant` with
+an editable, pre-filled question (never auto-sent).
 
 Every answer is produced through a fixed pipeline: a structured query planner
 (JSON-schema output, never raw prose SQL extraction) proposes a plan; the plan's
@@ -148,13 +154,32 @@ rejected, timeout, or error — writes exactly one record to a separate,
 privacy-aware audit database (`engine/audit_log.py`): a SHA-256 hash and a
 redacted excerpt of the prompt, never the raw prompt or result rows.
 
+## Analytics pages
+
+| Page | What it shows | Source |
+|---|---|---|
+| `/predictive` | Model card, ROC/PR/calibration, threshold explorer, SHAP importance, fairness audit, highest-risk encounters with reasons, intervention scenario calculator | `engine/ml/artifacts/*.json`, scored `medorch.db` |
+| `/research` | HbA1c replication-style study (CONSORT flow, odds ratios, interaction test), medication patterns, two-cohort statistical comparison | `engine/analysis/artifacts/hba1c_study.json`, read-only queries |
+| `/data-quality` | Missingness, repeat patients, outcome balance, definitions, exclusions, lineage | `engine/analysis/artifacts/data_quality.json` |
+| `/report` | Printable report assembled from all of the above (Download PDF) | the same artifacts |
+
+To (re)generate the artifacts see the regeneration order in `engine/ml/README.md`.
+
+## Demo script (about 5 minutes)
+
+1. **Data Quality** — 101,766 encounters from 71,518 patients; what is missing (weight 97%, HbA1c not performed in 83%), why those columns were excluded, the two definitions of "readmission", and the lineage from raw file to answer.
+2. **Research** — the HbA1c replication-style study: cohort flow, adjusted odds ratios, and an honest statement of how it compares with the published paper (directionally consistent, individually non-significant). Run the cohort comparison (e.g. women vs. men) and read the effect size, not just the p-value.
+3. **Predictive** — the model card with confidence intervals; the threshold explorer (why 0.5 catches almost nothing and a validation-chosen cutoff does); SHAP drivers; the fairness table with its suppressed and noise-flagged gaps; click a high-risk row for its reasons; try the scenario calculator (it shows nothing beneficial until you enter an assumption).
+4. **Assistant** — click an "Ask the assistant" button, run the pre-filled question, and show the automatic chart, the validated SQL, the model label, and the model switcher.
+5. **Report** — open the report and use Download PDF.
+
 ## Data behavior
 
 - Population, clinical-quality, and parts of financial/operational analytics query `hospital_readmissions` in SQLite.
 - Financial results are configured estimates rather than claims data.
-- Several operations, administration, strategy, platform, and predictive screens still contain demonstration values.
-- Prediction screens currently use heuristic rules, not trained clinical models.
-- AI-generated SQL is restricted to one read-only `SELECT` against `hospital_readmissions`, with SQL-length, row, column, and timeout limits, plus a SQLite authorizer denying any table other than `hospital_readmissions` and any reference to `patient_nbr` or `encounter_id`.
+- Several operations, administration, strategy, and platform screens still contain demonstration values.
+- `/predictive`, `/research`, `/data-quality` and `/report` show only real values: they are built from saved evaluation artifacts (`engine/ml/artifacts/`, `engine/analysis/artifacts/`) or read-only queries, and display an explicit "needs a generated artifact" notice when one is missing instead of placeholder numbers.
+- AI-generated SQL is restricted to one read-only `SELECT` against `hospital_readmissions`, with SQL-length, row, column, and timeout limits, plus a SQLite authorizer denying any table other than `hospital_readmissions`. `patient_nbr` and `encounter_id` may appear only as the argument of `COUNT()` (never selected, grouped, or passed to other functions).
 - Unsupported forecasting, billing, staffing, capacity, named-medication, and named-lab requests return a capability-aware limitation message instead of invented results, and execute no SQL.
 
 See [ROADMAP.md](ROADMAP.md) for the delivery plan and production-readiness gates.

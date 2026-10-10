@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Bot, TrendingUp, Activity, ActivitySquare, Users, Map, LogOut, Bell } from 'lucide-react';
+import { LayoutDashboard, Bot, TrendingUp, Activity, ActivitySquare, Users, Map, LogOut, Bell, FlaskConical, DatabaseZap, FileText } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 
@@ -20,6 +20,9 @@ const Sidebar = () => {
     { name: 'Administration', href: '/administration', icon: Users, roles: ['admin'] },
     { name: 'Strategy & Decision Hub', href: '/strategy', icon: Map, roles: ['admin'] },
     { name: 'Predictive Analytics', href: '/predictive', icon: ActivitySquare, roles: ['admin', 'doctor', 'billing'] },
+    { name: 'Research & Statistics', href: '/research', icon: FlaskConical, roles: ['admin', 'doctor', 'billing'] },
+    { name: 'Data Quality', href: '/data-quality', icon: DatabaseZap, roles: ['admin', 'doctor', 'billing'] },
+    { name: 'Analysis Report', href: '/report', icon: FileText, roles: ['admin', 'doctor', 'billing'] },
     { name: 'Analytics Assistant', href: '/assistant', icon: Bot, roles: ['admin', 'doctor', 'billing'] }
   ];
 

@@ -22,8 +22,12 @@ from dataclasses import dataclass
 import re
 
 _IDENTIFIER_PATTERNS = [
-    re.compile(r"\bpatient_nbr\D{0,10}\d+", re.IGNORECASE),
-    re.compile(r"\bencounter_id\D{0,10}\d+", re.IGNORECASE),
+    # [^\d)]{0,10} (not \D{0,10}): a closing paren between the column name and
+    # the digits means the name appeared inside a function call, e.g.
+    # "COUNT(encounter_id) (from 1 row...)" — that trailing "1" is an
+    # unrelated row count, not a leaked identifier value, and must not match.
+    re.compile(r"\bpatient_nbr[^\d)]{0,10}\d+", re.IGNORECASE),
+    re.compile(r"\bencounter_id[^\d)]{0,10}\d+", re.IGNORECASE),
     re.compile(r"\bpatient(?:\s+id)?\s*[:#]?\s*\d{5,}\b", re.IGNORECASE),
 ]
 

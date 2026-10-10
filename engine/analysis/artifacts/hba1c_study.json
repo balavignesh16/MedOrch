@@ -1,0 +1,588 @@
+{
+  "title": "HbA1c measurement and 30-day readmission (replication-style analysis)",
+  "generated_at_utc": "2026-10-10T04:53:49.651558+00:00",
+  "outcome": "readmitted == '<30' (readmission within 30 days)",
+  "exposure_definitions": {
+    "not_measured": "HbA1c not measured",
+    "normal": "Measured, normal (Norm or >7)",
+    "high_changed": "Measured >8, medication changed",
+    "high_no_change": "Measured >8, no medication change"
+  },
+  "cohort_flow": [
+    {
+      "step": "all_encounters",
+      "description": "All encounters in the bundled dataset (every encounter is for a diabetic patient by dataset design)",
+      "encounters": 101766,
+      "patients": 71518
+    },
+    {
+      "step": "exclude_death_hospice",
+      "description": "Excluded encounters ending in death or hospice discharge",
+      "encounters": 99343,
+      "patients": 69990
+    },
+    {
+      "step": "first_encounter_per_patient",
+      "description": "Kept one encounter per patient: the lowest encounter_id (proxy for first, as the data has no dates)",
+      "encounters": 69990,
+      "patients": 69990
+    },
+    {
+      "step": "valid_gender",
+      "description": "Excluded gender recorded as Unknown/Invalid (too few rows to model)",
+      "encounters": 69987,
+      "patients": 69987
+    },
+    {
+      "step": "assignable_exposure",
+      "description": "Excluded encounters whose HbA1c/medication-change coding did not fit an exposure group",
+      "encounters": 69987,
+      "patients": 69987
+    }
+  ],
+  "group_rates": [
+    {
+      "exposure": "not_measured",
+      "n": 57141,
+      "readmitted_within_30_days": 5206,
+      "rate": 0.0911,
+      "rate_ci95": [
+        0.0888,
+        0.0935
+      ],
+      "label": "HbA1c not measured"
+    },
+    {
+      "exposure": "normal",
+      "n": 6607,
+      "readmitted_within_30_days": 570,
+      "rate": 0.0863,
+      "rate_ci95": [
+        0.0797,
+        0.0933
+      ],
+      "label": "Measured, normal (Norm or >7)"
+    },
+    {
+      "exposure": "high_changed",
+      "n": 4058,
+      "readmitted_within_30_days": 348,
+      "rate": 0.0858,
+      "rate_ci95": [
+        0.0775,
+        0.0948
+      ],
+      "label": "Measured >8, medication changed"
+    },
+    {
+      "exposure": "high_no_change",
+      "n": 2181,
+      "readmitted_within_30_days": 161,
+      "rate": 0.0738,
+      "rate_ci95": [
+        0.0636,
+        0.0856
+      ],
+      "label": "Measured >8, no medication change"
+    }
+  ],
+  "chi_square": {
+    "chi2": 9.828,
+    "dof": 3,
+    "p_value": 0.02008658815468786,
+    "cramers_v": 0.0119,
+    "n": 69987
+  },
+  "adjusted_model": {
+    "reference_group": "not_measured",
+    "n": 69987,
+    "adjusted_for": [
+      "age band",
+      "race",
+      "gender",
+      "admission source",
+      "discharge disposition (grouped)",
+      "time in hospital",
+      "primary diagnosis group"
+    ],
+    "exposure_odds_ratios": [
+      {
+        "term": "high_changed",
+        "is_exposure": true,
+        "odds_ratio": 0.9516,
+        "ci95": [
+          0.8467,
+          1.0696
+        ],
+        "p_value": 0.40553815510695923
+      },
+      {
+        "term": "high_no_change",
+        "is_exposure": true,
+        "odds_ratio": 0.874,
+        "ci95": [
+          0.7404,
+          1.0316
+        ],
+        "p_value": 0.11124431715799439
+      },
+      {
+        "term": "normal",
+        "is_exposure": true,
+        "odds_ratio": 0.9125,
+        "ci95": [
+          0.8324,
+          1.0003
+        ],
+        "p_value": 0.05068387404879567
+      }
+    ],
+    "covariate_odds_ratios": [
+      {
+        "term": "age_band: 60-79",
+        "is_exposure": false,
+        "odds_ratio": 1.2141,
+        "ci95": [
+          1.1348,
+          1.299
+        ],
+        "p_value": 1.8393900431154465e-08
+      },
+      {
+        "term": "age_band: 80+",
+        "is_exposure": false,
+        "odds_ratio": 1.1198,
+        "ci95": [
+          1.0291,
+          1.2185
+        ],
+        "p_value": 0.008666673873704681
+      },
+      {
+        "term": "age_band: <40",
+        "is_exposure": false,
+        "odds_ratio": 0.9899,
+        "ci95": [
+          0.8668,
+          1.1304
+        ],
+        "p_value": 0.8805863214448129
+      },
+      {
+        "term": "race: Asian",
+        "is_exposure": false,
+        "odds_ratio": 0.9614,
+        "ci95": [
+          0.6923,
+          1.3351
+        ],
+        "p_value": 0.8140928021730083
+      },
+      {
+        "term": "race: Caucasian",
+        "is_exposure": false,
+        "odds_ratio": 0.9917,
+        "ci95": [
+          0.9239,
+          1.0644
+        ],
+        "p_value": 0.8169803460818111
+      },
+      {
+        "term": "race: Hispanic",
+        "is_exposure": false,
+        "odds_ratio": 0.9871,
+        "ci95": [
+          0.8107,
+          1.2017
+        ],
+        "p_value": 0.8967199138313273
+      },
+      {
+        "term": "race: Other",
+        "is_exposure": false,
+        "odds_ratio": 0.7678,
+        "ci95": [
+          0.6049,
+          0.9744
+        ],
+        "p_value": 0.029793397627179412
+      },
+      {
+        "term": "race: Unknown",
+        "is_exposure": false,
+        "odds_ratio": 0.8088,
+        "ci95": [
+          0.6724,
+          0.9729
+        ],
+        "p_value": 0.024334275310179683
+      },
+      {
+        "term": "gender: Male",
+        "is_exposure": false,
+        "odds_ratio": 1.033,
+        "ci95": [
+          0.9796,
+          1.0894
+        ],
+        "p_value": 0.23044136442009255
+      },
+      {
+        "term": "admission_group: other",
+        "is_exposure": false,
+        "odds_ratio": 0.9216,
+        "ci95": [
+          0.8303,
+          1.023
+        ],
+        "p_value": 0.12542983519676137
+      },
+      {
+        "term": "admission_group: referral",
+        "is_exposure": false,
+        "odds_ratio": 0.9558,
+        "ci95": [
+          0.9002,
+          1.0149
+        ],
+        "p_value": 0.1400836214573956
+      },
+      {
+        "term": "admission_group: transfer",
+        "is_exposure": false,
+        "odds_ratio": 0.8229,
+        "ci95": [
+          0.7377,
+          0.9178
+        ],
+        "p_value": 0.00046603294863025954
+      },
+      {
+        "term": "discharge_group: home",
+        "is_exposure": false,
+        "odds_ratio": 0.4598,
+        "ci95": [
+          0.4302,
+          0.4914
+        ],
+        "p_value": 5.565922895011645e-116
+      },
+      {
+        "term": "discharge_group: home_health",
+        "is_exposure": false,
+        "odds_ratio": 0.5946,
+        "ci95": [
+          0.5446,
+          0.6492
+        ],
+        "p_value": 4.072777862951254e-31
+      },
+      {
+        "term": "discharge_group: other",
+        "is_exposure": false,
+        "odds_ratio": 0.6289,
+        "ci95": [
+          0.5572,
+          0.7099
+        ],
+        "p_value": 6.026013384139687e-14
+      },
+      {
+        "term": "diag_group: Diabetes",
+        "is_exposure": false,
+        "odds_ratio": 1.0075,
+        "ci95": [
+          0.9064,
+          1.1197
+        ],
+        "p_value": 0.8903523710874008
+      },
+      {
+        "term": "diag_group: Digestive",
+        "is_exposure": false,
+        "odds_ratio": 0.871,
+        "ci95": [
+          0.7866,
+          0.9643
+        ],
+        "p_value": 0.007830761345329779
+      },
+      {
+        "term": "diag_group: Other",
+        "is_exposure": false,
+        "odds_ratio": 0.8917,
+        "ci95": [
+          0.8371,
+          0.9499
+        ],
+        "p_value": 0.0003799218754534196
+      },
+      {
+        "term": "diag_group: Respiratory",
+        "is_exposure": false,
+        "odds_ratio": 0.7554,
+        "ci95": [
+          0.6898,
+          0.8272
+        ],
+        "p_value": 1.4138914959916244e-09
+      },
+      {
+        "term": "time_in_hospital",
+        "is_exposure": false,
+        "odds_ratio": 1.0327,
+        "ci95": [
+          1.0236,
+          1.0419
+        ],
+        "p_value": 1.0445333384538876e-12
+      }
+    ]
+  },
+  "interaction": {
+    "lr_statistic": 27.3952,
+    "df": 12,
+    "p_value": 0.00677562873912914,
+    "significant_at_0.05": true,
+    "interpretation": "The association between HbA1c measurement and 30-day readmission differs by primary diagnosis group (likelihood-ratio test, p = 0.006776)."
+  },
+  "stratified_rates_by_diagnosis": [
+    {
+      "diag_group": "Circulatory",
+      "exposure": "high_changed",
+      "n": 1208,
+      "readmitted_within_30_days": 137,
+      "rate": 0.1134,
+      "rate_ci95": [
+        0.0967,
+        0.1325
+      ]
+    },
+    {
+      "diag_group": "Circulatory",
+      "exposure": "high_no_change",
+      "n": 692,
+      "readmitted_within_30_days": 65,
+      "rate": 0.0939,
+      "rate_ci95": [
+        0.0744,
+        0.118
+      ]
+    },
+    {
+      "diag_group": "Circulatory",
+      "exposure": "normal",
+      "n": 2178,
+      "readmitted_within_30_days": 214,
+      "rate": 0.0983,
+      "rate_ci95": [
+        0.0865,
+        0.1115
+      ]
+    },
+    {
+      "diag_group": "Circulatory",
+      "exposure": "not_measured",
+      "n": 17311,
+      "readmitted_within_30_days": 1654,
+      "rate": 0.0955,
+      "rate_ci95": [
+        0.0913,
+        0.1
+      ]
+    },
+    {
+      "diag_group": "Diabetes",
+      "exposure": "high_changed",
+      "n": 993,
+      "readmitted_within_30_days": 66,
+      "rate": 0.0665,
+      "rate_ci95": [
+        0.0526,
+        0.0837
+      ]
+    },
+    {
+      "diag_group": "Diabetes",
+      "exposure": "high_no_change",
+      "n": 522,
+      "readmitted_within_30_days": 25,
+      "rate": 0.0479,
+      "rate_ci95": [
+        0.0326,
+        0.0697
+      ]
+    },
+    {
+      "diag_group": "Diabetes",
+      "exposure": "normal",
+      "n": 546,
+      "readmitted_within_30_days": 58,
+      "rate": 0.1062,
+      "rate_ci95": [
+        0.0831,
+        0.1349
+      ]
+    },
+    {
+      "diag_group": "Diabetes",
+      "exposure": "not_measured",
+      "n": 3687,
+      "readmitted_within_30_days": 375,
+      "rate": 0.1017,
+      "rate_ci95": [
+        0.0924,
+        0.1119
+      ]
+    },
+    {
+      "diag_group": "Digestive",
+      "exposure": "high_changed",
+      "n": 213,
+      "readmitted_within_30_days": 18,
+      "rate": 0.0845,
+      "rate_ci95": [
+        0.0541,
+        0.1296
+      ]
+    },
+    {
+      "diag_group": "Digestive",
+      "exposure": "high_no_change",
+      "n": 144,
+      "readmitted_within_30_days": 8,
+      "rate": 0.0556,
+      "rate_ci95": [
+        0.0284,
+        0.1058
+      ]
+    },
+    {
+      "diag_group": "Digestive",
+      "exposure": "normal",
+      "n": 485,
+      "readmitted_within_30_days": 37,
+      "rate": 0.0763,
+      "rate_ci95": [
+        0.0559,
+        0.1034
+      ]
+    },
+    {
+      "diag_group": "Digestive",
+      "exposure": "not_measured",
+      "n": 5646,
+      "readmitted_within_30_days": 457,
+      "rate": 0.0809,
+      "rate_ci95": [
+        0.0741,
+        0.0883
+      ]
+    },
+    {
+      "diag_group": "Other",
+      "exposure": "high_changed",
+      "n": 1146,
+      "readmitted_within_30_days": 93,
+      "rate": 0.0812,
+      "rate_ci95": [
+        0.0667,
+        0.0984
+      ]
+    },
+    {
+      "diag_group": "Other",
+      "exposure": "high_no_change",
+      "n": 536,
+      "readmitted_within_30_days": 46,
+      "rate": 0.0858,
+      "rate_ci95": [
+        0.065,
+        0.1126
+      ]
+    },
+    {
+      "diag_group": "Other",
+      "exposure": "normal",
+      "n": 2318,
+      "readmitted_within_30_days": 208,
+      "rate": 0.0897,
+      "rate_ci95": [
+        0.0788,
+        0.1021
+      ]
+    },
+    {
+      "diag_group": "Other",
+      "exposure": "not_measured",
+      "n": 22871,
+      "readmitted_within_30_days": 2131,
+      "rate": 0.0932,
+      "rate_ci95": [
+        0.0895,
+        0.097
+      ]
+    },
+    {
+      "diag_group": "Respiratory",
+      "exposure": "high_changed",
+      "n": 498,
+      "readmitted_within_30_days": 34,
+      "rate": 0.0683,
+      "rate_ci95": [
+        0.0493,
+        0.0939
+      ]
+    },
+    {
+      "diag_group": "Respiratory",
+      "exposure": "high_no_change",
+      "n": 287,
+      "readmitted_within_30_days": 17,
+      "rate": 0.0592,
+      "rate_ci95": [
+        0.0373,
+        0.0928
+      ]
+    },
+    {
+      "diag_group": "Respiratory",
+      "exposure": "normal",
+      "n": 1080,
+      "readmitted_within_30_days": 53,
+      "rate": 0.0491,
+      "rate_ci95": [
+        0.0377,
+        0.0636
+      ]
+    },
+    {
+      "diag_group": "Respiratory",
+      "exposure": "not_measured",
+      "n": 7626,
+      "readmitted_within_30_days": 589,
+      "rate": 0.0772,
+      "rate_ci95": [
+        0.0715,
+        0.0834
+      ]
+    }
+  ],
+  "paper_comparison": {
+    "citation": "Strack B, DeShazo JP, Gennings C, et al. Impact of HbA1c Measurement on Hospital Readmission Rates: Analysis of 70,000 Clinical Database Patient Records. BioMed Research International. 2014.",
+    "headline_finding_of_paper": "HbA1c measurement was associated with lower 30-day readmission rates, and the relationship depended on the patient's primary diagnosis.",
+    "verify_against_paper": true,
+    "note": "The paper's headline is stated qualitatively; exact figures are not reproduced here and should be checked against the publication before being quoted.",
+    "our_results": "3 of 3 measured groups have an adjusted odds ratio below 1 versus 'not measured' (0 significantly so at p < 0.05).",
+    "assessment": "Directionally consistent with the paper (every adjusted odds ratio is below 1), but no individual group reaches p < 0.05 in this replication-style analysis.",
+    "same_direction_as_paper": true
+  },
+  "limitations": [
+    "Observational data: associations are not causal effects.",
+    "Not an exact reproduction of the published cohort; selection rules differ in detail.",
+    "No dates: 'first encounter' is a proxy based on encounter_id.",
+    "HbA1c is not measured for most encounters, and measurement is itself clinically selected.",
+    "Data span 1999-2008 from 130 US hospitals."
+  ]
+}

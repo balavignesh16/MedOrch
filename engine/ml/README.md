@@ -1,85 +1,91 @@
 # Predictive readmission-risk model
 
-A real, trained early-readmission-risk classifier, added as a demonstration
-capability on top of the Phase 4 assistant. This is separate from the chat
-assistant's LLM entirely: the model is trained and evaluated offline, and
-its output is stored as two plain columns in `hospital_readmissions`
-(`predicted_readmission_risk`, `predicted_readmission_risk_model_version`).
-The assistant only ever reads those columns like any other data — it never
-asks the LLM to "predict" anything, which would be exactly the kind of
-fabrication the rest of this phase was built to prevent.
+A real, trained 30-day readmission-risk classifier with a documented
+evaluation, explanations, and a subgroup fairness audit. It is a teaching
+demonstration on the bundled UCI "Diabetes 130-US hospitals" data (1999-2008).
+
+Everything it produces is computed **offline** by the scripts in this
+folder and stored as JSON artifacts plus plain columns/tables in
+`medorch.db`. The AI assistant's LLM never "predicts" anything: it reads the
+stored `predicted_readmission_risk` column like any other data.
 
 ## What this is not
 
-- **Not clinically validated.** Not approved for clinical decision-making,
-  triage, or care planning of any kind.
-- **Not a live prediction service.** Scores are computed once, offline, and
-  stored. There is no real-time inference endpoint.
-- **Not the full model-governance gate** ROADMAP.md describes for Phase 5
-  (drift monitoring, formal approval/rollback, external calibration
-  validation, full subgroup fairness review). What's implemented: real
-  training data, a patient-grouped train/test split, held-out evaluation,
-  cross-validated probability calibration, and basic subgroup ROC-AUC
-  visibility. What's deferred: everything else in that list.
+- **Not clinically validated** and not approved for clinical decisions,
+  triage, or care planning.
+- **Not a live prediction service.** Scores are computed once, offline.
+- **Not the full model-governance gate** (no drift monitoring, formal
+  approval/rollback, or external validation).
 
-## What it actually does
+## Method
 
-Trains a classifier to predict `readmitted == '<30'` (readmission within 30
-days) from the other columns in `hospital_readmissions` — the same table
-the assistant already queries; no additional data source, no CSV dependency
-at runtime.
+| Step | What is done | Why |
+|---|---|---|
+| Cohort | Encounters ending in death or hospice discharge (codes 11, 13, 14, 19, 20, 21) are excluded from training and evaluation | They cannot be readmitted; including them distorts the model |
+| Split | Train / validation / test = 60 / 20 / 20, **grouped by `patient_nbr`** | Repeat patients would otherwise leak between train and test |
+| Features | Strack et al. (2014) ICD-9 diagnosis groups, total prior visits, number of medication dose changes, active medications, age midpoint, HbA1c-tested and insulin-changed flags, plus the original demographic/clinical columns (`features.py`) | Shared by training, scoring, SHAP and the fairness audit so they cannot diverge |
+| Candidates | Calibrated logistic regression, random forest, LightGBM | Interpretable baseline plus stronger models |
+| Probabilities | `CalibratedClassifierCV` (no `class_weight`) | `class_weight` distorts `predict_proba`; calibration makes it mean what it says |
+| Selection | Highest **validation** ROC-AUC (PR-AUC tie-break) | The test set is never used for choices |
+| Thresholds | `max_f1` and `top_decile` chosen on **validation**; both reported on test, alongside the textbook 0.5 | A score becomes a decision only through a cutoff |
+| Test set | Scored **once**, after every choice is frozen; 1,000-resample bootstrap 95% intervals | Honest uncertainty |
 
-- **Split**: `GroupShuffleSplit` by `patient_nbr`, not by row. This dataset
-  has repeat patients with multiple encounters; splitting by row would leak
-  a patient's other encounters into the training set and inflate apparent
-  accuracy. Splitting by patient avoids that.
-- **Candidates**: logistic regression and a random forest, both wrapped in
-  `CalibratedClassifierCV` (cross-validated Platt/isotonic scaling) so
-  `predict_proba` output means what it says — an earlier version without
-  calibration produced risk scores clustered tightly around 0.5 regardless
-  of actual risk, which would have misled anyone reading the number as a
-  probability.
-- **Selection**: whichever candidate has the higher held-out ROC-AUC.
-- **Evaluation**: accuracy, precision, recall, F1, ROC-AUC, and Brier score
-  (calibration quality), computed only on the held-out test split — never
-  on training data — plus a basic subgroup ROC-AUC breakdown by race and
-  gender for visibility.
-
-Real, current numbers are in `artifacts/readmission_risk_metrics.json`
-after training — read that file rather than trusting any number quoted
-here, since it will drift as the model is retrained. As of this writing:
-held-out ROC-AUC is approximately 0.66, consistent with published results
-on this well-studied public dataset — early readmission is a genuinely
-hard, modest-signal prediction problem, and this number should not be
-expected to improve dramatically without materially better data (e.g. real
-lab values, vitals, or social determinants not present in this dataset).
+Real, current numbers live in `artifacts/readmission_risk_metrics.json` --
+read that file rather than any figure quoted in documents, since it changes
+when the model is retrained. Published work on this dataset typically reports
+ROC-AUC in the mid-0.6s to about 0.70; limited signal in these administrative
+fields, not a modelling defect, is the reason.
 
 ## Files
 
-- `train_readmission_model.py` — trains, evaluates, and saves the model to
-  `artifacts/readmission_risk_model.joblib` plus metrics to
-  `artifacts/readmission_risk_metrics.json`.
-- `apply_predictions.py` — loads the saved model, scores every row in
-  `hospital_readmissions`, and writes the two new columns back via a
-  writable connection. This is an offline data-preparation step run by a
-  developer, never something the AI engine's read-only guarded SQL path
-  does at request time.
+| File | Purpose | Output |
+|---|---|---|
+| `features.py` | Cohort rules, ICD-9 grouping, derived features, ID-mapping parser | (library) |
+| `train_readmission_model.py` | Train, select, evaluate, choose thresholds | `readmission_risk_model.joblib`, `readmission_risk_metrics.json` |
+| `apply_predictions.py` | Score every row into `hospital_readmissions` | columns `predicted_readmission_risk`, `..._model_version`, `..._in_scope` |
+| `explain_model.py` | SHAP: global importance and per-encounter reasons | `readmission_risk_explanations.json`, table `readmission_risk_explanations` |
+| `fairness_audit.py` | Per-subgroup AUC, recall, false-positive rate, calibration gap | `readmission_risk_fairness.json` |
 
-## Re-running
+`explain_model.py` explains the base (uncalibrated) model on the **log-odds**
+scale. The `readmission_risk_explanations` table is not reachable by the
+assistant (its SQL guard allows exactly one table) and is read only by the
+`/predictive` page, which never sends `encounter_id` to the browser.
+
+The fairness audit suppresses subgroups with fewer than 100 rows or fewer
+than 10 cases of either outcome, reports Wilson intervals, and notes when a
+gap's intervals overlap (possible sampling noise). It is a visibility tool,
+not a fairness certification.
+
+## Regeneration order
+
+Run from the repository root. Each step reads what the previous one wrote.
 
 ```powershell
 engine\venv\Scripts\python.exe -m engine.ml.train_readmission_model
 engine\venv\Scripts\python.exe -m engine.ml.apply_predictions
+engine\venv\Scripts\python.exe -m engine.ml.explain_model
+engine\venv\Scripts\python.exe -m engine.ml.fairness_audit
+engine\venv\Scripts\python.exe -m engine.analysis.hba1c_study
+engine\venv\Scripts\python.exe -m engine.analysis.data_quality
 ```
 
-Re-run both together after any change to the training data or feature
-logic — `apply_predictions.py` always scores with whatever model is
-currently saved to `artifacts/readmission_risk_model.joblib`.
+The last two live in `engine/analysis/` and do not depend on the model.
+Restart the engine afterwards so it picks up the new schema description
+(`FULL_SCHEMA_PROMPT` in `engine/main.py`).
 
-## Known limitation: scores include training data
+Optional dependencies for these scripts are in `engine/requirements-ml.txt`
+(scikit-learn, pandas, LightGBM, SHAP, statsmodels, scipy). The core engine
+does not import them at runtime.
 
-`apply_predictions.py` scores every encounter, including rows the selected
-model was trained on. Held-out metrics in `readmission_risk_metrics.json`
-are the trustworthy number for "how good is this model"; the risk score
-displayed for any individual training-set encounter may be somewhat
-optimistic relative to that held-out number.
+## Known limitations
+
+- Scores applied to the whole table include rows the model trained on, so
+  they are optimistic for those rows. `predicted_readmission_risk_in_scope`
+  marks the modelling cohort; the held-out metrics are the trustworthy
+  measure of quality.
+- Calibration uses cross-validation inside the training split (not
+  patient-grouped folds); the calibration curve on the test set is the
+  independent check.
+- The data have no timestamps, so "first encounter" in the HbA1c study is
+  the lowest `encounter_id` per patient, a documented proxy.
+- 1999-2008 US data; practice patterns have changed since.

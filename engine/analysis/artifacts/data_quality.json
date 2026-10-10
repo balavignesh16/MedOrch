@@ -1,0 +1,750 @@
+{
+  "generated_at_utc": "2026-10-10T05:10:48.711687+00:00",
+  "source": "engine/diabetes_data/dataset_diabetes/diabetic_data.csv (UCI Diabetes 130-US hospitals, 1999-2008)",
+  "missingness": [
+    {
+      "column": "weight",
+      "missing": 98569,
+      "missing_percent": 96.86,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": false,
+      "exclusion_reason": "Missing for almost all encounters; too sparse to use."
+    },
+    {
+      "column": "medical_specialty",
+      "missing": 49949,
+      "missing_percent": 49.08,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": false,
+      "exclusion_reason": "Missing for about half of encounters; not reliable enough for analysis."
+    },
+    {
+      "column": "payer_code",
+      "missing": 40256,
+      "missing_percent": 39.56,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": false,
+      "exclusion_reason": "Missing for a large share of encounters and a financial rather than clinical field."
+    },
+    {
+      "column": "race",
+      "missing": 2273,
+      "missing_percent": 2.23,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "diag_3",
+      "missing": 1423,
+      "missing_percent": 1.4,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "diag_2",
+      "missing": 358,
+      "missing_percent": 0.35,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "diag_1",
+      "missing": 21,
+      "missing_percent": 0.02,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "encounter_id",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "patient_nbr",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "gender",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "age",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "admission_type_id",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "discharge_disposition_id",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "admission_source_id",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "time_in_hospital",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "num_lab_procedures",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "num_procedures",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "num_medications",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "number_outpatient",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "number_emergency",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "number_inpatient",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "number_diagnoses",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "max_glu_serum",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 96420,
+      "not_performed_percent": 94.75,
+      "in_database": true
+    },
+    {
+      "column": "A1Cresult",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 84748,
+      "not_performed_percent": 83.28,
+      "in_database": true
+    },
+    {
+      "column": "metformin",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "repaglinide",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "nateglinide",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "chlorpropamide",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "glimepiride",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "acetohexamide",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "glipizide",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "glyburide",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "tolbutamide",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "pioglitazone",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "rosiglitazone",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "acarbose",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "miglitol",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "troglitazone",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "tolazamide",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "examide",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "citoglipton",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "insulin",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "glyburide-metformin",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "glipizide-metformin",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "glimepiride-pioglitazone",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "metformin-rosiglitazone",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "metformin-pioglitazone",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "change",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "diabetesMed",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    },
+    {
+      "column": "readmitted",
+      "missing": 0,
+      "missing_percent": 0.0,
+      "not_performed": 0,
+      "not_performed_percent": 0.0,
+      "in_database": true
+    }
+  ],
+  "excluded_columns": {
+    "weight": "Missing for almost all encounters; too sparse to use.",
+    "payer_code": "Missing for a large share of encounters and a financial rather than clinical field.",
+    "medical_specialty": "Missing for about half of encounters; not reliable enough for analysis."
+  },
+  "repeat_patients": {
+    "encounters": 101766,
+    "patients": 71518,
+    "patients_with_multiple_encounters": 16773,
+    "encounters_from_repeat_patients": 47021,
+    "max_encounters_for_one_patient": 40,
+    "distribution": {
+      "1": 54745,
+      "2": 10434,
+      "3": 3328,
+      "4": 1421,
+      "5+": 1590
+    },
+    "why_it_matters": "Encounters from the same patient are correlated. Random row-level splits would leak a patient's other encounters into the test set, so the risk model splits by patient, and statistical tests that treat encounters as independent give optimistic p-values."
+  },
+  "outcome_balance": {
+    "total": 101766,
+    "classes": {
+      "NO": {
+        "count": 54864,
+        "percent": 53.91
+      },
+      "<30": {
+        "count": 11357,
+        "percent": 11.16
+      },
+      ">30": {
+        "count": 35545,
+        "percent": 34.93
+      }
+    }
+  },
+  "cohort_exclusions": {
+    "codes": [
+      {
+        "code": 11,
+        "reason": "expired",
+        "description": "Expired",
+        "count": 1642
+      },
+      {
+        "code": 13,
+        "reason": "hospice",
+        "description": "Hospice / home",
+        "count": 399
+      },
+      {
+        "code": 14,
+        "reason": "hospice",
+        "description": "Hospice / medical facility",
+        "count": 372
+      },
+      {
+        "code": 19,
+        "reason": "expired",
+        "description": "Expired at home. Medicaid only, hospice.",
+        "count": 8
+      },
+      {
+        "code": 20,
+        "reason": "expired",
+        "description": "Expired in a medical facility. Medicaid only, hospice.",
+        "count": 2
+      },
+      {
+        "code": 21,
+        "reason": "expired",
+        "description": "Expired, place unknown. Medicaid only, hospice.",
+        "count": 0
+      }
+    ],
+    "total_excluded": 2423
+  },
+  "definitions": [
+    {
+      "term": "Readmission (assistant, dashboards)",
+      "definition": "readmitted != 'NO' \u2014 any readmission, within or after 30 days.",
+      "used_in": "AI assistant answers and population/quality dashboards"
+    },
+    {
+      "term": "30-day readmission (model, research)",
+      "definition": "readmitted == '<30' \u2014 readmitted within 30 days only.",
+      "used_in": "Risk model target, HbA1c study, cohort comparison tool"
+    },
+    {
+      "term": "Encounter vs. patient",
+      "definition": "Each row is one hospital encounter; patients can have several. Counts are encounters unless stated otherwise.",
+      "used_in": "Everywhere"
+    },
+    {
+      "term": "In-scope encounter",
+      "definition": "Not ending in death or hospice discharge (those cannot be readmitted).",
+      "used_in": "Risk model, HbA1c study"
+    }
+  ],
+  "lineage": [
+    {
+      "id": "uci",
+      "label": "UCI archive zip",
+      "detail": "Diabetes 130-US hospitals, 1999-2008 (fetch_dataset.py)"
+    },
+    {
+      "id": "raw",
+      "label": "diabetic_data.csv",
+      "detail": "50 columns, 101,766 encounters, '?' = missing"
+    },
+    {
+      "id": "clean",
+      "label": "hospital_readmissions.csv",
+      "detail": "'?' -> NA, column names snake_case"
+    },
+    {
+      "id": "db",
+      "label": "medorch.db",
+      "detail": "load_dataset.py drops weight, payer_code, medical_specialty"
+    },
+    {
+      "id": "ml",
+      "label": "Offline ML & analysis scripts",
+      "detail": "engine/ml/*, engine/analysis/* (writable, run by a developer)"
+    },
+    {
+      "id": "artifacts",
+      "label": "JSON artifacts + scored columns",
+      "detail": "metrics, SHAP, fairness, HbA1c study, risk scores"
+    },
+    {
+      "id": "ui",
+      "label": "Dashboards, research, assistant",
+      "detail": "Read-only access; assistant SQL guarded to one table"
+    }
+  ],
+  "database_consistency": {
+    "raw_rows": 101766,
+    "database_rows": 101766,
+    "rows_match": true,
+    "raw_patients": 71518,
+    "database_patients": 71518,
+    "duplicate_encounter_ids_in_raw": 0,
+    "source_columns_not_in_database": [
+      "medical_specialty",
+      "payer_code",
+      "weight"
+    ],
+    "database_columns_added_by_scoring": [
+      "predicted_readmission_risk",
+      "predicted_readmission_risk_in_scope",
+      "predicted_readmission_risk_model_version"
+    ]
+  },
+  "medication_prevalence": [
+    {
+      "drug": "metformin",
+      "No": 81778,
+      "Steady": 18346,
+      "Up": 1067,
+      "Down": 575,
+      "prescribed_percent": 19.64
+    },
+    {
+      "drug": "repaglinide",
+      "No": 100227,
+      "Steady": 1384,
+      "Up": 110,
+      "Down": 45,
+      "prescribed_percent": 1.51
+    },
+    {
+      "drug": "nateglinide",
+      "No": 101063,
+      "Steady": 668,
+      "Up": 24,
+      "Down": 11,
+      "prescribed_percent": 0.69
+    },
+    {
+      "drug": "chlorpropamide",
+      "No": 101680,
+      "Steady": 79,
+      "Up": 6,
+      "Down": 1,
+      "prescribed_percent": 0.08
+    },
+    {
+      "drug": "glimepiride",
+      "No": 96575,
+      "Steady": 4670,
+      "Up": 327,
+      "Down": 194,
+      "prescribed_percent": 5.1
+    },
+    {
+      "drug": "acetohexamide",
+      "No": 101765,
+      "Steady": 1,
+      "Up": 0,
+      "Down": 0,
+      "prescribed_percent": 0.0
+    },
+    {
+      "drug": "glipizide",
+      "No": 89080,
+      "Steady": 11356,
+      "Up": 770,
+      "Down": 560,
+      "prescribed_percent": 12.47
+    },
+    {
+      "drug": "glyburide",
+      "No": 91116,
+      "Steady": 9274,
+      "Up": 812,
+      "Down": 564,
+      "prescribed_percent": 10.47
+    },
+    {
+      "drug": "tolbutamide",
+      "No": 101743,
+      "Steady": 23,
+      "Up": 0,
+      "Down": 0,
+      "prescribed_percent": 0.02
+    },
+    {
+      "drug": "pioglitazone",
+      "No": 94438,
+      "Steady": 6976,
+      "Up": 234,
+      "Down": 118,
+      "prescribed_percent": 7.2
+    },
+    {
+      "drug": "rosiglitazone",
+      "No": 95401,
+      "Steady": 6100,
+      "Up": 178,
+      "Down": 87,
+      "prescribed_percent": 6.25
+    },
+    {
+      "drug": "acarbose",
+      "No": 101458,
+      "Steady": 295,
+      "Up": 10,
+      "Down": 3,
+      "prescribed_percent": 0.3
+    },
+    {
+      "drug": "miglitol",
+      "No": 101728,
+      "Steady": 31,
+      "Up": 2,
+      "Down": 5,
+      "prescribed_percent": 0.04
+    },
+    {
+      "drug": "troglitazone",
+      "No": 101763,
+      "Steady": 3,
+      "Up": 0,
+      "Down": 0,
+      "prescribed_percent": 0.0
+    },
+    {
+      "drug": "tolazamide",
+      "No": 101727,
+      "Steady": 38,
+      "Up": 1,
+      "Down": 0,
+      "prescribed_percent": 0.04
+    },
+    {
+      "drug": "examide",
+      "No": 101766,
+      "Steady": 0,
+      "Up": 0,
+      "Down": 0,
+      "prescribed_percent": 0.0
+    },
+    {
+      "drug": "citoglipton",
+      "No": 101766,
+      "Steady": 0,
+      "Up": 0,
+      "Down": 0,
+      "prescribed_percent": 0.0
+    },
+    {
+      "drug": "insulin",
+      "No": 47383,
+      "Steady": 30849,
+      "Up": 11316,
+      "Down": 12218,
+      "prescribed_percent": 53.44
+    },
+    {
+      "drug": "glyburide_metformin",
+      "No": 101060,
+      "Steady": 692,
+      "Up": 8,
+      "Down": 6,
+      "prescribed_percent": 0.69
+    },
+    {
+      "drug": "glipizide_metformin",
+      "No": 101753,
+      "Steady": 13,
+      "Up": 0,
+      "Down": 0,
+      "prescribed_percent": 0.01
+    },
+    {
+      "drug": "glimepiride_pioglitazone",
+      "No": 101765,
+      "Steady": 1,
+      "Up": 0,
+      "Down": 0,
+      "prescribed_percent": 0.0
+    },
+    {
+      "drug": "metformin_rosiglitazone",
+      "No": 101764,
+      "Steady": 2,
+      "Up": 0,
+      "Down": 0,
+      "prescribed_percent": 0.0
+    },
+    {
+      "drug": "metformin_pioglitazone",
+      "No": 101765,
+      "Steady": 1,
+      "Up": 0,
+      "Down": 0,
+      "prescribed_percent": 0.0
+    }
+  ]
+}

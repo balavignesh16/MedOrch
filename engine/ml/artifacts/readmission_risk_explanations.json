@@ -1,0 +1,418 @@
+{
+  "model_version": "readmission-risk-lightgbm-20261010T044120Z",
+  "generated_at_utc": "2026-10-10T04:48:40.436331+00:00",
+  "score_scale": "Raw log-odds of the uncalibrated base model; positive values raise predicted risk. Not calibrated probability.",
+  "method": "SHAP (TreeExplainer for tree models, exact linear contributions for logistic regression); one-hot columns summed back to the original feature.",
+  "global_sample": {
+    "rows": 2000,
+    "source": "held-out test split (in-scope)"
+  },
+  "local_explanations": {
+    "encounters": 500,
+    "top_features_per_encounter": 5,
+    "table": "readmission_risk_explanations",
+    "selection": "highest predicted risk, in-scope encounters"
+  },
+  "global_importance": [
+    {
+      "feature": "number_inpatient",
+      "mean_abs_contribution": 0.2337,
+      "direction": {
+        "kind": "numeric",
+        "correlation_with_contribution": 0.95,
+        "direction": "higher values raise risk"
+      }
+    },
+    {
+      "feature": "discharge_disposition_id",
+      "mean_abs_contribution": 0.2114,
+      "direction": {
+        "kind": "categorical",
+        "raises_risk_most": [
+          {
+            "value": "22",
+            "mean_contribution": 1.1324,
+            "count": 50
+          },
+          {
+            "value": "5",
+            "mean_contribution": 0.9068,
+            "count": 23
+          }
+        ],
+        "lowers_risk_most": [
+          {
+            "value": "1",
+            "mean_contribution": -0.1612,
+            "count": 1219
+          },
+          {
+            "value": "25",
+            "mean_contribution": -0.0978,
+            "count": 21
+          }
+        ]
+      }
+    },
+    {
+      "feature": "total_prior_visits",
+      "mean_abs_contribution": 0.0921,
+      "direction": {
+        "kind": "numeric",
+        "correlation_with_contribution": 0.803,
+        "direction": "higher values raise risk"
+      }
+    },
+    {
+      "feature": "diag_1_group",
+      "mean_abs_contribution": 0.0757,
+      "direction": {
+        "kind": "categorical",
+        "raises_risk_most": [
+          {
+            "value": "Neoplasms",
+            "mean_contribution": 0.114,
+            "count": 59
+          },
+          {
+            "value": "Circulatory",
+            "mean_contribution": 0.0833,
+            "count": 607
+          }
+        ],
+        "lowers_risk_most": [
+          {
+            "value": "Respiratory",
+            "mean_contribution": -0.1346,
+            "count": 271
+          },
+          {
+            "value": "Musculoskeletal",
+            "mean_contribution": -0.1256,
+            "count": 104
+          }
+        ]
+      }
+    },
+    {
+      "feature": "time_in_hospital",
+      "mean_abs_contribution": 0.0644,
+      "direction": {
+        "kind": "numeric",
+        "correlation_with_contribution": 0.402,
+        "direction": "higher values raise risk"
+      }
+    },
+    {
+      "feature": "number_diagnoses",
+      "mean_abs_contribution": 0.0636,
+      "direction": {
+        "kind": "numeric",
+        "correlation_with_contribution": 0.861,
+        "direction": "higher values raise risk"
+      }
+    },
+    {
+      "feature": "age_midpoint",
+      "mean_abs_contribution": 0.0594,
+      "direction": {
+        "kind": "numeric",
+        "correlation_with_contribution": 0.784,
+        "direction": "higher values raise risk"
+      }
+    },
+    {
+      "feature": "num_medications",
+      "mean_abs_contribution": 0.0573,
+      "direction": {
+        "kind": "numeric",
+        "correlation_with_contribution": 0.34,
+        "direction": "higher values raise risk"
+      }
+    },
+    {
+      "feature": "insulin",
+      "mean_abs_contribution": 0.0515,
+      "direction": {
+        "kind": "categorical",
+        "raises_risk_most": [
+          {
+            "value": "Down",
+            "mean_contribution": 0.1167,
+            "count": 224
+          },
+          {
+            "value": "Steady",
+            "mean_contribution": 0.0283,
+            "count": 583
+          }
+        ],
+        "lowers_risk_most": [
+          {
+            "value": "No",
+            "mean_contribution": -0.0553,
+            "count": 963
+          },
+          {
+            "value": "Up",
+            "mean_contribution": 0.0175,
+            "count": 230
+          }
+        ]
+      }
+    },
+    {
+      "feature": "num_lab_procedures",
+      "mean_abs_contribution": 0.0496,
+      "direction": {
+        "kind": "numeric",
+        "correlation_with_contribution": 0.349,
+        "direction": "higher values raise risk"
+      }
+    },
+    {
+      "feature": "diag_2_group",
+      "mean_abs_contribution": 0.0469,
+      "direction": {
+        "kind": "categorical",
+        "raises_risk_most": [
+          {
+            "value": "Neoplasms",
+            "mean_contribution": 0.3249,
+            "count": 42
+          },
+          {
+            "value": "Diabetes",
+            "mean_contribution": 0.0881,
+            "count": 257
+          }
+        ],
+        "lowers_risk_most": [
+          {
+            "value": "Musculoskeletal",
+            "mean_contribution": -0.1239,
+            "count": 43
+          },
+          {
+            "value": "Respiratory",
+            "mean_contribution": -0.0809,
+            "count": 202
+          }
+        ]
+      }
+    },
+    {
+      "feature": "num_procedures",
+      "mean_abs_contribution": 0.0387,
+      "direction": {
+        "kind": "numeric",
+        "correlation_with_contribution": -0.64,
+        "direction": "higher values lower risk"
+      }
+    },
+    {
+      "feature": "diabetesmed",
+      "mean_abs_contribution": 0.0354,
+      "direction": {
+        "kind": "categorical",
+        "raises_risk_most": [
+          {
+            "value": "Yes",
+            "mean_contribution": 0.023,
+            "count": 1540
+          },
+          {
+            "value": "No",
+            "mean_contribution": -0.0767,
+            "count": 460
+          }
+        ],
+        "lowers_risk_most": [
+          {
+            "value": "No",
+            "mean_contribution": -0.0767,
+            "count": 460
+          },
+          {
+            "value": "Yes",
+            "mean_contribution": 0.023,
+            "count": 1540
+          }
+        ]
+      }
+    },
+    {
+      "feature": "age",
+      "mean_abs_contribution": 0.0333,
+      "direction": {
+        "kind": "categorical",
+        "raises_risk_most": [
+          {
+            "value": "[70-80)",
+            "mean_contribution": 0.0338,
+            "count": 535
+          },
+          {
+            "value": "[80-90)",
+            "mean_contribution": 0.0269,
+            "count": 328
+          }
+        ],
+        "lowers_risk_most": [
+          {
+            "value": "[50-60)",
+            "mean_contribution": -0.0655,
+            "count": 343
+          },
+          {
+            "value": "[90-100)",
+            "mean_contribution": -0.0345,
+            "count": 56
+          }
+        ]
+      }
+    },
+    {
+      "feature": "diag_3_group",
+      "mean_abs_contribution": 0.0301,
+      "direction": {
+        "kind": "categorical",
+        "raises_risk_most": [
+          {
+            "value": "Neoplasms",
+            "mean_contribution": 0.1528,
+            "count": 41
+          },
+          {
+            "value": "Genitourinary",
+            "mean_contribution": 0.1005,
+            "count": 124
+          }
+        ],
+        "lowers_risk_most": [
+          {
+            "value": "Missing",
+            "mean_contribution": -0.0965,
+            "count": 20
+          },
+          {
+            "value": "Other",
+            "mean_contribution": -0.0251,
+            "count": 578
+          }
+        ]
+      }
+    },
+    {
+      "feature": "num_meds_active",
+      "mean_abs_contribution": 0.0298,
+      "direction": {
+        "kind": "numeric",
+        "correlation_with_contribution": -0.686,
+        "direction": "higher values lower risk"
+      }
+    },
+    {
+      "feature": "admission_source_id",
+      "mean_abs_contribution": 0.0288,
+      "direction": {
+        "kind": "categorical",
+        "raises_risk_most": [
+          {
+            "value": "1",
+            "mean_contribution": 0.0209,
+            "count": 598
+          },
+          {
+            "value": "7",
+            "mean_contribution": 0.0069,
+            "count": 1121
+          }
+        ],
+        "lowers_risk_most": [
+          {
+            "value": "4",
+            "mean_contribution": -0.0927,
+            "count": 61
+          },
+          {
+            "value": "2",
+            "mean_contribution": -0.0864,
+            "count": 24
+          }
+        ]
+      }
+    },
+    {
+      "feature": "a1cresult",
+      "mean_abs_contribution": 0.0279,
+      "direction": {
+        "kind": "categorical",
+        "raises_risk_most": [
+          {
+            "value": "missing",
+            "mean_contribution": 0.0158,
+            "count": 1668
+          },
+          {
+            "value": ">8",
+            "mean_contribution": -0.0432,
+            "count": 147
+          }
+        ],
+        "lowers_risk_most": [
+          {
+            "value": ">7",
+            "mean_contribution": -0.1803,
+            "count": 87
+          },
+          {
+            "value": "Norm",
+            "mean_contribution": -0.0635,
+            "count": 98
+          }
+        ]
+      }
+    },
+    {
+      "feature": "admission_type_id",
+      "mean_abs_contribution": 0.0259,
+      "direction": {
+        "kind": "categorical",
+        "raises_risk_most": [
+          {
+            "value": "6",
+            "mean_contribution": 0.0228,
+            "count": 101
+          },
+          {
+            "value": "1",
+            "mean_contribution": 0.018,
+            "count": 1046
+          }
+        ],
+        "lowers_risk_most": [
+          {
+            "value": "5",
+            "mean_contribution": -0.1308,
+            "count": 80
+          },
+          {
+            "value": "3",
+            "mean_contribution": -0.0127,
+            "count": 391
+          }
+        ]
+      }
+    },
+    {
+      "feature": "number_outpatient",
+      "mean_abs_contribution": 0.0196,
+      "direction": {
+        "kind": "numeric",
+        "correlation_with_contribution": -0.871,
+        "direction": "higher values lower risk"
+      }
+    }
+  ]
+}

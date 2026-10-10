@@ -16,6 +16,7 @@ try:
     from .audit_log import AuditRecord, AuditWriteError, initialize_audit_database, write_audit_record
     from .capability_registry import CapabilityContext, load_registry, resolve_against_schema
     from .config import ConfigurationError, EngineConfig
+    from .model_profiles import ModelProfile, resolve_model_profiles
     from .evidence import (
         GroundedAnswer,
         GroundingError,
@@ -27,6 +28,7 @@ try:
         NvidiaQueryPlanner,
         PlannerConnectionError,
         PlannerError,
+        PlannerRateLimitedError,
         PlannerServiceError,
         PlannerTimeoutError,
         QueryPlan,
@@ -39,6 +41,7 @@ except ImportError:
     from audit_log import AuditRecord, AuditWriteError, initialize_audit_database, write_audit_record
     from capability_registry import CapabilityContext, load_registry, resolve_against_schema
     from config import ConfigurationError, EngineConfig
+    from model_profiles import ModelProfile, resolve_model_profiles
     from evidence import (
         GroundedAnswer,
         GroundingError,
@@ -50,6 +53,7 @@ except ImportError:
         NvidiaQueryPlanner,
         PlannerConnectionError,
         PlannerError,
+        PlannerRateLimitedError,
         PlannerServiceError,
         PlannerTimeoutError,
         QueryPlan,
@@ -81,11 +85,25 @@ not assumed):
 - diag_1, diag_2, diag_3: ICD-9-style diagnosis codes as text, not diagnosis names.
 - max_glu_serum: one of '>300', '>200', 'Norm', or NULL (test not performed).
 - a1cresult: one of '>7', '>8', 'Norm', or NULL (test not performed).
-- change: 'Ch' (medication changed) or 'No'.
+- metformin, repaglinide, nateglinide, chlorpropamide, glimepiride, acetohexamide,
+  glipizide, glyburide, tolbutamide, pioglitazone, rosiglitazone, acarbose,
+  miglitol, troglitazone, tolazamide, examide, citoglipton, insulin,
+  glyburide_metformin, glipizide_metformin, glimepiride_pioglitazone,
+  metformin_rosiglitazone, metformin_pioglitazone: one column per drug, each one of
+  'No' (not prescribed), 'Steady', 'Up' (dose increased), 'Down' (dose decreased).
+  "Insulin status" means the insulin column, not diabetesmed.
+- change: 'Ch' (any medication changed during the stay) or 'No'.
 - diabetesmed: 'Yes' or 'No'.
 - readmitted: one of 'NO', '<30' (readmitted within 30 days), '>30'
   (readmitted after 30 days). This is the ONLY column that indicates
   readmission timing; time_in_hospital does not.
+  Definition of "a readmission" for aggregate questions (count, rate, total)
+  that do not name a specific window: readmitted != 'NO', i.e. '<30' OR '>30'
+  combined. Only narrow to '<30' alone, or '>30' alone, if the user's wording
+  explicitly asks for that window (e.g. "within 30 days", "readmitted early",
+  "long-term readmission"). Apply this same default consistently across every
+  question in a conversation — never silently switch definitions between
+  similarly-worded questions.
 - predicted_readmission_risk: a float between 0 and 1, precomputed once by
   an offline-trained demonstration classifier (not a live prediction, not
   clinically validated; held-out ROC-AUC is approximately 0.66 — see
@@ -94,10 +112,29 @@ not assumed):
   certainty or a clinical judgment about any individual encounter.
 - predicted_readmission_risk_model_version: text identifier of which trained
   model produced that score.
+- predicted_readmission_risk_in_scope: 1 if the encounter was part of the
+  model's modelling cohort, 0 if it ended in death or hospice discharge (those
+  cannot be readmitted, so the model was neither trained nor evaluated on
+  them). For aggregate analysis of predicted risk, filter to
+  predicted_readmission_risk_in_scope = 1.
 
 Write one SQLite SELECT statement using only hospital_readmissions.
-Never select encounter_id or patient_nbr directly; they may not appear anywhere
-in the query, including inside aggregate functions.
+Never select encounter_id or patient_nbr directly as output values. The only
+exception: they may be used as the sole argument to COUNT(), including inside
+a CASE expression for conditional counting (e.g. COUNT(CASE WHEN readmitted =
+'<30' THEN encounter_id END)) — this is the correct way to compute a rate or
+fraction. They must never appear inside MAX(), MIN(), or any other function,
+in a bare SELECT, or in GROUP BY combined with being selected.
+Do all arithmetic in SQL and return numbers ready to display. For any rate, share, or
+percentage return a percentage rounded to 1 decimal, never a bare fraction, e.g.
+ROUND(100.0 * COUNT(CASE WHEN readmitted = '<30' THEN encounter_id END) /
+COUNT(encounter_id), 1) AS readmission_rate_percent. For predicted_readmission_risk
+(a 0-1 probability) report ROUND(100.0 * AVG(predicted_readmission_risk), 1) AS
+avg_risk_percent. Round other averages to 2 decimals with ROUND(AVG(x), 2).
+Only these SQL functions are available: COUNT, AVG, SUM, MIN, MAX, ROUND, CAST,
+COALESCE, IFNULL, LENGTH, LOWER, UPPER, ABS. String functions such as SUBSTR or
+INSTR are NOT available. Age brackets like '[0-10)' and '[90-100)' already sort in
+the correct order as plain text, so use ORDER BY age (never a computed sort key).
 Do not use PRAGMA, ATTACH, comments, common table expressions, or multiple statements.
 Add an appropriate LIMIT for detail-row queries.
 """
@@ -128,7 +165,11 @@ SYNTHESIS_JSON_INSTRUCTIONS = (
     "explanation, and a bullet list only if comparing several groups. "
     "This dataset contains only historical, de-identified encounter counts — "
     "it has no clinical, socioeconomic, staffing, or causal information. If the "
-    "user's question asks WHY something happens, you must NOT invent a cause: "
+    "query counts or rates 'readmissions', state in summary_text whether that means "
+    "any readmission (both <30 and >30 days combined) or a specific window (within "
+    "30 days only, or after 30 days only) — do not use the bare word 'readmission' "
+    "without saying which. If the user's question asks WHY something happens, you "
+    "must NOT invent a cause: "
     "state plainly that this data can show counts, rates, and associations but "
     "not the underlying cause, then report whichever relevant numbers ARE "
     "available so the answer is still useful.\n"
@@ -197,10 +238,42 @@ class Outcome:
 
 
 class AnalyticsEngineServicer(healthcare_analytics_pb2_grpc.AnalyticsEngineServicer):
-    def __init__(self, config: EngineConfig, llm: LanguageModel, planner: QueryPlanner | None = None):
+    def __init__(
+        self,
+        config: EngineConfig,
+        llm: LanguageModel,
+        planner: QueryPlanner | None = None,
+        profile_clients: dict[str, tuple[LanguageModel, QueryPlanner, str]] | None = None,
+    ):
         self.config = config
         self.llm = llm
-        self.planner = planner or NvidiaQueryPlanner(llm, model_version=config.model, max_retries=1)
+        self.planner = planner or NvidiaQueryPlanner(llm, model_version=config.model, max_retries=2)
+
+        profiles = resolve_model_profiles(config)
+        self._profiles_by_id: dict[str, ModelProfile] = {profile.id: profile for profile in profiles}
+        if profile_clients is not None:
+            # Test injection point — mirrors the `planner` parameter above,
+            # so a test can inject fakes for named profiles too instead of
+            # the real ChatOpenAI clients built below ever making a network
+            # call. See AnalyticsEngineServicer tests for usage.
+            self._profile_clients = profile_clients
+        else:
+            self._profile_clients = {}
+            for profile in profiles:
+                if not profile.available:
+                    continue
+                profile_llm = ChatOpenAI(
+                    base_url=profile.base_url,
+                    api_key=profile.api_key,
+                    model=profile.model,
+                    temperature=0,
+                    max_tokens=4096,
+                    max_retries=0,
+                    timeout=config.llm_timeout_seconds,
+                )
+                profile_planner = NvidiaQueryPlanner(profile_llm, model_version=profile.model, max_retries=2)
+                self._profile_clients[profile.id] = (profile_llm, profile_planner, profile.model)
+
         contexts = load_registry()
         self.contexts: dict[str, CapabilityContext] = {
             context.id: context
@@ -273,13 +346,41 @@ class AnalyticsEngineServicer(healthcare_analytics_pb2_grpc.AnalyticsEngineServi
         prompt = request.natural_language_prompt.strip()
         context_id = request.agent_target or "general"
         requester_type = request.user_role or "unauthenticated-demo"
-        outcome = Outcome(request.query_id, requester_type, context_id, self.config.model)
+        requested_profile_id = (request.model_profile_id or "").strip()
+
+        if requested_profile_id and requested_profile_id in self._profile_clients:
+            active_llm, active_planner, active_model_version = self._profile_clients[requested_profile_id]
+        else:
+            # No profile requested: unchanged default behavior from before
+            # model profiles existed — the engine's single NVIDIA_*-
+            # configured client. A *named but unavailable or unrecognized*
+            # profile id is deliberately NOT substituted here; it is
+            # rejected explicitly below with a clear reason, since silently
+            # answering with a different model than the one the user
+            # selected would be a more deceptive failure than an error.
+            active_llm, active_planner, active_model_version = self.llm, self.planner, self.config.model
+
+        outcome = Outcome(request.query_id, requester_type, context_id, active_model_version)
 
         try:
             if not prompt:
                 context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Prompt must not be empty")
 
             LOGGER.info("Received query %s for context %s", request.query_id, context_id)
+
+            if requested_profile_id and requested_profile_id not in self._profile_clients:
+                unavailable = self._profiles_by_id.get(requested_profile_id)
+                reason = (
+                    unavailable.unavailable_reason
+                    if unavailable is not None
+                    else "that model is not recognized"
+                )
+                yield self._terminal(
+                    request, outcome, f"The requested model is not available right now: {reason}.",
+                    status=Status.EXECUTION_STATUS_ERROR, error_code="MODEL_UNAVAILABLE",
+                )
+                return
+
             yield self._analyzing(request, outcome, "Analyzing the available de-identified encounter data...")
 
             capability = self.contexts.get(context_id)
@@ -312,7 +413,7 @@ class AnalyticsEngineServicer(healthcare_analytics_pb2_grpc.AnalyticsEngineServi
                 return
 
             try:
-                plan: QueryPlan = self.planner.plan(prompt, context_id, FULL_SCHEMA_PROMPT + _context_guidance(capability))
+                plan: QueryPlan = active_planner.plan(prompt, context_id, FULL_SCHEMA_PROMPT + _context_guidance(capability))
             except PlannerTimeoutError:
                 yield self._terminal(
                     request, outcome, "The analytics assistant timed out while planning this request.",
@@ -328,13 +429,25 @@ class AnalyticsEngineServicer(healthcare_analytics_pb2_grpc.AnalyticsEngineServi
                     status=Status.EXECUTION_STATUS_ERROR, error_code="MODEL_UNAVAILABLE",
                 )
                 return
+            except PlannerRateLimitedError:
+                LOGGER.error("LLM endpoint rate-limited request %s", request.query_id, exc_info=True)
+                yield self._terminal(
+                    request, outcome,
+                    "The configured AI provider has rejected this request for exceeding its "
+                    "rate or quota limit. This is not an error in your question — the provider "
+                    "needs time (often measured in hours on a free tier) before it will accept "
+                    "new requests again.",
+                    status=Status.EXECUTION_STATUS_ERROR, error_code="MODEL_RATE_LIMITED",
+                )
+                return
             except PlannerServiceError:
                 LOGGER.error("LLM endpoint returned a server error for %s", request.query_id, exc_info=True)
                 yield self._terminal(
                     request, outcome,
-                    "The AI service could not process this request. If you're running a local "
-                    "model, this often means the host doesn't have enough free memory to load "
-                    "it right now — try closing other applications, or try again in a moment.",
+                    "The AI service returned an internal error and could not process this "
+                    "request. For a local model this often means the host doesn't have enough "
+                    "free memory to load it right now; for a hosted model it usually means the "
+                    "provider is temporarily overloaded. Try again in a moment.",
                     status=Status.EXECUTION_STATUS_ERROR, error_code="MODEL_SERVICE_ERROR",
                 )
                 return
@@ -402,7 +515,7 @@ class AnalyticsEngineServicer(healthcare_analytics_pb2_grpc.AnalyticsEngineServi
                 summary_text = deterministic.text
             else:
                 try:
-                    summary_text = self._synthesize_grounded_answer(prompt, capability, result)
+                    summary_text = self._synthesize_grounded_answer(active_llm, prompt, capability, result)
                 except (GroundingError, PlannerTimeoutError, PlannerError) as exc:
                     LOGGER.info(
                         "Narrative synthesis unavailable for %s (%s); falling back to deterministic summary",
@@ -450,7 +563,7 @@ class AnalyticsEngineServicer(healthcare_analytics_pb2_grpc.AnalyticsEngineServi
                 LOGGER.error("Audit write failed for %s", outcome.query_id)
 
     def _synthesize_grounded_answer(
-        self, prompt: str, capability: CapabilityContext, result: StructuredQueryResult
+        self, llm: LanguageModel, prompt: str, capability: CapabilityContext, result: StructuredQueryResult
     ) -> str:
         columns_desc = ", ".join(result.columns)
         rows_desc = json.dumps([list(row) for row in result.rows])
@@ -459,7 +572,7 @@ class AnalyticsEngineServicer(healthcare_analytics_pb2_grpc.AnalyticsEngineServi
             f"User request: {prompt}\nColumns: {columns_desc}\nRows: {rows_desc}\nJSON:"
         )
         try:
-            response = self.llm.invoke(synthesis_prompt)
+            response = llm.invoke(synthesis_prompt)
         except (openai.APITimeoutError, TimeoutError) as exc:
             raise PlannerTimeoutError("Synthesis request timed out") from exc
         except openai.OpenAIError as exc:
@@ -472,7 +585,7 @@ class AnalyticsEngineServicer(healthcare_analytics_pb2_grpc.AnalyticsEngineServi
             answer = GroundedAnswer.model_validate(payload)
         except Exception as exc:
             raise PlannerError(f"Synthesis output failed schema validation: {exc}") from exc
-        return validate_grounded_answer(answer, result)
+        return validate_grounded_answer(answer, result, prompt)
 
 
 def serve(config: EngineConfig | None = None) -> None:

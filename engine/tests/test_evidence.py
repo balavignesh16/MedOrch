@@ -156,3 +156,88 @@ def test_thousands_separator_normalizes() -> None:
         ],
     )
     assert "1,234" in validate_grounded_answer(answer, result)
+
+
+def _single_claim(rendered: str, value: object, column: str = "rate") -> tuple[GroundedAnswer, object]:
+    result = _result([column], [(value,)])
+    answer = GroundedAnswer(
+        summary_text=rendered,
+        numeric_claims=[NumericClaim(rendered_value=rendered, evidence=EvidenceReference(row_index=0, column_name=column))],
+    )
+    return answer, result
+
+
+@pytest.mark.parametrize(
+    ("rendered", "cell"),
+    [
+        ("10.0%", 10.037355169575586),
+        ("13.9%", 13.897528237027337),
+        ("10", 10.037355169575586),
+        ("0.11", 0.11128399623974845),
+        ("0.1", 0.11128399623974845 - 0.0113),
+        ("12.5", 12.45),
+        ("1,234", 1234.4),
+    ],
+)
+def test_claim_rounded_to_its_own_precision_is_accepted(rendered: str, cell: float) -> None:
+    answer, result = _single_claim(rendered, cell)
+    assert validate_grounded_answer(answer, result) == rendered
+
+
+@pytest.mark.parametrize(
+    ("rendered", "cell"),
+    [
+        ("10.1%", 10.037355169575586),
+        ("10.03", 10.037755169575586),
+        ("11", 10.037355169575586),
+        ("0.2", 0.11128399623974845),
+        ("5", 4.4),
+    ],
+)
+def test_claim_that_is_not_a_correct_rounding_is_still_rejected(rendered: str, cell: float) -> None:
+    answer, result = _single_claim(rendered, cell)
+    with pytest.raises(GroundingError, match="does not match"):
+        validate_grounded_answer(answer, result)
+
+
+def test_rounding_never_legitimizes_non_numeric_or_missing_cells() -> None:
+    for cell in (None, "NO", float("nan"), float("inf")):
+        answer, result = _single_claim("1", cell)
+        with pytest.raises(GroundingError):
+            validate_grounded_answer(answer, result)
+
+
+def test_numbers_from_the_users_own_question_do_not_need_a_data_claim() -> None:
+    result = _result(["insulin", "rate"], [("No", 10.0), ("Up", 13.0)])
+    answer = GroundedAnswer(
+        summary_text="The 30-day readmission rate was 13.0% for Up and 10.0% for No.",
+        numeric_claims=[
+            NumericClaim(rendered_value="13.0%", evidence=EvidenceReference(row_index=1, column_name="rate")),
+            NumericClaim(rendered_value="10.0", evidence=EvidenceReference(row_index=0, column_name="rate")),
+        ],
+    )
+    assert validate_grounded_answer(answer, result, "Compare the 30-day readmission rate by insulin") == answer.summary_text
+    with pytest.raises(GroundingError, match="no supporting evidence"):
+        validate_grounded_answer(answer, result, "Compare readmission rates by insulin")
+
+
+def test_numbers_inside_result_labels_do_not_need_a_data_claim() -> None:
+    result = _result(["age", "rate"], [("[80-90)", 12.8), ("[90-100)", 12.0)])
+    answer = GroundedAnswer(
+        summary_text="Ages 80-90 had a rate of 12.8, higher than 90-100 at 12.0.",
+        numeric_claims=[
+            NumericClaim(rendered_value="12.8", evidence=EvidenceReference(row_index=0, column_name="rate")),
+            NumericClaim(rendered_value="12.0", evidence=EvidenceReference(row_index=1, column_name="rate")),
+        ],
+    )
+    assert validate_grounded_answer(answer, result) == answer.summary_text
+
+
+def test_a_fabricated_number_is_still_rejected_even_with_free_tokens_present() -> None:
+    result = _result(["age", "rate"], [("[80-90)", 12.8)])
+    answer = GroundedAnswer(
+        summary_text="Ages 80-90 had a rate of 12.8, about 47 more than baseline.",
+        numeric_claims=[NumericClaim(rendered_value="12.8", evidence=EvidenceReference(row_index=0, column_name="rate"))],
+    )
+    with pytest.raises(GroundingError, match="no supporting evidence"):
+        validate_grounded_answer(answer, result, "Compare the 30-day rate by age")

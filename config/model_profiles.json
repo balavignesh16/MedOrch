@@ -1,0 +1,7 @@
+{
+  "profiles": [
+    { "id": "qwen2.5-14b", "display_name": "Qwen 2.5 14B (Local)", "provider": "ollama" },
+    { "id": "llama3.1-8b", "display_name": "Llama 3.1 8B (Local)", "provider": "ollama" },
+    { "id": "gemini-flash", "display_name": "Gemini Flash (Cloud)", "provider": "gemini" }
+  ]
+}
