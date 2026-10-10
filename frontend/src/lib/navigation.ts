@@ -20,7 +20,7 @@ export const NAV_LINKS: NavLink[] = [
   { name: 'Operational Intelligence', href: '/operations', icon: 'operations', roles: ['admin', 'billing'] },
   { name: 'Financial Intelligence', href: '/financial', icon: 'financial', roles: ['admin', 'billing'] },
   { name: 'Administration', href: '/administration', icon: 'administration', roles: ['admin'], demoOnly: true },
-  { name: 'Strategy & Decision Hub', href: '/strategy', icon: 'strategy', roles: ['admin'] },
+  { name: 'Executive Summary', href: '/strategy', icon: 'strategy', roles: ['admin'] },
   { name: 'Predictive Analytics', href: '/predictive', icon: 'predictive', roles: ['admin', 'doctor', 'billing'] },
   { name: 'Research & Statistics', href: '/research', icon: 'research', roles: ['admin', 'doctor', 'billing'] },
   { name: 'Data Quality', href: '/data-quality', icon: 'dataQuality', roles: ['admin', 'doctor', 'billing'] },
