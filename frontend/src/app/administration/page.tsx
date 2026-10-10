@@ -1,5 +1,6 @@
 import React from 'react';
 import { DashboardClient } from './DashboardClient';
+import { DemoGate } from '@/components/ui/DemoGate';
 import { 
   getAdministrativeOverview, 
   getDepartmentScorecards, 
@@ -57,6 +58,7 @@ export default async function AdministrationPage(props: { searchParams: Promise<
           </div>
         </div>
 
+        <DemoGate missing="hospital departments, bed counts, staff rosters, or compliance records">
         <DashboardClient 
           overview={overview} 
           scorecards={scorecards}
@@ -67,6 +69,7 @@ export default async function AdministrationPage(props: { searchParams: Promise<
           trends={trends}
           insights={insights}
         />
+        </DemoGate>
       </div>
   );
 }

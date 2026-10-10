@@ -6,27 +6,19 @@ import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Bot, TrendingUp, Activity, ActivitySquare, Users, Map, LogOut, Bell, FlaskConical, DatabaseZap, FileText } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
+import { visibleNavLinks, type NavIcon } from '@/lib/navigation';
+import { isDemoModeEnabled } from '@/lib/demoMode';
 
 const Sidebar = () => {
   const pathname = usePathname();
   const { user, logout } = useAuth();
 
-  const links = [
-    { name: 'Enterprise Home', href: '/', icon: LayoutDashboard, roles: ['admin', 'doctor', 'billing'] },
-    { name: 'Population Health', href: '/population', icon: Users, roles: ['admin', 'doctor', 'billing'] },
-    { name: 'Clinical Quality', href: '/quality', icon: Activity, roles: ['admin', 'doctor'] },
-    { name: 'Operational Intelligence', href: '/operations', icon: ActivitySquare, roles: ['admin', 'billing'] },
-    { name: 'Financial Intelligence', href: '/financial', icon: TrendingUp, roles: ['admin', 'billing'] },
-    { name: 'Administration', href: '/administration', icon: Users, roles: ['admin'] },
-    { name: 'Strategy & Decision Hub', href: '/strategy', icon: Map, roles: ['admin'] },
-    { name: 'Predictive Analytics', href: '/predictive', icon: ActivitySquare, roles: ['admin', 'doctor', 'billing'] },
-    { name: 'Research & Statistics', href: '/research', icon: FlaskConical, roles: ['admin', 'doctor', 'billing'] },
-    { name: 'Data Quality', href: '/data-quality', icon: DatabaseZap, roles: ['admin', 'doctor', 'billing'] },
-    { name: 'Analysis Report', href: '/report', icon: FileText, roles: ['admin', 'doctor', 'billing'] },
-    { name: 'Analytics Assistant', href: '/assistant', icon: Bot, roles: ['admin', 'doctor', 'billing'] }
-  ];
-
-  const visibleLinks = links.filter(link => !user || link.roles.includes(user.role as string));
+  const icons: Record<NavIcon, React.ComponentType<{ className?: string }>> = {
+    home: LayoutDashboard, population: Users, quality: Activity, operations: ActivitySquare,
+    financial: TrendingUp, administration: Users, strategy: Map, predictive: ActivitySquare,
+    research: FlaskConical, dataQuality: DatabaseZap, report: FileText, assistant: Bot,
+  };
+  const visibleLinks = visibleNavLinks(user?.role, isDemoModeEnabled());
 
   return (
     <aside className="w-[300px] h-screen bg-transparent flex flex-col shrink-0 p-4 pb-8 border-r border-white/5 relative">
@@ -59,7 +51,7 @@ const Sidebar = () => {
           
           {visibleLinks.map((link) => {
             const isActive = pathname === link.href || (link.href !== '/' && pathname.startsWith(link.href));
-            const Icon = link.icon;
+            const Icon = icons[link.icon];
             return (
               <Link key={link.href} href={link.href}>
                 <div className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 relative overflow-hidden group ${isActive ? 'bg-brand-teal/10 text-brand-teal border border-brand-teal/20 shadow-[inset_0_0_20px_rgba(45,212,191,0.05)]' : 'text-white/50 hover:text-white hover:bg-white/[0.05] border border-transparent hover:border-white/10'}`}>
@@ -70,7 +62,7 @@ const Sidebar = () => {
                     />
                   )}
                   <Icon className={`w-5 h-5 ${isActive ? 'text-brand-teal' : 'text-white/40 group-hover:text-brand-teal'} transition-colors duration-300`} />
-                  <span className={`font-semibold text-sm ${isActive ? 'text-white' : ''}`}>{link.name}</span>
+                  <span className={`font-semibold text-sm ${isActive ? 'text-white' : ''}`}>{link.name}{link.demoOnly ? ' (demo)' : ''}</span>
                 </div>
               </Link>
             );

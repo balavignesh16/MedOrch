@@ -62,6 +62,8 @@ Copy-Item .env.example .env
 
 Replace the placeholder `NVIDIA_API_KEY` with a newly issued credential. The credential previously committed to this repository must be revoked and must not be reused.
 
+`NEXT_PUBLIC_MEDORCH_DEMO_MODE` (default `false`) controls demonstration mode: screens built on values the dataset cannot support (beds, staff, departments) are hidden unless it is `true`, and are badged "Demonstration data" when shown.
+
 `MEDORCH_DB_PATH` may be absolute or relative to the repository root. Service addresses have local defaults and can be overridden for container or remote deployments.
 
 ## Running locally
