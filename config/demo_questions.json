@@ -1,0 +1,77 @@
+{
+  "description": "Curated assistant questions that are reliable for live demos. Each carries a reference SQL used by engine tests (guard + real-schema execution) and by scripts/smoke/assistant_questions.mjs. The suggested_prompts in assistant_capabilities.json must come from this list.",
+  "questions": [
+    {
+      "id": "general-readmissions-30",
+      "context": "general",
+      "prompt": "How many encounters resulted in a readmission within 30 days?",
+      "expected_sql": "SELECT COUNT(CASE WHEN readmitted = '<30' THEN encounter_id END) AS readmissions_within_30_days FROM hospital_readmissions"
+    },
+    {
+      "id": "general-average-los",
+      "context": "general",
+      "prompt": "What is the average time in hospital across all encounters?",
+      "expected_sql": "SELECT ROUND(AVG(time_in_hospital), 2) AS avg_days FROM hospital_readmissions"
+    },
+    {
+      "id": "general-outcome-counts",
+      "context": "general",
+      "prompt": "How many encounters are in each readmitted category?",
+      "expected_sql": "SELECT readmitted, COUNT(encounter_id) AS encounters FROM hospital_readmissions GROUP BY readmitted ORDER BY readmitted"
+    },
+    {
+      "id": "general-most-lab-procedures",
+      "context": "general",
+      "prompt": "Which race has the most lab procedures?",
+      "expected_sql": "SELECT race, SUM(num_lab_procedures) AS total_lab_procedures, ROUND(AVG(num_lab_procedures), 2) AS average_per_encounter FROM hospital_readmissions GROUP BY race ORDER BY total_lab_procedures DESC LIMIT 1"
+    },
+    {
+      "id": "clinical-rate-by-age",
+      "context": "clinical",
+      "prompt": "What is the 30-day readmission rate by age bracket?",
+      "expected_sql": "SELECT age, ROUND(100.0 * COUNT(CASE WHEN readmitted = '<30' THEN encounter_id END) / COUNT(encounter_id), 1) AS readmission_rate_percent FROM hospital_readmissions GROUP BY age ORDER BY age"
+    },
+    {
+      "id": "clinical-rate-by-insulin",
+      "context": "clinical",
+      "prompt": "Compare the 30-day readmission rate by insulin status",
+      "expected_sql": "SELECT insulin, ROUND(100.0 * COUNT(CASE WHEN readmitted = '<30' THEN encounter_id END) / COUNT(encounter_id), 1) AS readmission_rate_percent FROM hospital_readmissions GROUP BY insulin ORDER BY insulin"
+    },
+    {
+      "id": "clinical-rate-by-hba1c",
+      "context": "clinical",
+      "prompt": "What is the 30-day readmission rate by HbA1c test result?",
+      "expected_sql": "SELECT a1cresult, ROUND(100.0 * COUNT(CASE WHEN readmitted = '<30' THEN encounter_id END) / COUNT(encounter_id), 1) AS readmission_rate_percent FROM hospital_readmissions GROUP BY a1cresult ORDER BY a1cresult"
+    },
+    {
+      "id": "operations-los-by-admission-type",
+      "context": "operations",
+      "prompt": "What is the average length of stay by admission type?",
+      "expected_sql": "SELECT admission_type_id, ROUND(AVG(time_in_hospital), 2) AS avg_days FROM hospital_readmissions GROUP BY admission_type_id ORDER BY admission_type_id"
+    },
+    {
+      "id": "operations-discharge-counts",
+      "context": "operations",
+      "prompt": "How many encounters were discharged to each disposition category?",
+      "expected_sql": "SELECT discharge_disposition_id, COUNT(encounter_id) AS encounters FROM hospital_readmissions GROUP BY discharge_disposition_id ORDER BY encounters DESC LIMIT 50"
+    },
+    {
+      "id": "operations-rate-by-prior-inpatient",
+      "context": "operations",
+      "prompt": "What is the 30-day readmission rate by number of prior inpatient visits?",
+      "expected_sql": "SELECT number_inpatient, ROUND(100.0 * COUNT(CASE WHEN readmitted = '<30' THEN encounter_id END) / COUNT(encounter_id), 1) AS readmission_rate_percent FROM hospital_readmissions GROUP BY number_inpatient ORDER BY number_inpatient LIMIT 50"
+    },
+    {
+      "id": "predictive-risk-by-age",
+      "context": "predictive",
+      "prompt": "What is the average predicted readmission risk by age group?",
+      "expected_sql": "SELECT age, ROUND(100.0 * AVG(predicted_readmission_risk), 1) AS avg_risk_percent FROM hospital_readmissions WHERE predicted_readmission_risk_in_scope = 1 GROUP BY age ORDER BY age"
+    },
+    {
+      "id": "predictive-above-20-percent",
+      "context": "predictive",
+      "prompt": "How many encounters have a predicted readmission risk above 20 percent?",
+      "expected_sql": "SELECT COUNT(encounter_id) AS encounters_above_20_percent FROM hospital_readmissions WHERE predicted_readmission_risk > 0.2 AND predicted_readmission_risk_in_scope = 1"
+    }
+  ]
+}

@@ -4,6 +4,7 @@ from concurrent import futures
 import json
 import logging
 import sys
+import time
 import uuid
 from typing import Any, Iterator, Protocol
 
@@ -65,6 +66,20 @@ except ImportError:
 LOGGER = logging.getLogger("medorch.engine")
 
 MAX_SQL_REPAIR_ATTEMPTS = 1
+MAX_SYNTHESIS_ATTEMPTS = 2
+# The browser gives up on a request after ANALYTICS_REQUEST_TIMEOUT_MS (150 s by default). Retries
+# are therefore only attempted while there is clearly time for another model call to finish.
+REQUEST_BUDGET_SECONDS = 120
+
+
+def _monotonic() -> float:
+    return time.monotonic()
+
+
+def has_time_for_retry(started: float, last_call_seconds: float) -> bool:
+    """True when the remaining request budget comfortably exceeds the last model call's duration."""
+    remaining = REQUEST_BUDGET_SECONDS - (_monotonic() - started)
+    return remaining > 1.5 * last_call_seconds
 
 Status = healthcare_analytics_pb2.ExecutionStatus
 
@@ -136,9 +151,12 @@ avg_risk_percent. Round other averages to 2 decimals with ROUND(AVG(x), 2).
 Only these SQL functions are available: COUNT, AVG, SUM, MIN, MAX, ROUND, CAST,
 COALESCE, IFNULL, LENGTH, LOWER, UPPER, ABS. String functions such as SUBSTR or
 INSTR are NOT available. Window functions (OVER, PARTITION BY) are NOT available.
-To find which group has the most or highest value, GROUP BY it, aggregate with
-SUM, AVG or COUNT, ORDER BY that aggregate DESC, and add LIMIT 1 - never nest
-aggregates such as MAX(SUM(x)). Always SELECT the aggregate value next to the group
+Only when the question asks for the single top group ("which race has the most...",
+"which age group is highest") GROUP BY it, aggregate with SUM, AVG or COUNT, ORDER BY
+that aggregate DESC and add LIMIT 1 - never nest aggregates such as MAX(SUM(x)). For
+"compare", "by", "each" or "for every" questions return ALL groups: no LIMIT 1 (use
+LIMIT 50 at most) and do not filter groups out. NULL is a real group (usually "test
+not performed" or unknown); keep it unless the user asks to exclude it. Always SELECT the aggregate value next to the group
 name so the answer shows the figure, and for 'most' questions about a count of
 events (lab procedures, visits) prefer SELECT group, SUM(x) AS total, ROUND(AVG(x), 2)
 AS average_per_encounter so totals are not mistaken for per-encounter rates. Age brackets like '[0-10)' and '[90-100)' already sort in
@@ -188,9 +206,9 @@ SYNTHESIS_JSON_INSTRUCTIONS = (
     "referencing the exact row_index and column_name it came from — rendered_value must be "
     "a single standalone number exactly as it appears in summary_text (e.g. '29', never a "
     "phrase like '29 out of 161'); if you compare two counts, add one claim per number. "
-    "row_index is 0-based: the Rows list below is a JSON array, so its first element is "
-    "row_index 0, the second is row_index 1, and so on — if there is only one row, its "
-    "row_index is always 0, never 1. "
+    "row_index is 0-based and every row below is labelled with its row_index: copy that number "
+    "exactly (the first row is row_index 0, the second is row_index 1, and so on — if there is "
+    "only one row, its row_index is always 0, never 1). "
     "Do not perform arithmetic beyond what the columns already contain — if you want to "
     "state a rate or percentage, only do so if the SQL already returned it as its own "
     "column; otherwise compare the raw counts directly (e.g. 'X of Y encounters') instead "
@@ -355,6 +373,7 @@ class AnalyticsEngineServicer(healthcare_analytics_pb2_grpc.AnalyticsEngineServi
         context_id = request.agent_target or "general"
         requester_type = request.user_role or "unauthenticated-demo"
         requested_profile_id = (request.model_profile_id or "").strip()
+        started = _monotonic()
 
         if requested_profile_id and requested_profile_id in self._profile_clients:
             active_llm, active_planner, active_model_version = self._profile_clients[requested_profile_id]
@@ -420,6 +439,7 @@ class AnalyticsEngineServicer(healthcare_analytics_pb2_grpc.AnalyticsEngineServi
                 outcome.execution_status = "EXECUTION_STATUS_CANCELLED"
                 return
 
+            plan_started = _monotonic()
             try:
                 plan: QueryPlan = active_planner.plan(prompt, context_id, FULL_SCHEMA_PROMPT + _context_guidance(capability))
             except PlannerTimeoutError:
@@ -467,6 +487,8 @@ class AnalyticsEngineServicer(healthcare_analytics_pb2_grpc.AnalyticsEngineServi
                 )
                 return
 
+            plan_seconds = _monotonic() - plan_started
+
             if not plan.supported:
                 yield self._terminal(
                     request, outcome, plan.user_message,
@@ -498,7 +520,11 @@ class AnalyticsEngineServicer(healthcare_analytics_pb2_grpc.AnalyticsEngineServi
                     return
                 except UnsafeQueryError as exc:
                     LOGGER.warning("Rejected generated SQL for %s (attempt %d)", request.query_id, attempt + 1, exc_info=True)
-                    repaired = self._repair_plan(active_planner, prompt, context_id, capability, exc) if attempt < MAX_SQL_REPAIR_ATTEMPTS else None
+                    repaired = (
+                        self._repair_plan(active_planner, prompt, context_id, capability, exc)
+                        if attempt < MAX_SQL_REPAIR_ATTEMPTS and has_time_for_retry(started, plan_seconds)
+                        else None
+                    )
                     if repaired is None:
                         yield self._terminal(
                             request, outcome, UNSUPPORTED_MESSAGE,
@@ -531,7 +557,7 @@ class AnalyticsEngineServicer(healthcare_analytics_pb2_grpc.AnalyticsEngineServi
                 summary_text = deterministic.text
             else:
                 try:
-                    summary_text = self._synthesize_grounded_answer(active_llm, prompt, capability, result)
+                    summary_text = self._synthesize_grounded_answer(active_llm, prompt, capability, result, started)
                 except (GroundingError, PlannerTimeoutError, PlannerError) as exc:
                     LOGGER.info(
                         "Narrative synthesis unavailable for %s (%s); falling back to deterministic summary",
@@ -598,14 +624,49 @@ class AnalyticsEngineServicer(healthcare_analytics_pb2_grpc.AnalyticsEngineServi
         return repaired if repaired.supported and repaired.sql else None
 
     def _synthesize_grounded_answer(
-        self, llm: LanguageModel, prompt: str, capability: CapabilityContext, result: StructuredQueryResult
+        self,
+        llm: LanguageModel,
+        prompt: str,
+        capability: CapabilityContext,
+        result: StructuredQueryResult,
+        started: float | None = None,
     ) -> str:
         columns_desc = ", ".join(result.columns)
-        rows_desc = json.dumps([list(row) for row in result.rows])
+        # Each row carries its own index so the model copies it instead of counting, which
+        # prevents the off-by-one and swapped-row mistakes the grounding check kept catching.
+        rows_desc = "\n".join(f"row_index {index}: {json.dumps(list(row))}" for index, row in enumerate(result.rows))
         synthesis_prompt = (
             f"{_context_guidance(capability)}\n{SYNTHESIS_JSON_INSTRUCTIONS}\n"
-            f"User request: {prompt}\nColumns: {columns_desc}\nRows: {rows_desc}\nJSON:"
+            f"User request: {prompt}\nColumns: {columns_desc}\n"
+            f"Rows (each labelled with its row_index):\n{rows_desc}\nJSON:"
         )
+
+        failure: Exception | None = None
+        for attempt in range(MAX_SYNTHESIS_ATTEMPTS):
+            attempt_prompt = synthesis_prompt
+            if failure is not None:
+                attempt_prompt += (
+                    f"\n\n[Correction] Your previous JSON was rejected: {failure}. Re-read the labelled rows, copy "
+                    "each value and its row_index exactly, and mention only a few rows (for example the highest and "
+                    "lowest) so every claim can be checked. Output the corrected JSON only."
+                )
+            attempt_started = _monotonic()
+            try:
+                return self._synthesize_once(llm, attempt_prompt, result, prompt)
+            except (GroundingError, PlannerError) as exc:
+                if isinstance(exc, PlannerTimeoutError):
+                    raise
+                failure = exc
+                LOGGER.info("Narrative attempt %d rejected: %s", attempt + 1, exc)
+                if started is not None and not has_time_for_retry(started, _monotonic() - attempt_started):
+                    LOGGER.info("Skipping narrative retry: not enough of the request budget is left")
+                    break
+        assert failure is not None
+        raise failure
+
+    def _synthesize_once(
+        self, llm: LanguageModel, synthesis_prompt: str, result: StructuredQueryResult, user_prompt: str
+    ) -> str:
         try:
             response = llm.invoke(synthesis_prompt)
         except (openai.APITimeoutError, TimeoutError) as exc:
@@ -620,7 +681,7 @@ class AnalyticsEngineServicer(healthcare_analytics_pb2_grpc.AnalyticsEngineServi
             answer = GroundedAnswer.model_validate(payload)
         except Exception as exc:
             raise PlannerError(f"Synthesis output failed schema validation: {exc}") from exc
-        return validate_grounded_answer(answer, result, prompt)
+        return validate_grounded_answer(answer, result, user_prompt)
 
 
 def serve(config: EngineConfig | None = None) -> None:

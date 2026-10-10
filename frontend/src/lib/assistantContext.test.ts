@@ -82,6 +82,14 @@ describe('friendlyErrorMessage', () => {
     expect(friendlyErrorMessage('UNSAFE_SQL', 'fallback')).toContain('safety checks');
   });
 
+  it('tells the user what to do next for every error the engine can raise', () => {
+    const nextStep = /try|pick|choose|restart|rephras/i;
+    for (const code of ['INVALID_MODEL_OUTPUT', 'UNSAFE_SQL', 'QUERY_TIMEOUT', 'MODEL_TIMEOUT', 'INTERNAL_ERROR', 'UNKNOWN_CONTEXT']) {
+      expect(friendlyErrorMessage(code, 'fallback')).toMatch(nextStep);
+    }
+    expect(friendlyErrorMessage('INTERNAL_ERROR', 'fallback')).not.toBe('fallback');
+  });
+
   it('never leaks server internals; falls back to the safe server message for unknown codes', () => {
     expect(friendlyErrorMessage('SOME_NEW_CODE', 'a safe server message')).toBe('a safe server message');
   });
@@ -90,7 +98,7 @@ describe('friendlyErrorMessage', () => {
     const codes = [
       'UNKNOWN_CONTEXT', 'CONTEXT_UNAVAILABLE', 'UNSUPPORTED_REQUEST', 'INVALID_MODEL_OUTPUT',
       'UNSAFE_SQL', 'QUERY_TIMEOUT', 'MODEL_TIMEOUT', 'MODEL_UNAVAILABLE', 'MODEL_SERVICE_ERROR',
-      'MODEL_RATE_LIMITED', 'GROUNDING_FAILED', 'IDENTIFIER_EXPOSURE', 'AUDIT_FAILURE',
+      'MODEL_RATE_LIMITED', 'GROUNDING_FAILED', 'IDENTIFIER_EXPOSURE', 'AUDIT_FAILURE', 'INTERNAL_ERROR',
     ];
     for (const code of codes) {
       const message = friendlyErrorMessage(code, 'fallback');

@@ -41,13 +41,13 @@ export function friendlyErrorMessage(errorCode: string, fallback: string): strin
     case 'UNSUPPORTED_REQUEST':
       return fallback;
     case 'INVALID_MODEL_OUTPUT':
-      return 'The assistant could not turn this into a valid query. Try rephrasing it more simply, or try again — this can happen occasionally with local models.';
+      return 'The assistant could not turn this into a valid query. Try rephrasing it more simply, pick one of the suggested questions, or try again — this can happen occasionally with local models.';
     case 'UNSAFE_SQL':
-      return 'The generated query did not pass the safety checks for this dataset. Try rephrasing your question.';
+      return 'The generated query did not pass the safety checks for this dataset, so nothing was run (the assistant already retried once). Try asking for a count, average or rate by one column, or pick one of the suggested questions.';
     case 'QUERY_TIMEOUT':
       return 'The query took too long to run against the historical dataset. Try a narrower question.';
     case 'MODEL_TIMEOUT':
-      return 'The assistant took too long to respond. Try again, or try a shorter question.';
+      return 'The assistant took too long to respond. Try again, ask a shorter question, or choose a different model above.';
     case 'MODEL_UNAVAILABLE':
       return fallback;
     case 'MODEL_SERVICE_ERROR':
@@ -58,6 +58,8 @@ export function friendlyErrorMessage(errorCode: string, fallback: string): strin
       return 'The assistant could not verify its answer against the actual query results, so nothing was shown. Try again.';
     case 'IDENTIFIER_EXPOSURE':
       return 'The response was blocked because it could have exposed a protected identifier.';
+    case 'INTERNAL_ERROR':
+      return 'Something went wrong on the server while answering this. Try again; if it keeps happening, restart the services (stop.bat, then start.bat).';
     case 'AUDIT_FAILURE':
       return 'Your request completed, but its audit record could not be saved.';
     default:

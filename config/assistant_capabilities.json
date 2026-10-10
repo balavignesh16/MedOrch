@@ -7,11 +7,18 @@
       "display_name": "General Analytics",
       "description": "Aggregate questions over the bundled de-identified hospital_readmissions encounter table.",
       "available": true,
-      "required_tables": ["hospital_readmissions"],
-      "required_columns": ["encounter_id", "readmitted"],
+      "required_tables": [
+        "hospital_readmissions"
+      ],
+      "required_columns": [
+        "encounter_id",
+        "readmitted"
+      ],
       "suggested_prompts": [
         "How many encounters resulted in a readmission within 30 days?",
-        "What is the average time in hospital across all encounters?"
+        "What is the average time in hospital across all encounters?",
+        "How many encounters are in each readmitted category?",
+        "Which race has the most lab procedures?"
       ],
       "unsupported_examples": [
         "What will next month's admissions be?",
@@ -28,11 +35,20 @@
       "display_name": "Clinical Analytics",
       "description": "Aggregate readmission risk factors derived from documented diagnosis and procedure counts.",
       "available": true,
-      "required_tables": ["hospital_readmissions"],
-      "required_columns": ["diag_1", "diag_2", "diag_3", "num_medications", "readmitted"],
+      "required_tables": [
+        "hospital_readmissions"
+      ],
+      "required_columns": [
+        "diag_1",
+        "diag_2",
+        "diag_3",
+        "num_medications",
+        "readmitted"
+      ],
       "suggested_prompts": [
-        "What is the readmission rate grouped by primary diagnosis code?",
-        "How does number of medications relate to readmission within 30 days?"
+        "What is the 30-day readmission rate by age bracket?",
+        "Compare the 30-day readmission rate by insulin status",
+        "What is the 30-day readmission rate by HbA1c test result?"
       ],
       "unsupported_examples": [
         "What medication should be prescribed for this patient?",
@@ -49,11 +65,18 @@
       "display_name": "Operations Analytics",
       "description": "Aggregate encounter throughput and length-of-stay analytics from historical encounters.",
       "available": true,
-      "required_tables": ["hospital_readmissions"],
-      "required_columns": ["time_in_hospital", "admission_type_id", "discharge_disposition_id"],
+      "required_tables": [
+        "hospital_readmissions"
+      ],
+      "required_columns": [
+        "time_in_hospital",
+        "admission_type_id",
+        "discharge_disposition_id"
+      ],
       "suggested_prompts": [
         "What is the average length of stay by admission type?",
-        "How many encounters were discharged to each disposition category?"
+        "How many encounters were discharged to each disposition category?",
+        "What is the 30-day readmission rate by number of prior inpatient visits?"
       ],
       "unsupported_examples": [
         "What is our current ICU occupancy?",
@@ -70,11 +93,16 @@
       "display_name": "Predictive Risk (Demo Model)",
       "description": "Aggregate views of a demonstration early-readmission risk score, precomputed once per encounter by an offline-trained classifier.",
       "available": true,
-      "required_tables": ["hospital_readmissions"],
-      "required_columns": ["predicted_readmission_risk", "predicted_readmission_risk_model_version"],
+      "required_tables": [
+        "hospital_readmissions"
+      ],
+      "required_columns": [
+        "predicted_readmission_risk",
+        "predicted_readmission_risk_model_version"
+      ],
       "suggested_prompts": [
         "What is the average predicted readmission risk by age group?",
-        "How many encounters have a predicted readmission risk above 0.5?"
+        "How many encounters have a predicted readmission risk above 20 percent?"
       ],
       "unsupported_examples": [
         "Will this specific patient be readmitted?",
@@ -93,8 +121,13 @@
       "display_name": "Billing Analytics",
       "description": "Reserved for future billing and claims analytics once real financial data is available.",
       "available": false,
-      "required_tables": ["hospital_readmissions"],
-      "required_columns": ["claim_amount", "denial_reason"],
+      "required_tables": [
+        "hospital_readmissions"
+      ],
+      "required_columns": [
+        "claim_amount",
+        "denial_reason"
+      ],
       "suggested_prompts": [],
       "unsupported_examples": [
         "What is our total claim denial amount this quarter?"

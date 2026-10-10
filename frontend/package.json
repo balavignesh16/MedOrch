@@ -11,7 +11,9 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "smoke": "node ../scripts/smoke/walk.mjs",
+    "smoke:assistant": "node ../scripts/smoke/assistant_questions.mjs"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.14.4",

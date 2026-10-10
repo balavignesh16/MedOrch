@@ -602,5 +602,208 @@ def test_schema_prompt_forbids_window_functions_and_explains_the_alternative() -
     from engine.main import FULL_SCHEMA_PROMPT
 
     assert "Window functions (OVER, PARTITION BY) are NOT available" in FULL_SCHEMA_PROMPT
-    assert "ORDER BY that aggregate DESC" in FULL_SCHEMA_PROMPT
+    assert "that aggregate DESC" in FULL_SCHEMA_PROMPT
+    assert "Only when the question asks for the single top group" in FULL_SCHEMA_PROMPT
+    assert "return ALL groups" in FULL_SCHEMA_PROMPT
+    assert "NULL is a real group" in FULL_SCHEMA_PROMPT
     assert "Always SELECT the aggregate value next to the group" in FULL_SCHEMA_PROMPT
+
+
+class _SequenceLLM:
+    """Answers each synthesis call in order (a string, or an exception to raise) and records prompts."""
+
+    def __init__(self, *responses: object) -> None:
+        self._responses = list(responses)
+        self.prompts: list[str] = []
+
+    @property
+    def invoke_calls(self) -> int:
+        return len(self.prompts)
+
+    def invoke(self, prompt: str) -> _FakeMessage:
+        self.prompts.append(prompt)
+        item = self._responses.pop(0)
+        if isinstance(item, Exception):
+            raise item
+        return _FakeMessage(item)  # type: ignore[arg-type]
+
+
+_GROUP_PLAN = QueryPlan(
+    supported=True, reason_code="supported",
+    sql="SELECT diag_1, COUNT(*) AS count FROM hospital_readmissions GROUP BY diag_1",
+    user_message="",
+)
+_WRONG_CLAIM_JSON = (
+    '{"summary_text": "Diagnosis 250 has 99 encounters.", "numeric_claims": ['
+    '{"rendered_value": "250", "evidence": {"row_index": 0, "column_name": "diag_1"}},'
+    '{"rendered_value": "99", "evidence": {"row_index": 0, "column_name": "count"}}]}'
+)
+_RIGHT_CLAIM_JSON = (
+    '{"summary_text": "**Diagnosis 250** appears most often, with 2 occurrences.", "numeric_claims": ['
+    '{"rendered_value": "250", "evidence": {"row_index": 0, "column_name": "diag_1"}},'
+    '{"rendered_value": "2", "evidence": {"row_index": 0, "column_name": "count"}}]}'
+)
+
+
+def test_synthesis_prompt_labels_every_row_with_its_index(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    config = _config(tmp_path, monkeypatch)
+    llm = _SequenceLLM(_RIGHT_CLAIM_JSON)
+    servicer = AnalyticsEngineServicer(config, llm=llm, planner=_FakePlanner(plan=_GROUP_PLAN))
+    _drain(servicer.ProcessQuery(_FakeRequest("group by diagnosis"), _FakeContext()))
+
+    assert "row_index 0:" in llm.prompts[0]
+    assert "labelled with its row_index" in llm.prompts[0]
+
+
+def test_a_rejected_narrative_is_retried_once_with_the_reason_and_can_succeed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    config = _config(tmp_path, monkeypatch)
+    llm = _SequenceLLM(_WRONG_CLAIM_JSON, _RIGHT_CLAIM_JSON)
+    servicer = AnalyticsEngineServicer(config, llm=llm, planner=_FakePlanner(plan=_GROUP_PLAN))
+    events = _drain(servicer.ProcessQuery(_FakeRequest("group by diagnosis"), _FakeContext()))
+
+    final = events[-1]
+    assert "**Diagnosis 250** appears most often" in final.summary_text
+    assert llm.invoke_calls == 2
+    assert "[Correction]" in llm.prompts[1] and "does not match" in llm.prompts[1]
+    assert "[Correction]" not in llm.prompts[0]
+
+
+def test_two_rejected_narratives_fall_back_to_the_deterministic_table(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    config = _config(tmp_path, monkeypatch)
+    llm = _SequenceLLM(_WRONG_CLAIM_JSON, _WRONG_CLAIM_JSON, _RIGHT_CLAIM_JSON)
+    servicer = AnalyticsEngineServicer(config, llm=llm, planner=_FakePlanner(plan=_GROUP_PLAN))
+    events = _drain(servicer.ProcessQuery(_FakeRequest("group by diagnosis"), _FakeContext()))
+
+    final = events[-1]
+    assert final.error_code == "" and "grouped result(s)" in final.summary_text
+    assert "99" not in final.summary_text
+    assert llm.invoke_calls == 2
+
+
+def test_a_synthesis_timeout_is_not_retried(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    config = _config(tmp_path, monkeypatch)
+    llm = _SequenceLLM(TimeoutError("slow"), _RIGHT_CLAIM_JSON)
+    servicer = AnalyticsEngineServicer(config, llm=llm, planner=_FakePlanner(plan=_GROUP_PLAN))
+    events = _drain(servicer.ProcessQuery(_FakeRequest("group by diagnosis"), _FakeContext()))
+
+    assert events[-1].error_code == ""
+    assert "grouped result(s)" in events[-1].summary_text
+    assert llm.invoke_calls == 1
+
+
+def test_invalid_json_gets_one_corrected_attempt(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    config = _config(tmp_path, monkeypatch)
+    llm = _SequenceLLM("not json at all", _RIGHT_CLAIM_JSON)
+    servicer = AnalyticsEngineServicer(config, llm=llm, planner=_FakePlanner(plan=_GROUP_PLAN))
+    events = _drain(servicer.ProcessQuery(_FakeRequest("group by diagnosis"), _FakeContext()))
+
+    assert "**Diagnosis 250**" in events[-1].summary_text
+    assert llm.invoke_calls == 2
+
+
+class _Clock:
+    def __init__(self) -> None:
+        self.now = 1000.0
+
+    def __call__(self) -> float:
+        return self.now
+
+
+class _TimedPlanner(_SequencePlanner):
+    def __init__(self, clock: _Clock, seconds_per_call: float, *items: object) -> None:
+        super().__init__(*items)
+        self._clock = clock
+        self._seconds = seconds_per_call
+
+    def plan(self, prompt: str, context_id: str, schema_prompt: str) -> QueryPlan:
+        self._clock.now += self._seconds
+        return super().plan(prompt, context_id, schema_prompt)
+
+
+class _TimedLLM(_SequenceLLM):
+    def __init__(self, clock: _Clock, seconds_per_call: float, *responses: object) -> None:
+        super().__init__(*responses)
+        self._clock = clock
+        self._seconds = seconds_per_call
+
+    def invoke(self, prompt: str) -> _FakeMessage:
+        self._clock.now += self._seconds
+        return super().invoke(prompt)
+
+
+def test_has_time_for_retry_compares_remaining_budget_with_the_last_call(monkeypatch: pytest.MonkeyPatch) -> None:
+    import engine.main as engine_main
+
+    clock = _Clock()
+    monkeypatch.setattr(engine_main, "_monotonic", clock)
+    started = clock.now
+    assert engine_main.has_time_for_retry(started, 30.0)  # 120 s left vs 45 s needed
+    clock.now += 60
+    assert engine_main.has_time_for_retry(started, 30.0)  # 60 s left vs 45 s needed
+    assert not engine_main.has_time_for_retry(started, 45.0)  # 60 s left vs 67.5 s needed
+    clock.now += 70
+    assert not engine_main.has_time_for_retry(started, 1.0)  # budget exhausted
+
+
+def test_sql_repair_is_skipped_when_planning_already_used_most_of_the_budget(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import engine.main as engine_main
+
+    clock = _Clock()
+    monkeypatch.setattr(engine_main, "_monotonic", clock)
+    config = _config(tmp_path, monkeypatch)
+    planner = _TimedPlanner(clock, 70.0, _plan(_WINDOW_SQL), _plan(_SAFE_SQL))
+    servicer = AnalyticsEngineServicer(config, llm=object(), planner=planner)
+    events = _drain(servicer.ProcessQuery(_FakeRequest("which race has the most lab procedures"), _FakeContext()))
+
+    assert events[-1].error_code == "UNSAFE_SQL"
+    assert len(planner.prompts) == 1
+
+
+def test_sql_repair_runs_when_planning_was_quick(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import engine.main as engine_main
+
+    clock = _Clock()
+    monkeypatch.setattr(engine_main, "_monotonic", clock)
+    config = _config(tmp_path, monkeypatch)
+    planner = _TimedPlanner(clock, 10.0, _plan(_WINDOW_SQL), _plan(_SAFE_SQL))
+    servicer = AnalyticsEngineServicer(config, llm=object(), planner=planner)
+    events = _drain(servicer.ProcessQuery(_FakeRequest("which race has the most lab procedures"), _FakeContext()))
+
+    assert events[-1].error_code == ""
+    assert len(planner.prompts) == 2
+
+
+def test_narrative_retry_is_skipped_when_the_first_attempt_used_most_of_the_budget(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import engine.main as engine_main
+
+    clock = _Clock()
+    monkeypatch.setattr(engine_main, "_monotonic", clock)
+    config = _config(tmp_path, monkeypatch)
+    llm = _TimedLLM(clock, 60.0, _WRONG_CLAIM_JSON, _RIGHT_CLAIM_JSON)
+    servicer = AnalyticsEngineServicer(config, llm=llm, planner=_FakePlanner(plan=_GROUP_PLAN))
+    events = _drain(servicer.ProcessQuery(_FakeRequest("group by diagnosis"), _FakeContext()))
+
+    assert "grouped result(s)" in events[-1].summary_text
+    assert llm.invoke_calls == 1
+
+
+def test_narrative_retry_runs_when_the_first_attempt_was_quick(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import engine.main as engine_main
+
+    clock = _Clock()
+    monkeypatch.setattr(engine_main, "_monotonic", clock)
+    config = _config(tmp_path, monkeypatch)
+    llm = _TimedLLM(clock, 8.0, _WRONG_CLAIM_JSON, _RIGHT_CLAIM_JSON)
+    servicer = AnalyticsEngineServicer(config, llm=llm, planner=_FakePlanner(plan=_GROUP_PLAN))
+    events = _drain(servicer.ProcessQuery(_FakeRequest("group by diagnosis"), _FakeContext()))
+
+    assert "**Diagnosis 250**" in events[-1].summary_text
+    assert llm.invoke_calls == 2

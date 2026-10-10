@@ -61,6 +61,9 @@ else
   echo "AI engine skipped: NVIDIA_API_KEY is not configured. Dashboard mode remains available."
 fi
 
+# Load local models in the background so the first question is not slow.
+bash scripts/warmup.sh &
+
 (cd frontend && exec npm run dev) &
 pids+=("$!")
 

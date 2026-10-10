@@ -65,6 +65,9 @@ if defined NVIDIA_API_KEY (
   echo AI engine skipped: NVIDIA_API_KEY is not configured. Dashboard mode remains available.
 )
 
+rem Load local models in the background so the first question is not slow.
+start "MedOrch Warmup" /min powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\warmup.ps1"
+
 echo Launching Next.js frontend...
 start "MedOrch Frontend" /D "%~dp0frontend" cmd /k npm run dev
 

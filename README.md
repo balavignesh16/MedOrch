@@ -82,6 +82,16 @@ On Linux/macOS:
 
 If no API key is configured, the startup scripts skip the AI engine and run the database-backed dashboard and gateway. Open `http://localhost:3000`.
 
+Both startup scripts also run `scripts/warmup.ps1` / `scripts/warmup.sh` in the background, which loads the local Ollama models into memory so the first question after a restart is not slow (a cold 14B model can take 45+ seconds).
+
+To check that the assistant is demo-ready, run the curated question set against the running stack (about 20 seconds per question on a local 14B model):
+
+```bash
+node scripts/smoke/assistant_questions.mjs --repeats 3
+```
+
+It reports pass/fail, latency, and whether a written narrative (rather than the terse table caption) appeared for each question in `config/demo_questions.json`. Those same questions are the assistant's suggested prompts, and their reference SQL is validated by the engine tests.
+
 Individual services can also be started from their directories:
 
 ```text
