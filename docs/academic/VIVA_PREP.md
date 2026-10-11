@@ -23,7 +23,7 @@ I used the public UCI Diabetes 130-US Hospitals dataset (101,766 encounters, 71,
 | Weight missing / HbA1c not performed | 96.9% / 83.3% |
 | HbA1c study | 69,987 patients; chi-square p = 0.020, Cramér's V = 0.012; adjusted ORs 0.87–0.95, none significant; interaction with diagnosis p = 0.007 |
 | Assistant live test | 12 of 12 curated questions correct (local Qwen 2.5 14B) |
-| Automated tests | 266 engine + 182 frontend |
+| Automated tests | 266 engine + 209 frontend |
 
 ## Data and design
 
