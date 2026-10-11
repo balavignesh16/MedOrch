@@ -209,7 +209,7 @@ These usually carry the marks directly.
 | 6. Assistant robustness | Done | One-shot SQL repair and narrative retry (both bounded by a 120 s request budget), rows labelled with their index, curated question set, model warm-up script, clearer error messages. |
 | 7. Automated verification and rehearsal | Done, except the video | `npm run smoke` (pages, banned text, PDF), `npm run smoke:assistant`, `docs/DEMO_CHECKLIST.md`. Recording the backup video is a manual step. |
 | 8. Real authentication | Not started (optional) | |
-| 9. Academic deliverables | Not started (optional) | |
+| 9. Academic deliverables | Done | `docs/academic/`: 13-page report (.docx and .pdf), 12-slide deck with speaker notes, viva preparation. Generated from the saved artifacts. |
 
 ### Live assistant results (local Qwen 2.5 14B)
 

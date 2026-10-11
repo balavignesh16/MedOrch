@@ -1,0 +1,15 @@
+{
+  "name": "medorch-academic-build",
+  "private": true,
+  "description": "Builds the written report and slide deck from the saved analysis artifacts.",
+  "scripts": {
+    "figures": "python make_figures.py",
+    "report": "node build_report.mjs",
+    "slides": "node build_slides.mjs",
+    "all": "python make_figures.py && node build_report.mjs && node build_slides.mjs"
+  },
+  "dependencies": {
+    "docx": "^9.0.0",
+    "pptxgenjs": "^3.12.0"
+  }
+}

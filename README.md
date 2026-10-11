@@ -185,6 +185,10 @@ To (re)generate the artifacts see the regeneration order in `engine/ml/README.md
 4. **Assistant** — click an "Ask the assistant" button, run the pre-filled question, and show the automatic chart, the validated SQL, the model label, and the model switcher.
 5. **Report** — open the report and use Download PDF.
 
+## Academic deliverables
+
+`docs/academic/` holds the written report (`MedOrch_Report.docx`, with a PDF copy), the slide deck (`MedOrch_Slides.pptx`, with speaker notes) and viva preparation (`VIVA_PREP.md`). They are generated from the saved analysis artifacts, so the numbers match the application: after retraining, run `python make_figures.py`, `node build_report.mjs` and `node build_slides.mjs` in `docs/academic/build/` (after `npm install` there). Fill in the author fields on the report's title page and the deck's first slide.
+
 ## Data behavior
 
 - Population, clinical-quality, and parts of financial/operational analytics query `hospital_readmissions` in SQLite.
