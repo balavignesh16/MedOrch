@@ -113,6 +113,8 @@ Target: Weeks 2–3
 
 ## Phase 3 — Real authentication and authorization
 
+Status: implemented as demonstration-grade server-side auth (Phase 6 M8). SSO/MFA remain future work.
+
 Target: Weeks 3–4
 
 ### Deliverables

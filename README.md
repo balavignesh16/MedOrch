@@ -202,8 +202,9 @@ See [ROADMAP.md](ROADMAP.md) for the delivery plan and production-readiness gate
 
 ## Security notes
 
-- Authentication remains a client-side demonstration and is not a security boundary. Phase 3 (real server-backed auth) is not complete: every assistant request is recorded as `unauthenticated-demo`, and no role supplied by the browser is ever trusted for authorization.
-- API routes must not be exposed publicly until server-side authentication is implemented.
+- Sign-in is server-side: scrypt-hashed passwords in `database/users.db`, HMAC-signed HttpOnly session cookies, a login rate limiter, and role rules enforced in `frontend/src/proxy.ts` and again inside API handlers. The role is read only from the signed cookie, never from the browser's request body, and every assistant request is audited as `username:role`.
+- Demo accounts (`admin`, `doctor`, `billing`) are created on first sign-in with random passwords written to the git-ignored `database/demo_credentials.txt` (or set `MEDORCH_DEMO_PASSWORD_ADMIN/DOCTOR/BILLING` before first use). Set `SESSION_SECRET` (32+ characters) for any production build.
+- This is demonstration-grade authentication (no SSO, MFA, password reset or account management); it is not a substitute for a hospital identity provider.
 - The assistant's identifier protection (`pii_detected` / `pii_redacted` / legacy `pii_scrubbed`) is limited direct-pattern matching on `patient_nbr` and `encounter_id` — it is not comprehensive clinical NER, HIPAA certification, or formal de-identification validation.
 - Generated SQL and audit identifiers are never sent to the browser unless `ANALYTICS_DEV_PROVENANCE=true` is explicitly set for local development.
 - If this repository has been shared, remove any old credential from Git history after revoking it. Never commit a real key in `.env.example` — only `.env` is gitignored.

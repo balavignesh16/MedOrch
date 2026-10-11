@@ -26,6 +26,12 @@ tmp/
 # engine/audit_log.py and .env.example's AI_AUDIT_DB_PATH documentation)
 database/audit.db
 
+# Local sign-in accounts: hashed passwords and the one-time plaintext credentials
+# file written when the demo users are first created (see frontend/src/lib/auth).
+database/users.db
+database/users.db-*
+database/demo_credentials.txt
+
 # Raw source CSV for the predictive model: not used by any code at runtime
 # or training time (engine/ml/train_readmission_model.py reads directly
 # from database/medorch.db instead); kept out of version control to avoid

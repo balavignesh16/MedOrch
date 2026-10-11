@@ -9,6 +9,7 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { smokeCredentials } from './auth.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const args = Object.fromEntries(
@@ -97,7 +98,18 @@ await send('Emulation.setDeviceMetricsOverride', { width: 1400, height: 1000, de
 const origin = new URL(base).origin;
 await send('Page.navigate', { url: `${origin}/login` });
 await sleep(2500);
-await evaluate("localStorage.setItem('medorch_user', JSON.stringify({ name: 'Smoke Test', role: 'admin' }))");
+const credentials = smokeCredentials();
+if (!credentials) {
+  console.error('No credentials: set SMOKE_USERNAME and SMOKE_PASSWORD, or sign in once so database/demo_credentials.txt exists.');
+  chrome.kill();
+  process.exit(2);
+}
+const signedIn = await evaluate(`fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(${JSON.stringify(credentials)}) }).then((r) => r.status)`);
+if (signedIn !== 200) {
+  console.error(`Sign-in failed with HTTP ${signedIn} for user "${credentials.username}".`);
+  chrome.kill();
+  process.exit(2);
+}
 
 let failures = 0;
 for (const page of PAGES) {

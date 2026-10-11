@@ -106,7 +106,7 @@ Adversarial cases are in the test suite: injected SQL, attempts to select identi
 Privacy and cost: prompts and results stay on the machine. The trade-off is speed (multi-row answers take 60–100 s on my hardware). A hosted model can be selected in the interface, with the caveat that data leave the machine.
 
 **25. Is the login secure?**
-No, and I say so: the login is a client-side demonstration. Real server-side authentication and role checks are listed as future work.
+It is real but demonstration-grade: server-side sessions in signed HttpOnly cookies, scrypt-hashed passwords, a login rate limiter, and role checks in both the proxy and the API handlers; the audit log records who asked. It has no SSO, MFA or account management, so a real deployment would use the hospital identity provider.
 
 ## Reflection
 
@@ -114,7 +114,7 @@ No, and I say so: the login is a client-side demonstration. Real server-side aut
 No external or temporal validation (the data are undated and from one source), modest predictive signal, small subgroups limiting fairness conclusions, and stored scores that include training rows.
 
 **27. What would you do with more time?**
-Temporal or external validation if dated data were available; richer features (labs, social determinants); subgroup-specific calibration; drift monitoring and a model-governance process; a larger independent assistant evaluation; real authentication.
+Temporal or external validation if dated data were available; richer features (labs, social determinants); subgroup-specific calibration; drift monitoring and a model-governance process; a larger independent assistant evaluation; SSO/MFA and account management.
 
 **28. Could this be used in a hospital?**
 Not as it is. It would need clinical validation on local data, recalibration, a governance process, human oversight of any care decision, and real security. It is a teaching demonstration.

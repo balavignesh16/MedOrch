@@ -2,12 +2,15 @@ import { EventEmitter } from 'node:events';
 import type * as grpc from '@grpc/grpc-js';
 import { NextRequest } from 'next/server';
 import { describe, expect, it, vi } from 'vitest';
+import type { SessionUser } from '@/lib/auth/session';
 import {
   AnalyticsClient,
   createAnalyticsPostHandler,
   InsightResponse,
   QueryRequest,
 } from './route';
+
+const TEST_USER: SessionUser = { username: 'doctor', displayName: 'Attending Physician', role: 'doctor' };
 
 class FakeCall extends EventEmitter {
   cancelled = false;
@@ -34,6 +37,7 @@ class FakeClient implements AnalyticsClient {
 
 function makeHandler(client: FakeClient) {
   return createAnalyticsPostHandler({
+    resolveUser: () => TEST_USER,
     createClient: () => client,
     randomUUID: () => 'test-id',
     now: () => 1_000,
@@ -53,6 +57,7 @@ describe('POST /api/stream', () => {
   it('rejects malformed JSON before creating a gateway client', async () => {
     const createClient = vi.fn(() => new FakeClient());
     const handler = createAnalyticsPostHandler({
+      resolveUser: () => TEST_USER,
       createClient,
       randomUUID: () => 'test-id',
       now: () => 1_000,
@@ -83,7 +88,7 @@ describe('POST /api/stream', () => {
     expect(client.request).toMatchObject({
       query_id: 'q-test-id',
       natural_language_prompt: 'count encounters',
-      user_role: 'unauthenticated-demo',
+      user_role: 'doctor:doctor',
       agent_target: 'general',
     });
     expect(client.closed).toBe(true);
@@ -194,5 +199,28 @@ describe('POST /api/stream', () => {
     expect(events).toHaveLength(1);
     expect(events[0]).toContain('"isFinal":true');
     expect(events[0]).toContain('"executionStatus":"EXECUTION_STATUS_ERROR"');
+  });
+
+  it('refuses unauthenticated requests before parsing the body or contacting the gateway', async () => {
+    const createClient = vi.fn(() => new FakeClient());
+    const handler = createAnalyticsPostHandler({
+      resolveUser: () => null,
+      createClient,
+      randomUUID: () => 'test-id',
+      now: () => 1_000,
+    });
+    const response = await handler(jsonRequest({ prompt: 'count encounters', agent_target: 'general' }));
+
+    expect(response.status).toBe(401);
+    expect((await response.json()).error.code).toBe('unauthorized');
+    expect(createClient).not.toHaveBeenCalled();
+  });
+
+  it('records the signed-in user as the requester and never trusts a role sent in the body', async () => {
+    const client = new FakeClient();
+    const handler = makeHandler(client);
+    const response = await handler(jsonRequest({ prompt: 'count encounters', agent_target: 'general', user_role: 'admin' }));
+    expect(response.status).toBe(200);
+    expect(client.request?.user_role).toBe('doctor:doctor');
   });
 });

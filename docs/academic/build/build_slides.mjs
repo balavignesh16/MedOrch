@@ -293,7 +293,7 @@ const chartText = { catAxisLabelFontFace: BODY, valAxisLabelFontFace: BODY, data
     'De-identified data; identifiers never exposed by the assistant',
     'Both readmission definitions labelled everywhere',
     'Model card and “not for clinical use” notices',
-    'Real deployment needs clinical validation, governance and real authentication',
+    'Real deployment needs clinical validation, governance and hospital SSO/MFA',
   ], TEAL);
 }
 

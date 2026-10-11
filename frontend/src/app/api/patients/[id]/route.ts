@@ -4,13 +4,17 @@ import { getDatabasePath } from '@/lib/databaseConfig';
 import { parsePatientId } from '@/lib/patientId';
 import type { LabResultRow, MedicationRow, PatientDetailRow } from '@/lib/patientTypes';
 import { apiError } from '@/lib/apiResponse';
+import { requireSession } from '@/lib/auth/guard';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const guard = requireSession(request, ['admin', 'doctor']);
+  if (!guard.ok) return guard.response;
+
   const { id } = await params;
   const patientId = parsePatientId(id);
   if (patientId === null) {

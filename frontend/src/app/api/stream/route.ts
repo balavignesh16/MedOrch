@@ -1,3 +1,5 @@
+import { getSessionUser } from '@/lib/auth/guard';
+import type { SessionUser } from '@/lib/auth/session';
 import { NextRequest } from 'next/server';
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
@@ -63,6 +65,8 @@ const healthcarePackage = protoDescriptor.healthcare as grpc.GrpcObject;
 const AnalyticsEngineClient = healthcarePackage.AnalyticsEngine as unknown as AnalyticsClientConstructor;
 
 interface AnalyticsRouteDependencies {
+  /** The signed-in user for the request, or null. Identity always comes from the signed session cookie. */
+  resolveUser(request: NextRequest): SessionUser | null;
   createClient(): AnalyticsClient;
   randomUUID(): string;
   now(): number;
@@ -70,6 +74,9 @@ interface AnalyticsRouteDependencies {
 
 export function createAnalyticsPostHandler(dependencies: AnalyticsRouteDependencies) {
   return async function analyticsPost(req: NextRequest) {
+  const user = dependencies.resolveUser(req);
+  if (!user) return apiError('unauthorized', 'Sign in to use the assistant', 401);
+
   let body: unknown;
   try {
     body = await req.json();
@@ -86,8 +93,8 @@ export function createAnalyticsPostHandler(dependencies: AnalyticsRouteDependenc
   const request: QueryRequest = {
     query_id: `q-${dependencies.randomUUID()}`,
     natural_language_prompt: prompt,
-    // Authentication is implemented in a later roadmap phase. Never claim admin here.
-    user_role: 'unauthenticated-demo',
+    // Recorded in the audit log as the requester; derived from the signed session, never from the request body.
+    user_role: `${user.username}:${user.role}`,
     agent_target: agentTarget,
     model_profile_id: modelProfileId,
   };
@@ -171,6 +178,7 @@ export function createAnalyticsPostHandler(dependencies: AnalyticsRouteDependenc
 }
 
 export const POST = createAnalyticsPostHandler({
+  resolveUser: (request) => getSessionUser(request),
   createClient: () => new AnalyticsEngineClient(
     getAnalyticsGatewayAddress(),
     grpc.credentials.createInsecure(),

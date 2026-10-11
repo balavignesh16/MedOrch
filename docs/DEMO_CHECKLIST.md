@@ -23,6 +23,7 @@ A five-minute walkthrough is in the root `README.md` ("Demo script"). This page 
    npm run smoke:assistant    # the curated questions answer correctly against the live model
    ```
 
+   Both sign in automatically using `database/demo_credentials.txt` (or `SMOKE_USERNAME`/`SMOKE_PASSWORD`). Open the app once so the demo accounts exist, and sign in as `admin` during the demo.
    Both must end with everything passing. Screenshots and `report.pdf` land in `tmp/smoke/`.
 4. Open these tabs in order and leave them open: `/data-quality`, `/research`, `/predictive`, `/assistant`, `/report`.
 5. In `/assistant`, ask one question first (for example "How many encounters are in each readmitted category?") so the model is warm.

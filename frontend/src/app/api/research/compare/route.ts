@@ -1,3 +1,4 @@
+import { requireSession } from '@/lib/auth/guard';
 import { apiError } from '@/lib/apiResponse';
 import { getDb } from '@/lib/analytics/cache';
 import { ComparisonError, runCohortComparison, validateComparisonRequest } from '@/lib/analytics/cohortComparison';
@@ -5,6 +6,9 @@ import { ComparisonError, runCohortComparison, validateComparisonRequest } from 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
+  const guard = requireSession(request);
+  if (!guard.ok) return guard.response;
+
   let body: unknown;
   try {
     body = await request.json();

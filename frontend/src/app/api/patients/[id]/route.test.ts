@@ -3,6 +3,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createSessionToken, getSessionSecret, SESSION_COOKIE } from '@/lib/auth/session';
 import { GET } from './route';
 
 let fixtureDirectory = '';
@@ -56,7 +57,8 @@ function createFixtureDatabase(): void {
 }
 
 async function requestPatient(id: string): Promise<Response> {
-  return GET(new Request(`http://localhost/api/patients/${id}`), {
+  const token = createSessionToken({ username: 'doctor', displayName: 'Attending Physician', role: 'doctor' }, getSessionSecret(), Date.now());
+  return GET(new Request(`http://localhost/api/patients/${id}`, { headers: { cookie: `${SESSION_COOKIE}=${token}` } }), {
     params: Promise.resolve({ id }),
   });
 }

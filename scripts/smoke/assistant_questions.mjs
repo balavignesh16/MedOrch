@@ -10,6 +10,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { signIn } from './auth.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const args = Object.fromEntries(
@@ -25,12 +26,13 @@ const require = createRequire(path.join(root, 'frontend', 'package.json'));
 const Database = require('better-sqlite3');
 const db = new Database(path.join(root, 'database', 'medorch.db'), { readonly: true });
 const expectedRows = (sql) => db.prepare(sql).all().length;
+const sessionCookie = await signIn(base);
 
 async function ask(question) {
   const started = Date.now();
   const response = await fetch(`${base}/api/stream`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', Cookie: sessionCookie },
     body: JSON.stringify({ prompt: question.prompt, agent_target: question.context, model_profile_id: modelProfile }),
     signal: AbortSignal.timeout(170_000),
   });
